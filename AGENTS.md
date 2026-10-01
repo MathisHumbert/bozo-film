@@ -5,6 +5,34 @@ This file holds the rules and checklists. Two companions:
 [DETAILED_README.md](DETAILED_README.md) for how the pieces fit and why. When a rule appears
 in more than one, this file is the one to trust.
 
+## Running without Sanity
+
+The site boots with no `.env` at all, which is what makes this a usable starter. Three
+pieces make that work, and each is easy to break:
+
+- **`loadQuery` returns `null`** when `PUBLIC_SANITY_PROJECT_ID` is unset, and imports
+  `sanity:client` **dynamically** so the client is never constructed. Every caller already
+  handles null.
+- **`astro.config.mjs` passes a fallback `projectId`.** The integration's middleware builds
+  a client on _every request_, so a missing id crashes even a page with no imports. The
+  fallback is syntactically valid and never used: nothing queries with it.
+- **`studioBasePath` is conditional.** Without a real id the Studio route is not generated,
+  so `/admin` is a 404 rather than a crash.
+
+`src/lib/sanity/url-for-image.ts` builds its URL builder from the env vars rather than from
+`sanity:client`, for the same reason — `src/lib/seo/meta.ts` imports it, so it is in the
+module graph of every page.
+
+The two llms endpoints return 404 when there is nothing to serve. `/robots.txt`, the SEO
+head and the JSON-LD all work from defaults.
+
+If you add a module that imports `sanity:client` at the top level, the no-Sanity mode breaks
+and the symptom is a 500 on every route, including pages that import nothing. Verify with:
+
+```sh
+mv .env .env.bak && npm run dev   # / must be 200
+```
+
 ## Development
 
 When starting the dev server, use background mode:

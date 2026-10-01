@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 
-import { loadQuery } from "../lib/sanity/load-query";
+import { loadQuery, sanityConfigured } from "../lib/sanity/load-query";
 import { homeQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
 import PageBuilder from "../components/page-builder.astro";
@@ -15,10 +15,23 @@ const blocks = (home?.content ?? []).filter(
 
 const isEmpty = blocks.length === 0;
 
-const links = [
-  { label: "Open the Studio", href: "/admin", external: false },
-  { label: "README", href: "https://docs.astro.build", external: true },
-];
+const links = sanityConfigured
+  ? [
+      { label: "Open the Studio", href: "/admin", external: false },
+      { label: "Astro docs", href: "https://docs.astro.build", external: true },
+    ]
+  : [
+      {
+        label: "Create a Sanity project",
+        href: "https://sanity.io/manage",
+        external: true,
+      },
+      { label: "Astro docs", href: "https://docs.astro.build", external: true },
+    ];
+
+const intro = sanityConfigured
+  ? "The dataset is empty. Open the Studio, add blocks to the Home document, and they render here through the page builder."
+  : "Running without Sanity. Create a project, put its id in .env as PUBLIC_SANITY_PROJECT_ID, and the Studio mounts at /admin.";
 ---
 
 <Layout
@@ -52,8 +65,7 @@ const links = [
           style="--delay: 0.1s"
           class="text-body max-w-col-4 mt-32 opacity-70"
         >
-          The dataset is empty. Open the Studio, add blocks to the Home
-          document, and they render here through the page builder.
+          {intro}
         </p>
 
         <ul

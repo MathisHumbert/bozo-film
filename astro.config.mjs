@@ -68,13 +68,17 @@ export default defineConfig({
       customPages,
     }),
     sanity({
-      projectId: PUBLIC_SANITY_PROJECT_ID,
-      dataset: PUBLIC_SANITY_DATASET,
+      // The integration's middleware builds a client on every request, so it needs
+      // a syntactically valid id even when the project is not configured yet.
+      // Nothing ever queries with it: loadQuery returns null without a real id.
+      projectId: PUBLIC_SANITY_PROJECT_ID || "placeholder",
+      dataset: PUBLIC_SANITY_DATASET || "production",
       // Leave this off: the CDN would keep serving stale content straight
       // after a revalidation.
       useCdn: false,
       apiVersion: SANITY_API_VERSION,
-      studioBasePath: "/admin",
+      // No project id yet: skip the Studio so the site runs without Sanity.
+      ...(PUBLIC_SANITY_PROJECT_ID ? { studioBasePath: "/admin" } : {}),
       stega: {
         studioUrl: "/admin",
       },

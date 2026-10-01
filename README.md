@@ -9,6 +9,22 @@ are the only page builder blocks. Everything else is infrastructure, ready to bu
 > Coming from the full boilerplate? The demo sections, the `work` case-study model and the
 > `/clean-demo` command live there. This repo is the result of running it.
 
+## Run it right now
+
+No Sanity account, no `.env`, nothing to configure:
+
+```sh
+npm install
+npm run dev
+```
+
+The home page renders a placeholder hero telling you what to set up next. Every Sanity
+query is skipped, the Studio is not mounted, and `/llms.txt` returns 404 — the rest of the
+site, including the SEO head, the JSON-LD and `/robots.txt`, works.
+
+Connect Sanity when you are ready, with the five steps below. The page switches to the real
+content as soon as the Home document has blocks.
+
 ## Getting started
 
 Five steps, about ten minutes.
