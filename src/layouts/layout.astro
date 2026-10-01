@@ -44,6 +44,20 @@ const meta = buildMeta({
   theme: settings?.theme,
 });
 
+const footer = site?.footer;
+
+const hasNav = Boolean(site?.nav?.length);
+
+const hasFooter =
+  settings?.showFooter !== false &&
+  Boolean(
+    footer?.heading ||
+    footer?.copyright ||
+    footer?.links?.length ||
+    footer?.socials?.length ||
+    settings?.footerPage,
+  );
+
 const graph = buildGraph({
   site,
   meta,
@@ -77,15 +91,15 @@ const isDev = import.meta.env.DEV;
     <Progress />
 
     <div class="site">
-      <Nav links={site?.nav} />
+      {hasNav && <Nav links={site?.nav} />}
 
       {
         isDev ? (
           <main class="content">
             <div id="swup" class="page">
               <slot />
-              {settings?.showFooter !== false && (
-                <Footer footer={site?.footer} nextPage={settings?.footerPage} />
+              {hasFooter && (
+                <Footer footer={footer} nextPage={settings?.footerPage} />
               )}
             </div>
           </main>
@@ -95,11 +109,8 @@ const isDev = import.meta.env.DEV;
               <main class="content">
                 <div id="swup" class="page">
                   <slot />
-                  {settings?.showFooter !== false && (
-                    <Footer
-                      footer={site?.footer}
-                      nextPage={settings?.footerPage}
-                    />
+                  {hasFooter && (
+                    <Footer footer={footer} nextPage={settings?.footerPage} />
                   )}
                 </div>
               </main>

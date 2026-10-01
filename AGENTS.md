@@ -26,6 +26,28 @@ module graph of every page.
 The two llms endpoints return 404 when there is nothing to serve. `/robots.txt`, the SEO
 head and the JSON-LD all work from defaults.
 
+**The chrome hides itself when it has nothing to show.** `layout.astro` computes two flags
+and renders neither component otherwise, so the starter page is the hero alone:
+
+```ts
+const hasNav = Boolean(site?.nav?.length);
+
+const hasFooter =
+  settings?.showFooter !== false &&
+  Boolean(
+    footer?.heading ||
+    footer?.copyright ||
+    footer?.links?.length ||
+    footer?.socials?.length ||
+    settings?.footerPage,
+  );
+```
+
+An empty `footer` object is not enough — one of its fields has to be filled, or a
+`footerPage` set. Note that hiding the nav also removes the menu, since the `Modal` lives
+inside `nav.astro`. `showFooter` still wins: set it to false and the footer stays hidden
+however much content it holds.
+
 If you add a module that imports `sanity:client` at the top level, the no-Sanity mode breaks
 and the symptom is a 500 on every route, including pages that import nothing. Verify with:
 

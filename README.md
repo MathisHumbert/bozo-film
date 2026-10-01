@@ -22,6 +22,9 @@ The home page renders a placeholder hero telling you what to set up next. Every 
 query is skipped, the Studio is not mounted, and `/llms.txt` returns 404 — the rest of the
 site, including the SEO head, the JSON-LD and `/robots.txt`, works.
 
+The nav and the footer hide themselves while they have nothing to show, so what you get is
+the hero alone. Fill `nav` or any footer field in **Settings** and they appear.
+
 Connect Sanity when you are ready, with the five steps below. The page switches to the real
 content as soon as the Home document has blocks.
 
