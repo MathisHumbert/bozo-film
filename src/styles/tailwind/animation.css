@@ -1,0 +1,71 @@
+[data-animation="appear"] {
+  opacity: 0;
+
+  @variant not-reduced-motion {
+    transition: opacity 1s var(--ease-in-out);
+    transition-delay: var(--delay, 0s);
+  }
+
+  @variant revealed {
+    @variant inview {
+      opacity: 1;
+    }
+  }
+}
+
+[data-animation="slide-up"] {
+  transform: translateY(var(--y, 20%));
+  opacity: var(--opacity-from, 1);
+
+  @variant not-reduced-motion {
+    transition:
+      transform 0.6s var(--ease-out),
+      opacity 0.6s var(--ease-out);
+    transition-delay: var(--delay, 0s);
+    will-change: transform;
+  }
+
+  @variant revealed {
+    @variant inview {
+      transform: translateY(0%);
+      opacity: 1;
+    }
+  }
+}
+
+[data-animation="line"] {
+  transform: scale(0);
+  transform-origin: var(--origin, left);
+
+  @variant not-reduced-motion {
+    transition: transform 1.25s var(--ease-expo-out);
+    transition-delay: var(--delay, 0s);
+    will-change: transform;
+  }
+
+  @variant revealed {
+    @variant inview {
+      transform: scale(1);
+    }
+  }
+}
+
+[data-animation="text"] {
+  div div {
+    transform: translateY(125%) rotate(var(--rotate, 0deg));
+
+    @variant not-reduced-motion {
+      transition: transform 1.5s var(--ease-expo-out);
+      transition-delay: calc(var(--delay, 0s) + (var(--index, 0) * 0.1s));
+      will-change: transform;
+    }
+  }
+
+  @variant revealed {
+    @variant inview {
+      div div {
+        transform: translateY(0%) rotate(0deg);
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+---
+import Modal from "./modal/modal.astro";
+
+interface Link {
+  label: string | null;
+  href: string | null;
+  external: boolean;
+}
+
+interface Props {
+  links?: Link[] | null;
+}
+
+const { links } = Astro.props;
+---
+
+<header
+  class="p-grid z-navigation fixed top-0 right-0 left-0 flex items-center justify-between"
+>
+  <a href="/" class="text-label uppercase">Boilerplate</a>
+
+  <nav aria-label="Main" class="max-md:hidden">
+    <ul class="text-body-sm flex gap-24">
+      {
+        links?.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              target={link.external ? "_blank" : undefined}
+              rel={link.external ? "noopener noreferrer" : undefined}
+              class="underline-offset-4 hover:underline"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <button
+    type="button"
+    data-modal-open="menu"
+    aria-haspopup="dialog"
+    class="text-label uppercase"
+  >
+    Menu
+  </button>
+</header>
+
+<Modal name="menu" labelledby="menu-title">
+  <div class="min-h-[150dvh] bg-black text-white">
+    <div class="p-grid sticky top-0 flex items-start justify-between bg-black">
+      <h2 id="menu-title" class="text-label uppercase">Menu</h2>
+
+      <button type="button" data-modal-close class="text-label uppercase">
+        Close
+      </button>
+    </div>
+
+    <nav aria-label="Menu" class="px-grid pb-96">
+      <ul class="text-h2 flex flex-col gap-8">
+        {
+          links?.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
+                data-modal-close
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</Modal>

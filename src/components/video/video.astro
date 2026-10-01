@@ -1,0 +1,26 @@
+---
+import type { PageBuilderBlockOf } from "../../lib/sanity/types";
+import SanityVideo from "../sanity-video.astro";
+
+type Props = PageBuilderBlockOf<"video">;
+
+const { asset, caption, autoplay, loop, controls } = Astro.props;
+---
+
+{
+  asset && (
+    <figure class="px-grid py-24">
+      <SanityVideo
+        asset={asset}
+        autoplay={autoplay}
+        loop={loop}
+        controls={controls}
+        class="h-auto w-full"
+      />
+
+      {caption && (
+        <figcaption class="mt-4 text-sm opacity-60">{caption}</figcaption>
+      )}
+    </figure>
+  )
+}

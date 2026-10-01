@@ -1,0 +1,266 @@
+@utility grid-layout {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-count), 1fr);
+  gap: var(--grid-gutter);
+}
+
+@utility px-grid {
+  padding-left: var(--grid-margin);
+  padding-right: var(--grid-margin);
+}
+
+@utility py-grid {
+  padding-top: var(--grid-margin);
+  padding-bottom: var(--grid-margin);
+}
+
+@utility p-grid {
+  padding: var(--grid-margin);
+}
+
+@utility top-grid {
+  top: var(--grid-margin);
+}
+
+@utility right-grid {
+  right: var(--grid-margin);
+}
+
+@utility bottom-grid {
+  bottom: var(--grid-margin);
+}
+
+@utility left-grid {
+  left: var(--grid-margin);
+}
+
+@utility gap-gutter {
+  gap: var(--grid-gutter);
+}
+
+@utility gap-grid {
+  gap: var(--grid-margin);
+}
+
+@utility w-col-* {
+  width: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility w-col-gap-* {
+  width: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility min-w-col-* {
+  min-width: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility min-w-col-gap-* {
+  min-width: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility max-w-col-* {
+  max-width: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility max-w-col-gap-* {
+  max-width: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility ml-col-* {
+  margin-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility ml-col-gap-* {
+  margin-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility mr-col-* {
+  margin-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility mr-col-gap-* {
+  margin-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility mt-col-* {
+  margin-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility mt-col-gap-* {
+  margin-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility mb-col-* {
+  margin-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility mb-col-gap-* {
+  margin-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility mx-col-* {
+  margin-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+  margin-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility mx-col-gap-* {
+  margin-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+  margin-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility my-col-* {
+  margin-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+  margin-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility my-col-gap-* {
+  margin-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+  margin-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility pl-col-* {
+  padding-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility pl-col-gap-* {
+  padding-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility pr-col-* {
+  padding-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility pr-col-gap-* {
+  padding-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility pt-col-* {
+  padding-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility pt-col-gap-* {
+  padding-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility pb-col-* {
+  padding-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility pb-col-gap-* {
+  padding-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility px-col-* {
+  padding-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+  padding-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility px-col-gap-* {
+  padding-left: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+  padding-right: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}
+
+@utility py-col-* {
+  padding-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+  padding-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter)) -
+      var(--grid-gutter)
+  );
+}
+
+@utility py-col-gap-* {
+  padding-top: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+  padding-bottom: calc(
+    --value(integer) * (var(--grid-column-width) + var(--grid-gutter))
+  );
+}

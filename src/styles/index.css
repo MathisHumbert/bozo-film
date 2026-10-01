@@ -1,0 +1,14 @@
+@layer theme, base, blossom-carousel, components, utilities;
+
+@import "tailwindcss";
+
+@import "@blossom-carousel/core/style.css";
+@import "locomotive-scroll/dist/locomotive-scroll.css";
+
+@import "./tailwind.css";
+@import "./main.css";
+@import "./tailwind/animation.css";
+@import "./tailwind/grid.css";
+@import "./tailwind/helpers.css";
+@import "./tailwind/typography.css";
+@import "./tailwind/variants.css";

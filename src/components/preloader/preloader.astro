@@ -1,0 +1,14 @@
+---
+console.log("preloader.astro");
+---
+
+<c-preloader
+  class="js:flex px-grid z-preloader fixed inset-0 hidden items-end justify-between bg-white pb-64 text-black"
+>
+  <p class="text-label uppercase">Loading</p>
+  <p data-preloader="count" class="text-display tabular-nums">00</p>
+</c-preloader>
+
+<script>
+  import("./preloader");
+</script>

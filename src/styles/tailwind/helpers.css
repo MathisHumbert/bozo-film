@@ -1,0 +1,50 @@
+@utility scroll-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility cover {
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+@utility img-cover {
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+@utility center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility link-stretched {
+  cursor: pointer;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-index-above);
+  }
+}
+
+@utility link-stretched-outline {
+  &:focus-visible::before {
+    outline: 1px solid currentColor;
+    outline-offset: 0.4rem;
+  }
+}

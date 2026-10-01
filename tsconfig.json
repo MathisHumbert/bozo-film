@@ -1,0 +1,12 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    // The Astro presets leave JSX alone for .astro files. The Studio plugin is
+    // written in React .tsx files, so point JSX at React as @astrojs/react
+    // prescribes. .astro files are handled by the Astro toolchain, not tsc.
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"]
+}

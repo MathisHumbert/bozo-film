@@ -1,0 +1,93 @@
+/* user asked for less motion */
+@custom-variant reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+}
+
+/* user is fine with motion — write animations here to keep the default static */
+@custom-variant not-reduced-motion {
+  @media (prefers-reduced-motion: no-preference) {
+    @slot;
+  }
+}
+
+/* JS has booted (inline script in the head) */
+@custom-variant js {
+  html.js & {
+    @slot;
+  }
+}
+
+/* no JS: fallbacks for anything the scripts would otherwise reveal */
+@custom-variant no-js {
+  html:not(.js) & {
+    @slot;
+  }
+}
+
+/* page revealed: Preloader on first load, Transition on animation:in:start */
+@custom-variant ready {
+  html.is-ready & {
+    @slot;
+  }
+}
+
+/* before the reveal — guarded by .js so it never sticks without JS */
+@custom-variant not-ready {
+  html.js:not(.is-ready) & {
+    @slot;
+  }
+}
+
+/* the one to reveal with: covers both paths, is-ready on first load and
+   is-changing during a swup visit (is-ready is off between out and in) */
+@custom-variant revealed {
+  html.is-ready &,
+  html.is-changing & {
+    @slot;
+  }
+}
+
+/* in viewport: .is-inview from Locomotive, on the element or a [data-animation] parent */
+@custom-variant inview {
+  &:where(.is-inview),
+  :where([data-animation].is-inview) & {
+    @slot;
+  }
+}
+
+/* swup, whole visit (is-changing) */
+@custom-variant page-transitioning {
+  html.is-changing & {
+    @slot;
+  }
+}
+
+/* swup, old page leaving (is-leaving) */
+@custom-variant page-leaving {
+  html.is-leaving & {
+    @slot;
+  }
+}
+
+/* swup, new page inserted (is-rendering) */
+@custom-variant page-rendering {
+  html.is-rendering & {
+    @slot;
+  }
+}
+
+/* swup, both animation phases (is-animating) */
+@custom-variant page-animating {
+  html.is-animating & {
+    @slot;
+  }
+}
+
+/* swup, back/forward navigation (is-popstate) */
+@custom-variant page-popstate {
+  html.is-popstate & {
+    @slot;
+  }
+}

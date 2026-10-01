@@ -1,0 +1,46 @@
+---
+import { urlForImage } from "../lib/sanity/url-for-image";
+
+interface Props {
+  image?: any;
+  node?: any;
+  width?: number;
+  class?: string;
+  sizes?: string;
+  loading?: "lazy" | "eager";
+}
+
+const {
+  node,
+  image = node,
+  width,
+  class: className,
+  loading = "lazy",
+  sizes,
+} = Astro.props;
+
+let src = "";
+
+if (width) {
+  src = urlForImage(image).width(width).auto("format").url();
+} else {
+  src = urlForImage(image).auto("format").url();
+}
+---
+
+<>
+  {
+    image?.asset && (
+      <img
+        src={src}
+        alt={image.alt ?? ""}
+        width={image.width}
+        height={image.height}
+        sizes={sizes}
+        loading={loading}
+        decoding="async"
+        class={className}
+      />
+    )
+  }
+</>

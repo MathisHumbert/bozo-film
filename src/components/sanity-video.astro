@@ -1,0 +1,51 @@
+---
+import type { VideoAsset } from "../lib/sanity/types";
+import { videoUrl } from "../lib/video-library/cdn";
+
+interface Props {
+  asset?: VideoAsset | null;
+  autoplay?: boolean | null;
+  loop?: boolean | null;
+  controls?: boolean | null;
+  class?: string;
+}
+
+const { asset, autoplay, loop, controls, class: className } = Astro.props;
+
+const src = videoUrl(asset?.storageKey);
+
+const hasIntrinsicSize = Boolean(asset?.width && asset?.height);
+const aspectRatio = asset?.aspectRatio ?? 16 / 9;
+---
+
+{
+  asset && src && (
+    <c-video
+      class="block"
+      data-autoplay={autoplay ? "" : undefined}
+      data-scroll
+      data-scroll-repeat
+      data-scroll-call="video:inview"
+      data-scroll-offset="-20%"
+    >
+      <video
+        class={className}
+        style={hasIntrinsicSize ? undefined : `aspect-ratio: ${aspectRatio}`}
+        data-src={src}
+        poster={asset.poster ?? undefined}
+        width={asset.width ?? undefined}
+        height={asset.height ?? undefined}
+        preload="none"
+        playsinline
+        muted={Boolean(autoplay)}
+        loop={Boolean(loop)}
+        controls={Boolean(controls)}
+        aria-label={asset.altText ?? asset.title ?? undefined}
+      />
+    </c-video>
+  )
+}
+
+<script>
+  import("./video/video");
+</script>

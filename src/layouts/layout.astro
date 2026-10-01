@@ -1,0 +1,116 @@
+---
+import { VisualEditing } from "@sanity/astro/visual-editing";
+
+import { loadQuery } from "../lib/sanity/load-query";
+import { siteSettingsQuery } from "../lib/sanity/queries";
+import { SITE_LANG } from "../lib/seo/constants";
+import { buildGraph } from "../lib/seo/json-ld";
+import { buildMeta, type OgType } from "../lib/seo/meta";
+import type { SeoPage } from "../lib/seo/types";
+import { canonicalUrl } from "../lib/seo/url";
+import type { PageSettings, SeoFields } from "../lib/sanity/types";
+
+import Nav from "../components/nav.astro";
+import Preloader from "../components/preloader/preloader.astro";
+import Progress from "../components/progress/progress.astro";
+import Footer from "../components/footer.astro";
+import Grid from "../components/grid/grid.astro";
+import JsonLd from "../components/json-ld.astro";
+import Seo from "../components/seo.astro";
+
+import "../styles/index.css";
+
+interface Props {
+  seo?: SeoFields;
+  settings?: PageSettings;
+  ogType?: OgType;
+  page?: SeoPage;
+  updatedAt?: string | null;
+}
+
+const { seo, settings, ogType = "website", page, updatedAt } = Astro.props;
+const site = await loadQuery(siteSettingsQuery);
+
+const visualEditingEnabled =
+  import.meta.env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === "true";
+
+const canonical = canonicalUrl(Astro.url.pathname, Astro.site);
+
+const meta = buildMeta({
+  seo,
+  site,
+  canonical,
+  ogType,
+  theme: settings?.theme,
+});
+
+const graph = buildGraph({
+  site,
+  meta,
+  page,
+  origin: Astro.site ? new URL(Astro.site).origin : "",
+  updatedAt,
+});
+
+const isDev = import.meta.env.DEV;
+---
+
+<!doctype html>
+<html lang={SITE_LANG}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      document.documentElement.classList.add("js");
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <Seo meta={meta} />
+    <JsonLd graph={graph} />
+  </head>
+
+  <body>
+    <script src="../scripts/index.ts"></script>
+
+    {site?.showPreloader && <Preloader />}
+
+    <Progress />
+
+    <div class="site">
+      <Nav links={site?.nav} />
+
+      {
+        isDev ? (
+          <main class="content">
+            <div id="swup" class="page">
+              <slot />
+              {settings?.showFooter !== false && (
+                <Footer footer={site?.footer} nextPage={settings?.footerPage} />
+              )}
+            </div>
+          </main>
+        ) : (
+          <div id="scroll-wrapper">
+            <div id="scroll-content">
+              <main class="content">
+                <div id="swup" class="page">
+                  <slot />
+                  {settings?.showFooter !== false && (
+                    <Footer
+                      footer={site?.footer}
+                      nextPage={settings?.footerPage}
+                    />
+                  )}
+                </div>
+              </main>
+            </div>
+          </div>
+        )
+      }
+    </div>
+
+    <VisualEditing enabled={visualEditingEnabled} />
+
+    {isDev && <Grid />}
+  </body>
+</html>

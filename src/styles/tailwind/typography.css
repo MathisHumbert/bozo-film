@@ -1,0 +1,104 @@
+@theme {
+  --text-display: 4rem;
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.02em;
+
+  --text-h1: 3.6rem;
+  --text-h1--line-height: 1;
+  --text-h1--letter-spacing: -0.02em;
+
+  --text-h2: 2.8rem;
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.01em;
+
+  --text-h3: 2.4rem;
+  --text-h3--line-height: 1.2;
+
+  --text-body: 1.8rem;
+  --text-body--line-height: 1.5;
+
+  --text-body-sm: 1.4rem;
+  --text-body-sm--line-height: 1.4;
+
+  --text-label: 1.4rem;
+  --text-label--line-height: 1;
+  --text-label--letter-spacing: 0.1em;
+}
+
+@media (min-width: theme(--breakpoint-md)) {
+  :root {
+    --text-display: 8rem;
+    --text-h1: 6rem;
+    --text-h2: 3.6rem;
+    --text-h3: 2.8rem;
+    --text-body: 2rem;
+    --text-body-sm: 1.6rem;
+    --text-label: 1.6rem;
+  }
+}
+
+@utility prose {
+  font-size: var(--text-body);
+  line-height: 1.5;
+
+  & > * + * {
+    margin-top: 1.6rem;
+  }
+
+  & :is(h1, h2, h3, h4, h5, h6) {
+    line-height: 1.2;
+  }
+
+  & > :is(h1, h2, h3, h4, h5, h6) + * {
+    margin-top: 1.2rem;
+  }
+
+  & > * + :is(h1, h2, h3, h4, h5, h6) {
+    margin-top: 4.8rem;
+  }
+
+  & h1 {
+    font-size: var(--text-h2);
+    letter-spacing: -0.01em;
+  }
+
+  & h2 {
+    font-size: var(--text-h3);
+  }
+
+  & :is(h3, h4, h5, h6) {
+    font-size: var(--text-body);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  & :is(ul, ol) {
+    padding-left: 2.4rem;
+  }
+
+  & ul {
+    list-style: disc;
+  }
+
+  & ol {
+    list-style: decimal;
+  }
+
+  & li + li {
+    margin-top: 0.8rem;
+  }
+
+  & a {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  & blockquote {
+    padding-left: 2.4rem;
+    border-left: 1px solid currentColor;
+  }
+
+  & :is(img, figure) {
+    margin-block: 4.8rem;
+  }
+}

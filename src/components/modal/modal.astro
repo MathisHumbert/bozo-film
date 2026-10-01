@@ -1,0 +1,35 @@
+---
+interface Props {
+  name: string;
+  label?: string;
+  labelledby?: string;
+  class?: string;
+}
+
+const { name, label, labelledby, class: className } = Astro.props;
+---
+
+<c-modal data-name={name}>
+  <dialog
+    class:list={[
+      "z-menu fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-hidden border-0 bg-transparent p-0 text-inherit",
+      "backdrop:bg-[var(--modal-backdrop,transparent)]",
+      className,
+    ]}
+    aria-label={labelledby ? undefined : (label ?? name)}
+    aria-labelledby={labelledby}
+  >
+    <div
+      data-modal="scroll"
+      class="scroll-wrapper relative h-full overflow-x-clip overflow-y-auto overscroll-contain"
+    >
+      <div data-modal="content">
+        <slot />
+      </div>
+    </div>
+  </dialog>
+</c-modal>
+
+<script>
+  import("./modal");
+</script>

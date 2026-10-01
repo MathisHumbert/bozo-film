@@ -1,0 +1,23 @@
+---
+import type { PageBuilderBlock } from "../lib/sanity/types";
+
+import Video from "./video/video.astro";
+import Wysiwyg from "./wysiwyg.astro";
+
+interface Props {
+  content?: PageBuilderBlock[] | null;
+}
+
+const { content } = Astro.props;
+---
+
+{
+  content?.map((block) => {
+    switch (block._type) {
+      case "video":
+        return <Video {...block} />;
+      case "wysiwyg":
+        return <Wysiwyg {...block} />;
+    }
+  })
+}
