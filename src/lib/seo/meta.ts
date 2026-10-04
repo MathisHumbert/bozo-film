@@ -16,7 +16,6 @@ export interface MetaInput {
   site: SiteSettings;
   canonical: string;
   ogType: OgType;
-  theme?: "light" | "dark" | null;
 }
 
 export interface Meta {
@@ -47,7 +46,7 @@ const INDEXABLE = [
 ].join(", ");
 
 export function buildMeta(input: MetaInput): Meta {
-  const { seo, site, canonical, ogType, theme } = input;
+  const { seo, site, canonical, ogType } = input;
 
   const fallback = site?.fallbackSEO;
   const identity = site?.siteIdentity;
@@ -71,7 +70,7 @@ export function buildMeta(input: MetaInput): Meta {
       }
     : undefined;
 
-  const sameAs = mergeProfiles(identity?.sameAs, site?.footer?.socials);
+  const sameAs = [...new Set(identity?.sameAs ?? [])];
   const [firstName, ...rest] = (identity?.name ?? "").trim().split(/\s+/);
 
   return stegaClean({
@@ -79,7 +78,7 @@ export function buildMeta(input: MetaInput): Meta {
     description,
     canonical,
     robots: seo?.noIndex ? "noindex, nofollow" : INDEXABLE,
-    themeColor: theme === "dark" ? THEME_COLOR.dark : THEME_COLOR.light,
+    themeColor: THEME_COLOR.light,
     ogType,
     ogLocale: SITE_LOCALE,
     siteName: identity?.name || undefined,
@@ -91,17 +90,6 @@ export function buildMeta(input: MetaInput): Meta {
     lastName:
       ogType === "profile" && rest.length > 0 ? rest.join(" ") : undefined,
   });
-}
-
-function mergeProfiles(
-  sameAs?: string[] | null,
-  socials?: { external?: boolean; href?: string | null }[] | null,
-): string[] {
-  const external = (socials ?? [])
-    .filter((link) => link.external && link.href)
-    .map((link) => link.href!);
-
-  return [...new Set([...(sameAs ?? []), ...external])];
 }
 
 function twitterHandle(sameAs: string[]): string | undefined {

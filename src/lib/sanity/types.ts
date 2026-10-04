@@ -3,17 +3,18 @@ import type {
   SiteSettingsQueryResult,
 } from "../../../sanity/sanity.types";
 
-export type PageBuilder = NonNullable<NonNullable<HomeQueryResult>["content"]>;
-
-export type PageBuilderBlock = PageBuilder[number];
-
-export type PageBuilderBlockOf<T extends PageBuilderBlock["_type"]> = Extract<
-  PageBuilderBlock,
-  { _type: T }
->;
-
-export type VideoAsset = NonNullable<PageBuilderBlockOf<"video">["asset"]>;
+export interface VideoAsset {
+  id: string;
+  title: string | null;
+  altText: string | null;
+  storageKey: string | null;
+  duration: number | null;
+  width: number | null;
+  height: number | null;
+  aspectRatio: number | null;
+  poster: string | null;
+  posterLqip: string | null;
+}
 
 export type SeoFields = NonNullable<HomeQueryResult>["seo"];
-export type PageSettings = NonNullable<HomeQueryResult>["settings"];
 export type SiteSettings = SiteSettingsQueryResult;

@@ -31,6 +31,7 @@ export default class Scroll {
         lerp: device.reducedMotion ? 1 : 0.125,
         wheelMultiplier: 0.75,
         touchMultiplier: 0.75,
+        infinite: Boolean(document.querySelector("[data-scroll-infinite]")),
       },
     });
 
@@ -73,6 +74,10 @@ export default class Scroll {
 
   static get scroll() {
     return this.loco?.lenisInstance?.scroll ?? 0;
+  }
+
+  static get limit() {
+    return this.loco?.lenisInstance?.limit ?? 0;
   }
 
   static get velocity() {

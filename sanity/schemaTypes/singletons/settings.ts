@@ -1,7 +1,6 @@
 import { MenuIcon } from "@sanity/icons/Menu";
 import { CogIcon } from "@sanity/icons/Cog";
 import { EarthGlobeIcon } from "@sanity/icons/EarthGlobe";
-import { DocumentIcon } from "@sanity/icons/Document";
 import { UsersIcon } from "@sanity/icons/Users";
 import { defineArrayMember, defineField, defineType } from "sanity";
 
@@ -13,7 +12,6 @@ export const settingsType = defineType({
   groups: [
     { name: "general", title: "General", icon: CogIcon, default: true },
     { name: "nav", title: "Navigation", icon: MenuIcon },
-    { name: "footer", title: "Footer", icon: DocumentIcon },
     { name: "seo", title: "SEO & AI", icon: EarthGlobeIcon },
     { name: "identity", title: "Site identity", icon: UsersIcon },
   ],
@@ -92,32 +90,10 @@ export const settingsType = defineType({
           name: "sameAs",
           title: "Profile URLs",
           description:
-            "Canonical profiles that identify this entity elsewhere: LinkedIn, Instagram, Wikidata, Crunchbase. Separate from the footer socials, which are for display — these are merged with them automatically.",
+            "Canonical profiles that identify this entity elsewhere: LinkedIn, Instagram, Wikidata, Crunchbase.",
           type: "array",
           of: [defineArrayMember({ type: "url" })],
         }),
-      ],
-    }),
-    defineField({
-      name: "footer",
-      title: "Footer",
-      type: "object",
-      group: "footer",
-      fields: [
-        defineField({ name: "heading", title: "Heading", type: "string" }),
-        defineField({
-          name: "links",
-          title: "Links",
-          type: "array",
-          of: [defineArrayMember({ type: "link" })],
-        }),
-        defineField({
-          name: "socials",
-          title: "Socials",
-          type: "array",
-          of: [defineArrayMember({ type: "link" })],
-        }),
-        defineField({ name: "copyright", title: "Copyright", type: "string" }),
       ],
     }),
     defineField({

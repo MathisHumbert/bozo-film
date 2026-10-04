@@ -1,13 +1,13 @@
 html {
   font-size: min(calc(100vw / var(--sizes-mobile) * 10), 12px);
-  font-family: var(--font-satoshi);
+  font-family: var(--font-feature-display-condensed);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   line-height: 1;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
-  background: var(--color-white);
-  color: var(--color-black);
+  background: var(--color-black);
+  color: var(--color-white);
   pointer-events: none;
 }
 

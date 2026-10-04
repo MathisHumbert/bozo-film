@@ -1,12 +1,14 @@
-export const ROUTABLE_TYPES = ["home"] as const;
+export const ROUTABLE_TYPES = ["home", "about", "work"] as const;
 
-export const REPEATABLE_TYPES = [] as const;
+export const REPEATABLE_TYPES = ["work"] as const;
 
 export type RoutableType = (typeof ROUTABLE_TYPES)[number];
 
 export type RepeatableType = (typeof REPEATABLE_TYPES)[number];
 
-export const INDEX_FOR: Record<RepeatableType, RoutableType> = {};
+export const INDEX_FOR: Record<RepeatableType, RoutableType> = {
+  work: "home",
+};
 
 export type SlugsByType = Partial<Record<string, string[]>>;
 
@@ -27,6 +29,10 @@ export function hrefFor(doc?: RoutableDocument | null): string | null {
   switch (doc?._type) {
     case "home":
       return "/";
+    case "about":
+      return "/about";
+    case "work":
+      return doc.slug ? `/work/${doc.slug}` : null;
     default:
       return null;
   }

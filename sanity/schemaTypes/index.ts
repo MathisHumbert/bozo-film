@@ -1,28 +1,28 @@
 import type { SchemaTypeDefinition } from "sanity";
 
 // singletons
+import { aboutType } from "./singletons/about";
 import { homeType } from "./singletons/home";
 import { settingsType } from "./singletons/settings";
 
 // documents
 import { videoAssetType } from "./documents/video-asset";
+import { workType } from "./documents/work";
 
 // objects
 import { linkType } from "./objects/link";
-import { pageSettingsType } from "./objects/page-settings";
 import { seoType } from "./objects/seo";
 import { videoType } from "./objects/video";
-import { wysiwygType } from "./objects/wysiwyg";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
+    aboutType,
     homeType,
     settingsType,
     videoAssetType,
+    workType,
     linkType,
-    pageSettingsType,
     seoType,
     videoType,
-    wysiwygType,
   ],
 };

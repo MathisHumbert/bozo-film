@@ -8,5 +8,8 @@ export const resolve: PresentationPluginOptions["resolve"] = {
     home: defineLocations({
       locations: [{ title: "Home", href: hrefFor({ _type: "home" })! }],
     }),
+    about: defineLocations({
+      locations: [{ title: "About", href: hrefFor({ _type: "about" })! }],
+    }),
   },
 };

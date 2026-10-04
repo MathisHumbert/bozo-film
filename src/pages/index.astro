@@ -1,99 +1,38 @@
 ---
 export const prerender = false;
 
-import { loadQuery, sanityConfigured } from "../lib/sanity/load-query";
-import { homeQuery } from "../lib/sanity/queries";
+import { loadQuery } from "../lib/sanity/load-query";
+import { allWorkQuery, homeQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
-import PageBuilder from "../components/page-builder.astro";
-import ArrowUpRight from "../icons/arrow-up-right.svg";
+
+import HomeWide from "../components/home-wide/home-wide.astro";
+import HomeList from "../components/home-list/home-list.astro";
+import HomeFooter from "../components/home-footer/home-footer.astro";
 
 const home = await loadQuery(homeQuery);
+const allWork = await loadQuery(allWorkQuery);
 
-const blocks = (home?.content ?? []).filter(
-  (block) => block._type === "video" || block._type === "wysiwyg",
-);
-
-const isEmpty = blocks.length === 0;
-
-const links = sanityConfigured
-  ? [
-      { label: "Open the Studio", href: "/admin", external: false },
-      { label: "Astro docs", href: "https://docs.astro.build", external: true },
-    ]
-  : [
-      {
-        label: "Create a Sanity project",
-        href: "https://sanity.io/manage",
-        external: true,
-      },
-      { label: "Astro docs", href: "https://docs.astro.build", external: true },
-    ];
-
-const intro = sanityConfigured
-  ? "The dataset is empty. Open the Studio, add blocks to the Home document, and they render here through the page builder."
-  : "Running without Sanity. Create a project, put its id in .env as PUBLIC_SANITY_PROJECT_ID, and the Studio mounts at /admin.";
+const selectedWorks = home?.featuredWork ?? [];
+const works = allWork ?? [];
 ---
 
 <Layout
   seo={home?.seo}
-  settings={home?.settings}
   page={{ type: "home" }}
   updatedAt={home?._updatedAt}
+  background="#000000"
+  color="#FFFFFF"
+  infiniteScroll
 >
-  {
-    isEmpty ? (
-      <section class="px-grid flex min-h-dvh flex-col justify-center">
-        <p
-          data-animation="text"
-          data-scroll
-          class="text-label uppercase opacity-50"
-        >
-          Astro + Sanity
-        </p>
+  <h1 class="sr-only">{home?.title ?? "Home"}</h1>
 
-        <h1
-          data-animation="text"
-          data-scroll
-          class="text-display max-w-col-8 mt-16"
-        >
-          Creative boilerplate
-        </h1>
+  <div data-home-view="wide">
+    <HomeWide selectedWorks={selectedWorks} />
+  </div>
 
-        <p
-          data-animation="slide-up"
-          data-scroll
-          style="--delay: 0.1s"
-          class="text-body max-w-col-4 mt-32 opacity-70"
-        >
-          {intro}
-        </p>
+  <div data-home-view="list" hidden>
+    <HomeList works={works} />
+  </div>
 
-        <ul
-          data-animation="slide-up"
-          data-scroll
-          style="--delay: 0.2s"
-          class="text-body-sm mt-48 flex flex-wrap gap-24"
-        >
-          {links.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                target={link.external ? "_blank" : undefined}
-                rel={link.external ? "noopener noreferrer" : undefined}
-                class="group inline-flex items-center gap-8 underline underline-offset-4"
-              >
-                {link.label}
-                <ArrowUpRight
-                  aria-hidden="true"
-                  class="w-12 transition-transform group-hover:-translate-y-2"
-                />
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    ) : (
-      <PageBuilder content={blocks} />
-    )
-  }
+  <HomeFooter />
 </Layout>

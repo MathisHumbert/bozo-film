@@ -16,7 +16,7 @@ import { structure } from "./sanity/structure";
 import { videoLibrary } from "./sanity/plugins/video-library";
 
 export default defineConfig({
-  title: "Astro Creative Boilerplate",
+  title: "Bozo Film",
   projectId: projectId(),
   dataset: dataset(),
   plugins: [

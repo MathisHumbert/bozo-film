@@ -1,0 +1,113 @@
+---
+export const prerender = false;
+
+import { loadQuery } from "../../lib/sanity/load-query";
+import { allWorkQuery, workBySlugQuery } from "../../lib/sanity/queries";
+import { hrefFor } from "../../lib/routes";
+import Layout from "../../layouts/layout.astro";
+import SanityVideo from "../../components/sanity-video.astro";
+import SanityImage from "../../components/sanity-image.astro";
+
+const { slug } = Astro.params;
+
+const work = await loadQuery(workBySlugQuery, { slug });
+
+if (!work) {
+  return new Response(null, { status: 404 });
+}
+
+const allWork = (await loadQuery(allWorkQuery)) ?? [];
+const currentIndex = allWork.findIndex((item) => item.slug === slug);
+const next =
+  currentIndex !== -1 && allWork.length > 1
+    ? allWork[(currentIndex + 1) % allWork.length]
+    : null;
+
+function formatDuration(duration?: number | null) {
+  if (!duration) return null;
+
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.round(duration % 60);
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+const duration = formatDuration(work.mainVideo.duration);
+---
+
+<Layout seo={work.seo} page={{ type: "work" }} updatedAt={work._updatedAt}>
+  <section>
+    <SanityVideo
+      asset={work.previewVideo}
+      autoplay
+      loop
+      class="h-auto w-full"
+    />
+
+    <SanityVideo asset={work.mainVideo} controls class="h-auto w-full" />
+
+    {duration && <div>{duration}</div>}
+
+    <button type="button">( WATCH )</button>
+  </section>
+
+  <section>
+    <div>
+      <span>PROJECT</span>
+      <h2>{work.title}</h2>
+    </div>
+
+    <div>
+      <h2>Category</h2>
+      <ul>
+        {work.category?.map((category) => <li>{category}</li>)}
+      </ul>
+    </div>
+
+    <div>
+      <h2>Roles</h2>
+      <ul>
+        {work.roles?.map((role) => <li>{role}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    {
+      work.media?.map((item) =>
+        item._type === "image" ? (
+          <SanityImage image={item} class="h-auto w-full" />
+        ) : (
+          <SanityVideo
+            asset={item.asset}
+            autoplay={item.autoplay}
+            loop={item.loop}
+            controls={item.controls}
+            class="h-auto w-full"
+          />
+        ),
+      )
+    }
+  </section>
+
+  <section>
+    {
+      next && (
+        <>
+          <SanityVideo
+            asset={next.previewVideo}
+            autoplay
+            loop
+            class="h-auto w-full"
+          />
+
+          <p>( Next Project )</p>
+
+          <a href={hrefFor({ _type: "work", slug: next.slug })}>
+            <p>{next.title}</p>
+          </a>
+        </>
+      )
+    }
+  </section>
+</Layout>

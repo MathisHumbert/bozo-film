@@ -1,0 +1,76 @@
+---
+import { stegaClean } from "@sanity/client/stega";
+
+import type { AllWorkQueryResult } from "../../../sanity/sanity.types";
+import { hrefFor } from "../../lib/routes";
+import SanityVideo from "../sanity-video.astro";
+
+interface Props {
+  works?: AllWorkQueryResult | null;
+}
+
+const works = (Astro.props.works ?? []).map((work) => ({
+  ...work,
+  href: hrefFor({ _type: work._type, slug: stegaClean(work.slug) }),
+}));
+---
+
+<c-home-list>
+  <div data-home-list="spacer" aria-hidden="true" class="h-svh"></div>
+  <div data-home-list="spacer" aria-hidden="true" class="h-svh"></div>
+
+  <div
+    data-home-list="wrapper"
+    class="fixed inset-0 h-svh w-full overflow-clip"
+  >
+    <section aria-labelledby="home-list-title">
+      <h2 id="home-list-title" class="sr-only">All Works</h2>
+
+      <ul data-home-list="list" class="flex flex-col items-center gap-4 pb-4">
+        {
+          works.map((work) => (
+            <li data-home-list="item">
+              <h3>
+                <a
+                  href={work.href ?? undefined}
+                  class="text-h2 flex items-center gap-24"
+                >
+                  <span class="sr-only">{work.title}</span>
+
+                  <span aria-hidden="true">{work.titleLeft}</span>
+
+                  <span
+                    data-home-list="media"
+                    aria-hidden="true"
+                    class="flex w-0 shrink-0 justify-center"
+                  >
+                    <span data-home-list="video" class="block shrink-0 scale-0">
+                      <SanityVideo
+                        asset={work.previewVideo}
+                        autoplay
+                        loop
+                        class="aspect-video w-240 object-cover"
+                      />
+                    </span>
+                  </span>
+
+                  <span aria-hidden="true">{work.titleRight}</span>
+                </a>
+              </h3>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-x-0 top-0 h-256 bg-linear-to-b from-black to-black/0"
+    >
+    </div>
+  </div>
+</c-home-list>
+
+<script>
+  import("./home-list");
+</script>

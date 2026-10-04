@@ -48,9 +48,9 @@ export default class Transition {
 
       Scroll.stop();
 
-      document.documentElement.classList.remove("is-ready");
+      // document.documentElement.classList.remove("is-ready");
 
-      await delay(500);
+      await this.animateOut();
     });
 
     swup.hooks.on("content:replace", () => {
@@ -63,10 +63,12 @@ export default class Transition {
     swup.hooks.on("animation:in:start", async () => {
       await this.onLoadPage();
 
-      document.documentElement.classList.add("is-ready");
+      // document.documentElement.classList.add("is-ready");
 
       Scroll.init();
       Scroll.start();
+
+      await this.animateIn();
 
       events.emit("transition:end");
     });
@@ -91,6 +93,14 @@ export default class Transition {
 
   animateIn() {
     return new Promise((resolve) => {
+      console.log(document.documentElement.dataset);
+      gsap.to(document.documentElement, {
+        background: document.documentElement.dataset.background,
+        color: document.documentElement.dataset.color,
+        duration: 0.6,
+        ease: "sine.out",
+      });
+
       gsap.to(".content", {
         opacity: 1,
         duration: 0.6,

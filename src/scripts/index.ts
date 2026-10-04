@@ -1,6 +1,8 @@
 import "./classes/WindowEvents";
 import "./classes/Gsap";
 
+import gsap from "gsap";
+
 import Preloader from "./classes/Preloader";
 import Transition from "./classes/Transition";
 import AnimationManager from "./classes/AnimationManager";
@@ -37,6 +39,13 @@ class App {
   }
 
   onPreloaded = async () => {
+    const page = document.getElementById("swup");
+
+    gsap.set(document.documentElement, {
+      background: page?.dataset.background,
+      color: page?.dataset.color,
+    });
+
     this.animationManager.create();
 
     await nextFrame();
@@ -51,6 +60,17 @@ class App {
   };
 
   onContentReplaced = () => {
+    const page = document.getElementById("swup");
+
+    console.log(page);
+
+    gsap.to(document.documentElement, {
+      background: page?.dataset.background,
+      color: page?.dataset.color,
+      duration: 0.6,
+      ease: "sine.out",
+    });
+
     this.animationManager.reset();
   };
 }

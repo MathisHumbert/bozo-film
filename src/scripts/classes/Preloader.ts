@@ -13,7 +13,7 @@ export interface PreloaderOptions {
 
 await Promise.allSettled([...document.images].map((img) => img.decode()));
 
-const DEFAULT_FONTS = ["Satoshi"];
+const DEFAULT_FONTS = ["Feature Display Condensed"];
 
 const PRELOAD_DEFAULTS: Required<PreloaderOptions> = {
   images: true,

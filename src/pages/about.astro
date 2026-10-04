@@ -1,0 +1,62 @@
+---
+export const prerender = false;
+
+import { loadQuery } from "../lib/sanity/load-query";
+import { aboutQuery } from "../lib/sanity/queries";
+import Layout from "../layouts/layout.astro";
+import SanityVideo from "../components/sanity-video.astro";
+
+const about = await loadQuery(aboutQuery);
+---
+
+<Layout
+  seo={about?.seo}
+  page={{ type: "about" }}
+  updatedAt={about?._updatedAt}
+  background="#f7ff60"
+  color="#000000"
+>
+  <h1 class="sr-only">{about?.title ?? "About"}</h1>
+
+  <section class="flex flex-col items-center gap-48 pt-358">
+    <h2 class="text-h4">( Bio )</h2>
+    <p style="white-space: pre-line" class="text-h2 w-col-10 text-center">
+      {about?.description}
+    </p>
+  </section>
+
+  <section class="relative grid grid-cols-2 pt-240">
+    <div class="sticky top-0">
+      <div class="w-col-2 aspect-[0.8] bg-black"></div>
+    </div>
+
+    <div>
+      <div>
+        <h2>Services</h2>
+        <ul>
+          {about?.services?.map((service) => <li>{service}</li>)}
+        </ul>
+      </div>
+
+      <div>
+        <h2>Select Clients</h2>
+        <ul>
+          {about?.clients?.map((client) => <li>{client}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Showreel</h2>
+
+    <p style="white-space: pre-line">{about?.reel?.textTop}</p>
+    <SanityVideo
+      asset={about?.reel?.preview}
+      autoplay
+      loop
+      class="h-auto w-full"
+    />
+    <p style="white-space: pre-line">{about?.reel?.textBottom}</p>
+  </section>
+</Layout>

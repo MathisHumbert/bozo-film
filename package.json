@@ -1,5 +1,5 @@
 {
-  "name": "astro-creative-boilerplate",
+  "name": "bozo-film",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -13,7 +13,7 @@
     "build:sanity": "sanity build",
     "deploy:sanity": "sanity deploy",
     "astro": "astro",
-    "typegen": "sanity schema extract --force && sanity typegen generate",
+    "typegen": "sanity schema extract --enforce-required-fields --force && sanity typegen generate",
     "typegen:watch": "sanity typegen generate --watch",
     "check:storage": "node scripts/check-storage.mjs",
     "check:media": "node scripts/check-media-api.mjs",

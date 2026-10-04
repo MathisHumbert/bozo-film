@@ -1,5 +1,6 @@
 import { CogIcon } from "@sanity/icons/Cog";
 import { DocumentIcon } from "@sanity/icons/Document";
+import { InfoOutlineIcon } from "@sanity/icons/InfoOutline";
 import type { StructureBuilder, StructureResolver } from "sanity/structure";
 import type { ComponentType } from "react";
 
@@ -21,6 +22,10 @@ export const structure: StructureResolver = (S: StructureBuilder) =>
     .title("Website Content")
     .items([
       documentTypeSingletonItem(S, "Home", DocumentIcon, "home", "home"),
+      documentTypeSingletonItem(S, "About", InfoOutlineIcon, "about", "about"),
+
+      S.divider(),
+      S.documentTypeListItem("work").title("Work"),
 
       S.divider(),
       documentTypeSingletonItem(S, "Settings", CogIcon, "settings", "settings"),

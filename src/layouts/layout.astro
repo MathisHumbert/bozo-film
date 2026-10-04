@@ -1,6 +1,4 @@
 ---
-import { VisualEditing } from "@sanity/astro/visual-editing";
-
 import { loadQuery } from "../lib/sanity/load-query";
 import { siteSettingsQuery } from "../lib/sanity/queries";
 import { SITE_LANG } from "../lib/seo/constants";
@@ -8,27 +6,40 @@ import { buildGraph } from "../lib/seo/json-ld";
 import { buildMeta, type OgType } from "../lib/seo/meta";
 import type { SeoPage } from "../lib/seo/types";
 import { canonicalUrl } from "../lib/seo/url";
-import type { PageSettings, SeoFields } from "../lib/sanity/types";
+import type { SeoFields } from "../lib/sanity/types";
 
 import Nav from "../components/nav.astro";
+import Noise from "../components/noise.astro";
 import Preloader from "../components/preloader/preloader.astro";
 import Progress from "../components/progress/progress.astro";
-import Footer from "../components/footer.astro";
 import Grid from "../components/grid/grid.astro";
 import JsonLd from "../components/json-ld.astro";
 import Seo from "../components/seo.astro";
+import VisualEditingToggle from "../components/visual-editing-toggle";
 
 import "../styles/index.css";
 
 interface Props {
   seo?: SeoFields;
-  settings?: PageSettings;
   ogType?: OgType;
   page?: SeoPage;
   updatedAt?: string | null;
+  background?: string;
+  color?: string;
+  infiniteScroll?: boolean;
 }
 
-const { seo, settings, ogType = "website", page, updatedAt } = Astro.props;
+const {
+  seo,
+  ogType = "website",
+  page,
+  updatedAt,
+  background,
+  color,
+  infiniteScroll = false,
+} = Astro.props;
+
+const scrollInfinite = infiniteScroll ? "" : undefined;
 const site = await loadQuery(siteSettingsQuery);
 
 const visualEditingEnabled =
@@ -41,22 +52,7 @@ const meta = buildMeta({
   site,
   canonical,
   ogType,
-  theme: settings?.theme,
 });
-
-const footer = site?.footer;
-
-const hasNav = Boolean(site?.nav?.length);
-
-const hasFooter =
-  settings?.showFooter !== false &&
-  Boolean(
-    footer?.heading ||
-    footer?.copyright ||
-    footer?.links?.length ||
-    footer?.socials?.length ||
-    settings?.footerPage,
-  );
 
 const graph = buildGraph({
   site,
@@ -90,28 +86,36 @@ const isDev = import.meta.env.DEV;
 
     <Progress />
 
+    <Noise />
+
     <div class="site">
-      {hasNav && <Nav links={site?.nav} />}
+      <Nav links={site?.nav} />
 
       {
         isDev ? (
           <main class="content">
-            <div id="swup" class="page">
+            <div
+              id="swup"
+              class="page"
+              data-scroll-infinite={scrollInfinite}
+              data-background={background}
+              data-color={color}
+            >
               <slot />
-              {hasFooter && (
-                <Footer footer={footer} nextPage={settings?.footerPage} />
-              )}
             </div>
           </main>
         ) : (
           <div id="scroll-wrapper">
             <div id="scroll-content">
               <main class="content">
-                <div id="swup" class="page">
+                <div
+                  id="swup"
+                  class="page"
+                  data-scroll-infinite={scrollInfinite}
+                  data-background={background}
+                  data-color={color}
+                >
                   <slot />
-                  {hasFooter && (
-                    <Footer footer={footer} nextPage={settings?.footerPage} />
-                  )}
                 </div>
               </main>
             </div>
@@ -120,7 +124,7 @@ const isDev = import.meta.env.DEV;
       }
     </div>
 
-    <VisualEditing enabled={visualEditingEnabled} />
+    <VisualEditingToggle client:only="react" enabled={visualEditingEnabled} />
 
     {isDev && <Grid />}
   </body>

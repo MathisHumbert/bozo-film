@@ -12,44 +12,54 @@ interface Props {
 }
 
 const { links } = Astro.props;
+
+import Logo from "../icons/logo.svg";
 ---
 
 <header
-  class="p-grid z-navigation fixed top-0 right-0 left-0 flex items-center justify-between"
+  class="p-grid z-navigation text-title pointer-events-none fixed top-0 right-0 left-0"
 >
-  <a href="/" class="text-label uppercase">Boilerplate</a>
+  <nav class="grid grid-cols-3">
+    <ul class="flex gap-24">
+      <li>
+        <a href="/" class="pointer-events-auto hidden sm:block"
+          >Film
+          <!-- afficher nombre de projet -->
+          <span>(12)</span>
+        </a>
+      </li>
+      <li>
+        <a href="/photo" class="pointer-events-auto hidden sm:block"
+          >Photo
+          <span>(8)</span>
+        </a>
+      </li>
+      <li>
+        <button type="button" class="pointer-events-auto sm:hidden"
+          >Menu
+        </button>
+      </li>
+    </ul>
 
-  <nav aria-label="Main" class="max-md:hidden">
-    <ul class="text-body-sm flex gap-24">
-      {
-        links?.map((link) => (
-          <li>
-            <a
-              href={link.href}
-              target={link.external ? "_blank" : undefined}
-              rel={link.external ? "noopener noreferrer" : undefined}
-              class="underline-offset-4 hover:underline"
-            >
-              {link.label}
-            </a>
-          </li>
-        ))
-      }
+    <a href="/" class="pointer-events-auto flex justify-center">
+      <span class="sr-only">Bozo Logo</span>
+      <Logo class="h-auto w-112 sm:w-240" aria-hidden="true" />
+    </a>
+
+    <ul class="flex justify-end gap-24">
+      <li>
+        <a href="/about" class="pointer-events-auto hidden sm:block">Bio</a>
+      </li>
+      <li>
+        <!-- use about email -->
+        <a href="" class="pointer-events-auto">Contact</a>
+      </li>
     </ul>
   </nav>
-
-  <button
-    type="button"
-    data-modal-open="menu"
-    aria-haspopup="dialog"
-    class="text-label uppercase"
-  >
-    Menu
-  </button>
 </header>
 
 <Modal name="menu" labelledby="menu-title">
-  <div class="min-h-[150dvh] bg-black text-white">
+  <div class="min-h-dvh bg-white text-black">
     <div class="p-grid sticky top-0 flex items-start justify-between bg-black">
       <h2 id="menu-title" class="text-label uppercase">Menu</h2>
 
@@ -59,7 +69,7 @@ const { links } = Astro.props;
     </div>
 
     <nav aria-label="Menu" class="px-grid pb-96">
-      <ul class="text-h2 flex flex-col gap-8">
+      <ul class="flex flex-col gap-8">
         {
           links?.map((link) => (
             <li>

@@ -1,4 +1,3 @@
-import { CogIcon } from "@sanity/icons/Cog";
 import { DocumentIcon } from "@sanity/icons/Document";
 import { EarthGlobeIcon } from "@sanity/icons/EarthGlobe";
 import { TiersIcon } from "@sanity/icons/Tiers";
@@ -12,26 +11,34 @@ export const homeType = defineType({
   groups: [
     { name: "content", title: "Content", icon: TiersIcon, default: true },
     { name: "seo", title: "SEO", icon: EarthGlobeIcon },
-    { name: "settings", title: "Settings", icon: CogIcon },
   ],
   fields: [
     defineField({
-      name: "content",
-      title: "Content",
+      name: "title",
+      title: "Title",
+      description:
+        "Rendered as the page's H1. Separate from the SEO meta title.",
+      type: "string",
+      group: "content",
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "featuredWork",
+      title: "Featured Works",
+      description:
+        "The projects shown in the home page's wide view, in this order. The list view always shows every work, like selects versus the full archive.",
       type: "array",
       group: "content",
       of: [
-        defineArrayMember({ type: "video" }),
-        defineArrayMember({ type: "wysiwyg" }),
+        defineArrayMember({
+          type: "reference",
+          to: [{ type: "work" }],
+          options: { disableNew: true },
+        }),
       ],
+      validation: (Rule) => Rule.unique(),
     }),
     defineField({ name: "seo", title: "SEO", type: "seo", group: "seo" }),
-    defineField({
-      name: "settings",
-      title: "Settings",
-      type: "page-settings",
-      group: "settings",
-    }),
   ],
   preview: { prepare: () => ({ title: "Home" }) },
 });

@@ -1,0 +1,48 @@
+---
+const views = [
+  { name: "wide", label: "WIDE" },
+  { name: "list", label: "LIST" },
+];
+---
+
+<c-home-footer>
+  <div
+    class="p-grid text-title pointer-events-none fixed right-0 bottom-0 left-0 flex justify-between"
+  >
+    <div class="flex gap-24">
+      {
+        views.map((view, index) => (
+          <button
+            type="button"
+            data-home-footer="toggle"
+            data-view={view.name}
+            aria-pressed={index === 0 ? "true" : "false"}
+            class="group pointer-events-auto"
+          >
+            <span
+              aria-hidden="true"
+              class="duration-medium ease-expo-out reduced-motion:transition-none inline-block translate-x-[0.4em] opacity-0 transition group-aria-pressed:translate-x-0 group-aria-pressed:opacity-100"
+            >
+              (
+            </span>{" "}
+            {view.label}{" "}
+            <span
+              aria-hidden="true"
+              class="duration-medium ease-expo-out reduced-motion:transition-none inline-block translate-x-[-0.4em] opacity-0 transition group-aria-pressed:translate-x-0 group-aria-pressed:opacity-100"
+            >
+              )
+            </span>
+          </button>
+        ))
+      }
+    </div>
+
+    <span
+      >© <span data-home-footer="year">{new Date().getFullYear()}</span></span
+    >
+  </div>
+</c-home-footer>
+
+<script>
+  import("./home-footer");
+</script>

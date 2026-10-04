@@ -1,4 +1,6 @@
 ---
+import { stegaClean } from "@sanity/client/stega";
+
 import type { VideoAsset } from "../lib/sanity/types";
 import { videoUrl } from "../lib/video-library/cdn";
 
@@ -12,7 +14,9 @@ interface Props {
 
 const { asset, autoplay, loop, controls, class: className } = Astro.props;
 
-const src = videoUrl(asset?.storageKey);
+const storageKey = stegaClean(asset?.storageKey);
+const poster = stegaClean(asset?.poster);
+const src = videoUrl(storageKey);
 
 const hasIntrinsicSize = Boolean(asset?.width && asset?.height);
 const aspectRatio = asset?.aspectRatio ?? 16 / 9;
@@ -32,7 +36,7 @@ const aspectRatio = asset?.aspectRatio ?? 16 / 9;
         class={className}
         style={hasIntrinsicSize ? undefined : `aspect-ratio: ${aspectRatio}`}
         data-src={src}
-        poster={asset.poster ?? undefined}
+        poster={poster ?? undefined}
         width={asset.width ?? undefined}
         height={asset.height ?? undefined}
         preload="none"
