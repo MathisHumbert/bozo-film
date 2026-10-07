@@ -1,4 +1,6 @@
 ---
+import Year from "../year/year.astro";
+
 const views = [
   { name: "wide", label: "WIDE" },
   { name: "list", label: "LIST" },
@@ -37,9 +39,7 @@ const views = [
       }
     </div>
 
-    <span
-      >© <span data-home-footer="year">{new Date().getFullYear()}</span></span
-    >
+    <span>© <Year /></span>
   </div>
 </c-home-footer>
 

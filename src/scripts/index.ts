@@ -7,6 +7,7 @@ import Preloader from "./classes/Preloader";
 import Transition from "./classes/Transition";
 import AnimationManager from "./classes/AnimationManager";
 import Scroll from "./classes/Scroll";
+import Canvas from "./canvas";
 
 import { events } from "./utils/events";
 import { nextFrame } from "./utils/math";
@@ -21,16 +22,23 @@ if (window.history.scrollRestoration) {
 class App {
   private preloader: Preloader;
   private animationManager: AnimationManager;
+  private canvas: Canvas;
 
   constructor() {
     Scroll.init();
 
+    this.canvas = new Canvas();
     this.preloader = new Preloader();
     this.animationManager = new AnimationManager();
 
     new Transition({
       onContentReplaced: this.onContentReplaced,
-      onLoadPage: () => this.preloader.loadPage(),
+      onLoadPage: async () => {
+        await this.preloader.loadPage();
+
+        // After loadPage: it waits for the page's custom elements.
+        this.canvas.show(window.location.pathname);
+      },
     });
 
     this.preloader.preloadPage();
@@ -47,6 +55,7 @@ class App {
     });
 
     this.animationManager.create();
+    this.canvas.show(window.location.pathname);
 
     await nextFrame();
 
@@ -61,8 +70,6 @@ class App {
 
   onContentReplaced = () => {
     const page = document.getElementById("swup");
-
-    console.log(page);
 
     gsap.to(document.documentElement, {
       background: page?.dataset.background,

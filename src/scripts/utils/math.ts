@@ -26,6 +26,11 @@ export function random(min: number, max: number) {
   return gsap.utils.random(min, max);
 }
 
+/** Modulo that stays positive: mod(-1, 4) is 3. */
+export function mod(value: number, length: number) {
+  return ((value % length) + length) % length;
+}
+
 export function pad(value: number, length = 2) {
   return String(value).padStart(length, "0");
 }

@@ -19,10 +19,39 @@ export type UpdateData = {
   direction: number;
 };
 
+export type View = "wide" | "list";
+
+export type Bounds = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+export type Frame = {
+  slug: string;
+  bounds: Bounds;
+  split: number;
+  order: number;
+};
+
+export type Hero = {
+  from: Frame;
+  to: Frame;
+  progress: number;
+  seal: number;
+};
+
+export type HomeLeave = {
+  view: View;
+  from: Frame | null;
+  titles: HTMLElement[];
+};
+
 type AppEvents = {
   loaded: void;
   "page:loaded": void;
-  "transition:start": void;
+  "transition:start": { from: string; to: string };
   "transition:end": void;
   resize: ResizeData;
   "start-update": FrameData;
@@ -39,6 +68,9 @@ type AppEvents = {
   "modal:opened": { name: string };
   "modal:closed": { name: string };
   "device:motion": { reducedMotion: boolean };
+  "home:view": { view: View };
+  "home:leave": HomeLeave;
+  "home:shown": { view: View };
 };
 
 class TypedEventEmitter<TEvents extends Record<string, unknown>> {

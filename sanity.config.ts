@@ -31,6 +31,10 @@ export default defineConfig({
     videoLibrary({
       apiBasePath: mediaApiBasePath(),
       cdnUrl: cdnUrl(),
+      // An agency showreel: the original is the product, so no small copies.
+      // Only uploads wider than full HD get a 1920 one, so no page ever
+      // downloads 4K.
+      renditionWidths: [1920],
     }),
   ],
   schema,

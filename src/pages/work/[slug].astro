@@ -35,7 +35,13 @@ function formatDuration(duration?: number | null) {
 const duration = formatDuration(work.mainVideo.duration);
 ---
 
-<Layout seo={work.seo} page={{ type: "work" }} updatedAt={work._updatedAt}>
+<Layout
+  seo={work.seo}
+  page={{ type: "work" }}
+  updatedAt={work._updatedAt}
+  background="#000000"
+  color="#FFFFFF"
+>
   <section>
     <SanityVideo
       asset={work.previewVideo}

@@ -44,6 +44,8 @@ export const homeQuery = defineQuery(`*[_type == "home"][0]{
   featuredWork[]->{
     _type,
     title,
+    titleLeft,
+    titleRight,
     "slug": slug.current,
     previewVideo-> ${videoAssetProjection},
     "mainDuration": mainVideo->duration

@@ -1,12 +1,17 @@
 ---
 export const prerender = false;
 
+import { stegaClean } from "@sanity/client/stega";
 import { loadQuery } from "../lib/sanity/load-query";
 import { aboutQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
 import SanityVideo from "../components/sanity-video.astro";
+import Year from "../components/year/year.astro";
 
 const about = await loadQuery(aboutQuery);
+
+const email = stegaClean(about?.contact?.email);
+const phone = stegaClean(about?.contact?.phone);
 ---
 
 <Layout
@@ -25,38 +30,90 @@ const about = await loadQuery(aboutQuery);
     </p>
   </section>
 
-  <section class="relative grid grid-cols-2 pt-240">
-    <div class="sticky top-0">
+  <section class="px-grid gap-gutter relative grid grid-cols-2 pt-240">
+    <div class="sticky top-[calc(var(--grid-margin)*3)] h-fit">
       <div class="w-col-2 aspect-[0.8] bg-black"></div>
     </div>
 
-    <div>
-      <div>
-        <h2>Services</h2>
-        <ul>
-          {about?.services?.map((service) => <li>{service}</li>)}
-        </ul>
+    <div class="flex flex-col gap-96">
+      <div class="gap-gutter grid grid-cols-2">
+        <div class="flex flex-col gap-32">
+          <h2 class="text-title">Services</h2>
+          <ul class="flex flex-col gap-8">
+            {
+              about?.services?.map((service) => (
+                <li class="text-h4">{service}</li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="flex flex-col gap-32">
+          <h2 class="text-title">Select Clients</h2>
+          <ul class="flex flex-col gap-8">
+            {about?.clients?.map((client) => <li class="text-h4">{client}</li>)}
+          </ul>
+        </div>
       </div>
 
-      <div>
-        <h2>Select Clients</h2>
-        <ul>
-          {about?.clients?.map((client) => <li>{client}</li>)}
-        </ul>
-      </div>
+      {
+        about?.socialLinks?.length ? (
+          <div class="flex flex-col gap-32">
+            <h2 class="text-title">Follow me</h2>
+
+            <ul class="flex flex-col gap-8">
+              {about.socialLinks.map((link) => (
+                <li class="text-h4">
+                  <a
+                    href={link.href ?? undefined}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noopener noreferrer" : undefined}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null
+      }
+
+      {
+        (email || phone) && (
+          <div class="text-h4 flex flex-col gap-8">
+            {email && <a href={`mailto:${email}`}>{email}</a>}
+            {phone && (
+              <a href={`tel:${phone.replace(/[^\d+]/g, "")}`}>{phone}</a>
+            )}
+          </div>
+        )
+      }
     </div>
   </section>
 
-  <section>
-    <h2>Showreel</h2>
+  <section class="text-h1 flex flex-col items-center gap-64 py-240 text-center">
+    <h2 class="sr-only">Showreel</h2>
 
-    <p style="white-space: pre-line">{about?.reel?.textTop}</p>
-    <SanityVideo
-      asset={about?.reel?.preview}
-      autoplay
-      loop
-      class="h-auto w-full"
-    />
+    <p style="white-space: pre-line" class="">{about?.reel?.textTop}</p>
+    <div class="relative">
+      <SanityVideo
+        asset={about?.reel?.preview}
+        autoplay
+        loop
+        class="w-col-4 aspect-video"
+      />
+
+      <span
+        class="text-h4 absolute top-1/2 left-1/2 -translate-1/2 text-white uppercase"
+        >( Play Reel )</span
+      >
+    </div>
     <p style="white-space: pre-line">{about?.reel?.textBottom}</p>
+  </section>
+
+  <section class="text-tile p-grid grid grid-cols-3">
+    <span>© Copyright BOZO FILM.</span>
+    <span class="flex justify-center"><Year format="roman" /></span>
+    <span class="flex justify-end">All rights reserved</span>
   </section>
 </Layout>

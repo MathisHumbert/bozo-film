@@ -606,6 +606,11 @@ wait for are ready.
 | `images` | `true`               | every image in `document.body`, backgrounds included                         |
 | `fonts`  | `true` \| `string[]` | each family, via `FontFaceObserver` — `["Satoshi"]` unless you pass an array |
 | `videos` | `false`              | `canplay` on every `video[data-src]` inside the first viewport               |
+| `textures` | `true`             | the poster of every `[data-preload]` box, and the first frame of its video for `"video"` |
+
+`textures` serves the WebGL canvas: what it loads goes into `preloaded` (`src/scripts/utils/textures.ts`),
+and `Media` picks it up instead of fetching again. The home marks the first featured work `"video"` and the
+second `"poster"` — the two the wide view shows on arrival.
 
 `fonts` doubles as its own list: `true` uses `DEFAULT_FONTS`, an array replaces it.
 Add a family there whenever you add one to `public/fonts`, or the page reveals before

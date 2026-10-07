@@ -3,11 +3,13 @@ import FontFaceObserver from "fontfaceobserver";
 
 import { events } from "../utils/events";
 import { attachSources } from "../utils/video";
+import { createMutedVideo, getSource, preloaded } from "../utils/textures";
 
 export interface PreloaderOptions {
   images?: boolean;
   fonts?: boolean | string[];
   videos?: boolean;
+  textures?: boolean;
   webComponents?: boolean;
   timeout?: number;
 }
@@ -20,6 +22,7 @@ const PRELOAD_DEFAULTS: Required<PreloaderOptions> = {
   images: true,
   fonts: true,
   videos: false,
+  textures: true,
   webComponents: true,
   timeout: 5000,
 };
@@ -60,6 +63,10 @@ export default class Preloader {
 
     if (options.videos) {
       tasks.push(this.loadVideos(options));
+    }
+
+    if (options.textures) {
+      tasks.push(this.loadTextures(options));
     }
 
     if (options.webComponents) {
@@ -122,6 +129,59 @@ export default class Preloader {
 
       attachSources(video);
     });
+  }
+
+  // `[data-preload]` boxes the WebGL canvas draws into: their poster, and up
+  // to the first frame of their video for "video". Cached as soon as created,
+  // so the canvas reuses them even if the timeout wins.
+  private loadTextures({ timeout }: Required<PreloaderOptions>) {
+    const elements = document.querySelectorAll<HTMLElement>("[data-preload]");
+    const tasks: Promise<void>[] = [];
+
+    elements.forEach((element) => {
+      const poster = element.dataset.poster;
+
+      if (poster && !preloaded.posters.has(poster)) {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.src = poster;
+
+        preloaded.posters.set(poster, image);
+        tasks.push(image.decode().catch(() => undefined));
+      }
+
+      const src = getSource(element);
+
+      if (
+        element.dataset.preload === "video" &&
+        src &&
+        !preloaded.videos.has(src)
+      ) {
+        const video = createMutedVideo();
+        video.preload = "auto";
+        video.src = src;
+
+        preloaded.videos.set(src, video);
+        tasks.push(
+          new Promise<void>((resolve) => {
+            video.addEventListener("loadeddata", () => resolve(), {
+              once: true,
+            });
+            video.addEventListener("error", () => resolve(), { once: true });
+            video.load();
+          }),
+        );
+      }
+    });
+
+    if (tasks.length === 0) {
+      return Promise.resolve();
+    }
+
+    return Promise.race([
+      Promise.all(tasks),
+      new Promise((resolve) => setTimeout(resolve, timeout)),
+    ]);
   }
 
   private loadWebComponents({ timeout }: Required<PreloaderOptions>) {

@@ -1,6 +1,8 @@
 ---
 export const prerender = false;
 
+import { stegaClean } from "@sanity/client/stega";
+
 import { loadQuery } from "../lib/sanity/load-query";
 import { allWorkQuery, homeQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
@@ -26,13 +28,11 @@ const works = allWork ?? [];
 >
   <h1 class="sr-only">{home?.title ?? "Home"}</h1>
 
-  <div data-home-view="wide">
-    <HomeWide selectedWorks={selectedWorks} />
-  </div>
-
-  <div data-home-view="list" hidden>
-    <HomeList works={works} />
-  </div>
+  <HomeWide selectedWorks={selectedWorks} />
+  <HomeList
+    works={works}
+    featured={selectedWorks.map((work) => stegaClean(work.slug) ?? "")}
+  />
 
   <HomeFooter />
 </Layout>

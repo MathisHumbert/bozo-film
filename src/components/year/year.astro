@@ -1,0 +1,17 @@
+---
+import { toRoman } from "../../scripts/utils/roman";
+
+interface Props {
+  format?: "arabic" | "roman";
+}
+
+const { format = "arabic" } = Astro.props;
+
+const year = new Date().getFullYear();
+---
+
+<c-year data-format={format}>{format === "roman" ? toRoman(year) : year}</c-year>
+
+<script>
+  import("./year");
+</script>

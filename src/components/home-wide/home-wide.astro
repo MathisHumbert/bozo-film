@@ -3,35 +3,31 @@ import { stegaClean } from "@sanity/client/stega";
 
 import { hrefFor } from "../../lib/routes";
 import type { HomeQueryResult } from "../../../sanity/sanity.types";
-import { videoUrl } from "../../lib/video-library/cdn";
 
 type Props = {
   selectedWorks?: NonNullable<HomeQueryResult>["featuredWork"] | null;
 };
 
 const works = (Astro.props.selectedWorks ?? []).map((work) => {
-  const asset = work.previewVideo;
+  const title = stegaClean(work.title);
+  const left = stegaClean(work.titleLeft);
+  const right = stegaClean(work.titleRight);
 
   return {
-    src: videoUrl(stegaClean(asset.storageKey)),
-    // Cleaned first: stega characters in a slug would end up in the URL.
+    ...work,
+    slug: stegaClean(work.slug),
     href: hrefFor({ _type: work._type, slug: stegaClean(work.slug) }),
-    title: work.title,
-    poster: stegaClean(asset.poster),
-    width: asset.width ?? 1920,
-    height: asset.height ?? 1080,
-    label: asset.altText ?? work.title,
+    split: Boolean(left && right),
+    spaced: title === `${left} ${right}`,
   };
 });
 
 const first = works[0];
-const posterStyle = (poster: string | null) =>
-  poster ? `background: url(${poster}) center / cover no-repeat` : undefined;
 ---
 
 {
   first && (
-    <c-home-wide>
+    <c-home-wide class="block">
       <h2 class="sr-only">Selected Works</h2>
 
       <section
@@ -43,44 +39,36 @@ const posterStyle = (poster: string | null) =>
           {works.map((work, index) => (
             <article
               data-home-wide="item"
+              data-slug={work.slug}
               class="pointer-events-none absolute inset-0 data-active:pointer-events-auto"
               style={`z-index: ${works.length + 1 - index}`}
             >
-              <video
-                data-home-wide="video"
-                data-src={work.src}
-                preload="none"
-                playsinline
-                muted
-                loop
-                aria-label={work.label}
-                class="img-cover pointer-events-none absolute inset-0 opacity-0"
-              />
-              <canvas
-                data-home-wide="top-half"
-                width={work.width}
-                height={work.height}
+              <div
+                data-home-wide="media"
                 aria-hidden="true"
-                style={posterStyle(work.poster)}
-                class="img-cover absolute inset-0 [clip-path:inset(0_0_50%_0)]"
+                class="absolute inset-0"
               />
-              <canvas
-                data-home-wide="bottom-half"
-                width={work.width}
-                height={work.height}
-                aria-hidden="true"
-                style={posterStyle(work.poster)}
-                class="img-cover absolute inset-0 [clip-path:inset(50%_0_0_0)]"
-              />
-
-              {/* mettre sur chaque canvas */}
-              {/* <div class="pointer-events-none absolute inset-0 bg-black/10" /> */}
 
               <h3
                 data-home-wide="text"
-                class="text-h2 absolute bottom-58 left-1/2 z-2 -translate-x-1/2 text-white"
+                class="text-h2 absolute bottom-58 left-1/2 z-2 -translate-x-1/2 whitespace-nowrap text-white"
               >
-                {work.title}
+                {work.split ? (
+                  <>
+                    <span class="sr-only">{work.title}</span>
+                    <span aria-hidden="true">
+                      <span data-home-wide="title" class="inline-block">
+                        {work.titleLeft}
+                      </span>
+                      {work.spaced && " "}
+                      <span data-home-wide="title" class="inline-block">
+                        {work.titleRight}
+                      </span>
+                    </span>
+                  </>
+                ) : (
+                  work.title
+                )}
               </h3>
 
               <a
@@ -99,12 +87,7 @@ const posterStyle = (poster: string | null) =>
             class="pointer-events-none absolute inset-0"
             style="z-index: 1"
           >
-            <canvas
-              width={first.width}
-              height={first.height}
-              style={posterStyle(first.poster)}
-              class="img-cover absolute inset-0"
-            />
+            <div data-home-wide="clone-media" class="absolute inset-0" />
 
             <p
               data-home-wide="clone-text"

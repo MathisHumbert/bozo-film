@@ -3,33 +3,53 @@ import { stegaClean } from "@sanity/client/stega";
 
 import type { AllWorkQueryResult } from "../../../sanity/sanity.types";
 import { hrefFor } from "../../lib/routes";
-import SanityVideo from "../sanity-video.astro";
+import { videoSources } from "../../lib/video-library/sources";
 
 interface Props {
   works?: AllWorkQueryResult | null;
+  featured?: string[];
 }
 
-const works = (Astro.props.works ?? []).map((work) => ({
-  ...work,
-  href: hrefFor({ _type: work._type, slug: stegaClean(work.slug) }),
-}));
+const { featured = [] } = Astro.props;
+
+const works = (Astro.props.works ?? []).map((work) => {
+  const asset = work.previewVideo;
+
+  return {
+    ...work,
+    slug: stegaClean(work.slug),
+    href: hrefFor({ _type: work._type, slug: stegaClean(work.slug) }),
+    sources: asset
+      ? videoSources(
+          {
+            storageKey: stegaClean(asset.storageKey),
+            width: asset.width,
+            renditions: stegaClean(asset.renditions),
+          },
+          "1280 md:1920",
+        )
+      : [],
+    poster: stegaClean(asset?.poster) ?? undefined,
+  };
+});
 ---
 
-<c-home-list>
-  <div data-home-list="spacer" aria-hidden="true" class="h-svh"></div>
-  <div data-home-list="spacer" aria-hidden="true" class="h-svh"></div>
+<c-home-list class="block" hidden>
+  <div aria-hidden="true" class="h-svh"></div>
+  <div aria-hidden="true" class="h-svh"></div>
 
-  <div
-    data-home-list="wrapper"
-    class="fixed inset-0 h-svh w-full overflow-clip"
-  >
+  <div class="fixed inset-0 h-svh w-full overflow-clip">
     <section aria-labelledby="home-list-title">
       <h2 id="home-list-title" class="sr-only">All Works</h2>
 
       <ul data-home-list="list" class="flex flex-col items-center gap-4 pb-4">
         {
           works.map((work) => (
-            <li data-home-list="item">
+            <li
+              data-home-list="item"
+              data-slug={work.slug}
+              data-featured={featured.includes(work.slug ?? "") || undefined}
+            >
               <h3>
                 <a
                   href={work.href ?? undefined}
@@ -37,24 +57,33 @@ const works = (Astro.props.works ?? []).map((work) => ({
                 >
                   <span class="sr-only">{work.title}</span>
 
-                  <span aria-hidden="true">{work.titleLeft}</span>
+                  <span data-home-list="title" aria-hidden="true">
+                    {work.titleLeft}
+                  </span>
 
                   <span
                     data-home-list="media"
                     aria-hidden="true"
                     class="flex w-0 shrink-0 justify-center"
                   >
-                    <span data-home-list="video" class="block shrink-0 scale-0">
-                      <SanityVideo
-                        asset={work.previewVideo}
-                        autoplay
-                        loop
-                        class="aspect-video w-240 object-cover"
-                      />
-                    </span>
+                    <span
+                      data-home-list="video"
+                      data-sources={JSON.stringify(work.sources)}
+                      data-poster={work.poster}
+                      data-preload={
+                        work.slug === featured[0]
+                          ? "video"
+                          : work.slug === featured[1]
+                            ? "poster"
+                            : undefined
+                      }
+                      class="block aspect-video w-240 shrink-0 scale-0"
+                    />
                   </span>
 
-                  <span aria-hidden="true">{work.titleRight}</span>
+                  <span data-home-list="title" aria-hidden="true">
+                    {work.titleRight}
+                  </span>
                 </a>
               </h3>
             </li>
@@ -64,6 +93,7 @@ const works = (Astro.props.works ?? []).map((work) => ({
     </section>
 
     <div
+      data-home-list="gradient"
       aria-hidden="true"
       class="pointer-events-none absolute inset-x-0 top-0 h-256 bg-linear-to-b from-black to-black/0"
     >

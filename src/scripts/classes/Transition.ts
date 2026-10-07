@@ -43,8 +43,11 @@ export default class Transition {
       ],
     });
 
-    swup.hooks.on("animation:out:start", async () => {
-      events.emit("transition:start");
+    swup.hooks.on("animation:out:start", async (visit) => {
+      events.emit("transition:start", {
+        from: new URL(visit.from.url, window.location.origin).pathname,
+        to: new URL(visit.to.url, window.location.origin).pathname,
+      });
 
       Scroll.stop();
 
@@ -93,7 +96,6 @@ export default class Transition {
 
   animateIn() {
     return new Promise((resolve) => {
-      console.log(document.documentElement.dataset);
       gsap.to(document.documentElement, {
         background: document.documentElement.dataset.background,
         color: document.documentElement.dataset.color,

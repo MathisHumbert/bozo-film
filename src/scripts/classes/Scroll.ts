@@ -16,7 +16,7 @@ export default class Scroll {
     this.loco = new LocomotiveScroll({
       autoStart: false,
       initCustomTicker: (render) => {
-        gsap.ticker.add(render);
+        gsap.ticker.add(render, false, true);
       },
       destroyCustomTicker: (render) => {
         gsap.ticker.remove(render);
@@ -59,6 +59,11 @@ export default class Scroll {
   static resume() {
     this.isActive = true;
     this.loco?.start();
+  }
+
+  static resize() {
+    this.loco?.lenisInstance?.resize();
+    this.loco?.resize();
   }
 
   static destroy() {
