@@ -1,5 +1,6 @@
 import { ClipboardIcon } from "@sanity/icons/Clipboard";
 import { DownloadIcon } from "@sanity/icons/Download";
+import { RefreshIcon } from "@sanity/icons/Refresh";
 import {
   Box,
   Button,
@@ -16,6 +17,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { playbackUrl, type VideoLibraryConfig } from "../config";
 import { formatBytes, formatDimensions, formatDuration } from "../format";
 import { useAssetEditor, type SaveStatus } from "../hooks/use-asset-editor";
+import type {
+  GenerationPhase,
+  RenditionGenerator,
+} from "../hooks/use-rendition-generator";
 import type { VideoAssetListItem } from "../queries";
 
 /**
@@ -27,9 +32,10 @@ import type { VideoAssetListItem } from "../queries";
 interface AssetDetailsProps {
   asset: VideoAssetListItem;
   config: VideoLibraryConfig;
+  generator: RenditionGenerator;
 }
 
-export function AssetDetails({ asset, config }: AssetDetailsProps) {
+export function AssetDetails({ asset, config, generator }: AssetDetailsProps) {
   const editor = useAssetEditor(asset, config);
   const src = playbackUrl(config, asset.storageKey);
 
@@ -116,6 +122,10 @@ export function AssetDetails({ asset, config }: AssetDetailsProps) {
             <Detail label="Uploaded by" value={asset.uploadedBy ?? "—"} />
           </Stack>
 
+          {generator.enabled ? (
+            <Renditions asset={asset} generator={generator} />
+          ) : null}
+
           {src ? (
             <Inline gap={2}>
               <Button
@@ -162,6 +172,87 @@ function Player({ src, poster }: { src: string; poster: string | null }) {
         style={{ width: "100%", display: "block", aspectRatio: "16 / 9" }}
       />
     </Card>
+  );
+}
+
+export const GENERATION_LABELS: Record<GenerationPhase, string> = {
+  queued: "Waiting",
+  downloading: "Reading the original",
+  encoding: "Encoding",
+  uploading: "Uploading",
+  saving: "Saving",
+  done: "Done",
+  failed: "Failed",
+};
+
+/**
+ * The smaller copies the site serves in place of the original. Generating
+ * them again replaces the old ones, so the button also repairs an asset whose
+ * renditions predate a change to `renditionWidths`.
+ */
+function Renditions({
+  asset,
+  generator,
+}: {
+  asset: VideoAssetListItem;
+  generator: RenditionGenerator;
+}) {
+  const renditions = asset.renditions ?? [];
+  const job = generator.jobs[asset._id];
+  const active = job && job.phase !== "done" && job.phase !== "failed";
+
+  return (
+    <Stack gap={3}>
+      <Detail
+        label="Renditions"
+        value={
+          renditions.length
+            ? renditions
+                .map(
+                  ({ width, size }) => `${width ?? "?"} · ${formatBytes(size)}`,
+                )
+                .join("  /  ")
+            : "None"
+        }
+      />
+
+      {job ? (
+        <Card
+          padding={job.phase === "failed" ? 3 : 0}
+          radius={2}
+          tone={job.phase === "failed" ? "critical" : "transparent"}
+        >
+          <Text size={1} muted={job.phase !== "failed"}>
+            {GENERATION_LABELS[job.phase]}
+            {active && job.progress > 0
+              ? ` · ${Math.round(job.progress * 100)}%`
+              : ""}
+            {job.error ? ` · ${job.error}` : ""}
+          </Text>
+        </Card>
+      ) : null}
+
+      <Inline gap={2}>
+        <Button
+          icon={RefreshIcon}
+          text={
+            renditions.length ? "Regenerate renditions" : "Generate renditions"
+          }
+          mode="bleed"
+          fontSize={1}
+          disabled={generator.running}
+          onClick={() => void generator.generate([asset])}
+        />
+        {active ? (
+          <Button
+            text="Cancel"
+            mode="bleed"
+            fontSize={1}
+            onClick={generator.cancel}
+          />
+        ) : null}
+      </Inline>
+    </Stack>
   );
 }
 

@@ -1,5 +1,6 @@
 import { device } from "../../scripts/classes/Device";
 import { events } from "../../scripts/utils/events";
+import { attachSources } from "../../scripts/utils/video";
 
 const INVIEW_EVENT = "video:inview";
 
@@ -75,14 +76,9 @@ class Video extends HTMLElement {
    * Methods
    */
   load() {
-    if (!this.$video || this.$video.src) return;
+    if (!this.$video) return;
 
-    const src = this.$video.dataset.src;
-
-    if (!src) return;
-
-    this.$video.src = src;
-    this.$video.load();
+    attachSources(this.$video);
   }
 
   play() {

@@ -263,6 +263,14 @@ export type VideoAsset = {
   width?: number;
   height?: number;
   aspectRatio?: number;
+  renditions?: Array<{
+    width?: number;
+    height?: number;
+    size?: number;
+    storageKey?: string;
+    _type: "rendition";
+    _key: string;
+  }>;
   uploadedAt?: string;
   uploadedBy?: string;
 };
@@ -420,7 +428,7 @@ export type AllSanitySchemaTypes =
 
 // Source: src/lib/sanity/queries.ts
 // Variable: homeQuery
-// Query: *[_type == "home"][0]{  _updatedAt,  title,  featuredWork[]->{    _type,    title,    "slug": slug.current,    previewVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    "mainDuration": mainVideo->duration  },  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
+// Query: *[_type == "home"][0]{  _updatedAt,  title,  featuredWork[]->{    _type,    title,    "slug": slug.current,    previewVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    "mainDuration": mainVideo->duration  },  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
 export type HomeQueryResult = {
   _updatedAt: string;
   title: string;
@@ -437,6 +445,10 @@ export type HomeQueryResult = {
       width: number | null;
       height: number | null;
       aspectRatio: number | null;
+      renditions: Array<{
+        width: number | null;
+        storageKey: string | null;
+      }> | null;
       poster: string | null;
       posterLqip: string | null;
     };
@@ -462,7 +474,7 @@ export type HomeQueryResult = {
 
 // Source: src/lib/sanity/queries.ts
 // Variable: allWorkQuery
-// Query: *[_type == "work"] | order(_createdAt desc){    _type,    title,    titleLeft,    titleRight,    "slug": slug.current,    previewVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip}  }
+// Query: *[_type == "work"] | order(_createdAt desc){    _type,    title,    titleLeft,    titleRight,    "slug": slug.current,    previewVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip}  }
 export type AllWorkQueryResult = Array<{
   _type: "work";
   title: string;
@@ -478,6 +490,10 @@ export type AllWorkQueryResult = Array<{
     width: number | null;
     height: number | null;
     aspectRatio: number | null;
+    renditions: Array<{
+      width: number | null;
+      storageKey: string | null;
+    }> | null;
     poster: string | null;
     posterLqip: string | null;
   };
@@ -485,7 +501,7 @@ export type AllWorkQueryResult = Array<{
 
 // Source: src/lib/sanity/queries.ts
 // Variable: workBySlugQuery
-// Query: *[_type == "work" && slug.current == $slug][0]{  _updatedAt,  title,  category,  roles,  previewVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},  mainVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},  media[]{  _type,  _type == "image" => {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,},  _type == "video" => {    asset-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    caption,    autoplay,    loop,    controls  }},  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
+// Query: *[_type == "work" && slug.current == $slug][0]{  _updatedAt,  title,  category,  roles,  previewVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},  mainVideo-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},  media[]{  _type,  _type == "image" => {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,},  _type == "video" => {    asset-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    caption,    autoplay,    loop,    controls  }},  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
 export type WorkBySlugQueryResult = {
   _updatedAt: string;
   title: string;
@@ -500,6 +516,10 @@ export type WorkBySlugQueryResult = {
     width: number | null;
     height: number | null;
     aspectRatio: number | null;
+    renditions: Array<{
+      width: number | null;
+      storageKey: string | null;
+    }> | null;
     poster: string | null;
     posterLqip: string | null;
   };
@@ -512,6 +532,10 @@ export type WorkBySlugQueryResult = {
     width: number | null;
     height: number | null;
     aspectRatio: number | null;
+    renditions: Array<{
+      width: number | null;
+      storageKey: string | null;
+    }> | null;
     poster: string | null;
     posterLqip: string | null;
   };
@@ -538,6 +562,10 @@ export type WorkBySlugQueryResult = {
           width: number | null;
           height: number | null;
           aspectRatio: number | null;
+          renditions: Array<{
+            width: number | null;
+            storageKey: string | null;
+          }> | null;
           poster: string | null;
           posterLqip: string | null;
         };
@@ -567,7 +595,7 @@ export type WorkBySlugQueryResult = {
 
 // Source: src/lib/sanity/queries.ts
 // Variable: aboutQuery
-// Query: *[_type == "about"][0]{  _updatedAt,  title,  description,  services,  clients,  socialLinks[] {  label,  "external": linkType == "external",  "href": select(    linkType == "external" => url,    page->_type == "home" => "/",    null  )},  contact{ email, phone },  images[] {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,},  reel{    textTop,    preview-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    main-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    textBottom  },  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
+// Query: *[_type == "about"][0]{  _updatedAt,  title,  description,  services,  clients,  socialLinks[] {  label,  "external": linkType == "external",  "href": select(    linkType == "external" => url,    page->_type == "home" => "/",    null  )},  contact{ email, phone },  images[] {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,},  reel{    textTop,    preview-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    main-> {  "id": _id,  title,  altText,  storageKey,  duration,  width,  height,  aspectRatio,  "renditions": renditions[]{ width, storageKey },  "poster": thumbnail.asset->url,  "posterLqip": thumbnail.asset->metadata.lqip},    textBottom  },  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
 export type AboutQueryResult = {
   _updatedAt: string;
   title: string;
@@ -605,6 +633,10 @@ export type AboutQueryResult = {
       width: number | null;
       height: number | null;
       aspectRatio: number | null;
+      renditions: Array<{
+        width: number | null;
+        storageKey: string | null;
+      }> | null;
       poster: string | null;
       posterLqip: string | null;
     } | null;
@@ -617,6 +649,10 @@ export type AboutQueryResult = {
       width: number | null;
       height: number | null;
       aspectRatio: number | null;
+      renditions: Array<{
+        width: number | null;
+        storageKey: string | null;
+      }> | null;
       poster: string | null;
       posterLqip: string | null;
     } | null;
@@ -737,10 +773,10 @@ export type LlmsQueryResult = {
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_type == "home"][0]{\n  _updatedAt,\n  title,\n  featuredWork[]->{\n    _type,\n    title,\n    "slug": slug.current,\n    previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    "mainDuration": mainVideo->duration\n  },\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': HomeQueryResult;
-    '*[_type == "work"] | order(_createdAt desc){\n    _type,\n    title,\n    titleLeft,\n    titleRight,\n    "slug": slug.current,\n    previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n}\n  }': AllWorkQueryResult;
-    '*[_type == "work" && slug.current == $slug][0]{\n  _updatedAt,\n  title,\n  category,\n  roles,\n  previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n  mainVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n  media[]{\n  _type,\n  _type == "image" => {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  _type == "video" => {\n    asset-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    caption,\n    autoplay,\n    loop,\n    controls\n  }\n},\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': WorkBySlugQueryResult;
-    '*[_type == "about"][0]{\n  _updatedAt,\n  title,\n  description,\n  services,\n  clients,\n  socialLinks[] {\n  label,\n  "external": linkType == "external",\n  "href": select(\n    linkType == "external" => url,\n    page->_type == "home" => "/",\n    null\n  )\n},\n  contact{ email, phone },\n  images[] {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  reel{\n    textTop,\n    preview-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    main-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    textBottom\n  },\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': AboutQueryResult;
+    '*[_type == "home"][0]{\n  _updatedAt,\n  title,\n  featuredWork[]->{\n    _type,\n    title,\n    "slug": slug.current,\n    previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    "mainDuration": mainVideo->duration\n  },\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': HomeQueryResult;
+    '*[_type == "work"] | order(_createdAt desc){\n    _type,\n    title,\n    titleLeft,\n    titleRight,\n    "slug": slug.current,\n    previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n}\n  }': AllWorkQueryResult;
+    '*[_type == "work" && slug.current == $slug][0]{\n  _updatedAt,\n  title,\n  category,\n  roles,\n  previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n  mainVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n  media[]{\n  _type,\n  _type == "image" => {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  _type == "video" => {\n    asset-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    caption,\n    autoplay,\n    loop,\n    controls\n  }\n},\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': WorkBySlugQueryResult;
+    '*[_type == "about"][0]{\n  _updatedAt,\n  title,\n  description,\n  services,\n  clients,\n  socialLinks[] {\n  label,\n  "external": linkType == "external",\n  "href": select(\n    linkType == "external" => url,\n    page->_type == "home" => "/",\n    null\n  )\n},\n  contact{ email, phone },\n  images[] {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  reel{\n    textTop,\n    preview-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    main-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    textBottom\n  },\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': AboutQueryResult;
     '*[_type == "settings"][0]{\n  showPreloader,\n  nav[] {\n  label,\n  "external": linkType == "external",\n  "href": select(\n    linkType == "external" => url,\n    page->_type == "home" => "/",\n    null\n  )\n},\n  siteIdentity{\n    entityType,\n    name,\n    alternateName,\n    jobTitle,\n    email,\n    sameAs,\n    logo{\n      "url": asset->url,\n      "width": asset->metadata.dimensions.width,\n      "height": asset->metadata.dimensions.height\n    }\n  },\n  aiContent{\n    summary,\n    sections[]{ title, items }\n  },\n  fallbackSEO{\n    metaTitle,\n    metaDescription,\n    ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n  }\n}': SiteSettingsQueryResult;
     '{\n  "settings": *[_type == "settings"][0]{\n    siteIdentity{ entityType, name, jobTitle, email, sameAs },\n    aiContent{ summary, sections[]{ title, items } },\n    fallbackSEO{ metaTitle, metaDescription }\n  },\n  "home": *[_type == "home"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n},\n  "about": *[_type == "about"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n}\n}': LlmsQueryResult;
   }

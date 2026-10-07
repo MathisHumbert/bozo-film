@@ -365,7 +365,14 @@ poster and a 10-frame storyboard, then PUTs the file straight to the bucket — 
 transits the server. The document is created last, and a failure deletes the object.
 
 Storage keys are opaque and immutable (`videos/3f2a9c81-hero-cut.mp4`), which is what makes
-renaming or moving an asset a metadata patch with no re-upload.
+renaming or moving an asset a metadata patch with no re-upload — and why every object is
+stored with a one-year `immutable` Cache-Control.
+
+After the original, the browser encodes 1920, 1280 and 640-wide copies (only those
+smaller than the original) and stores them beside it. Pages choose one per breakpoint with
+`<SanityVideo quality="1280 md:1920">`. Assets uploaded before this, or whose encode
+failed, get theirs from **Generate renditions** in the Videos tool. Encoding uses
+WebCodecs; a browser without an H.264/AAC encoder still uploads, just without renditions.
 
 Deleting removes the document, the object, **and** the poster and storyboard images —
 Sanity never collects unreferenced assets. A video referenced by a page cannot be deleted:

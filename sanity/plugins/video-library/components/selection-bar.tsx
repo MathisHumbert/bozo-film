@@ -1,29 +1,46 @@
+import { RefreshIcon } from "@sanity/icons/Refresh";
 import { TrashIcon } from "@sanity/icons/Trash";
 import { Box, Button, Card, Dialog, Flex, Stack, Text } from "@sanity/ui";
 import { useState } from "react";
 
 import type { AssetDeletion } from "../hooks/use-asset-deletion";
+import type { RenditionGenerator } from "../hooks/use-rendition-generator";
 import type { Selection } from "../hooks/use-selection";
 import type { VideoAssetListItem } from "../queries";
+import { GENERATION_LABELS } from "./asset-details";
 
 interface SelectionBarProps {
   selection: Selection;
   assets: VideoAssetListItem[];
   deletion: AssetDeletion;
+  generator: RenditionGenerator;
 }
 
 export function SelectionBar({
   selection,
   assets,
   deletion,
+  generator,
 }: SelectionBarProps) {
   const [confirming, setConfirming] = useState(false);
 
-  if (selection.count === 0) {
+  if (selection.count === 0 && !generator.running) {
     return null;
   }
 
   const selected = assets.filter((asset) => selection.isSelected(asset._id));
+
+  // The asset being worked on, and how far along the batch is.
+  const jobs = Object.entries(generator.jobs);
+  const current = jobs.find(
+    ([, job]) => !["queued", "done", "failed"].includes(job.phase),
+  );
+  const finished = jobs.filter(([, job]) =>
+    ["done", "failed"].includes(job.phase),
+  ).length;
+  const currentTitle = current
+    ? (assets.find((asset) => asset._id === current[0])?.title ?? "")
+    : "";
 
   async function confirm() {
     const done = await deletion.remove(selected);
@@ -52,6 +69,15 @@ export function SelectionBar({
             {selection.count} selected
           </Text>
 
+          {generator.running ? (
+            <Text size={1} muted textOverflow="ellipsis">
+              Renditions {Math.min(finished + 1, jobs.length)}/{jobs.length}
+              {current
+                ? ` · ${currentTitle} · ${GENERATION_LABELS[current[1].phase]} ${Math.round(current[1].progress * 100)}%`
+                : ""}
+            </Text>
+          ) : null}
+
           <Box flex={1} />
 
           <Button
@@ -66,6 +92,23 @@ export function SelectionBar({
             fontSize={1}
             onClick={selection.clear}
           />
+          {generator.running ? (
+            <Button
+              text="Stop"
+              mode="ghost"
+              fontSize={1}
+              onClick={generator.cancel}
+            />
+          ) : !generator.enabled ? null : (
+            <Button
+              icon={RefreshIcon}
+              text="Generate renditions"
+              mode="ghost"
+              fontSize={1}
+              disabled={selected.length === 0}
+              onClick={() => void generator.generate(selected)}
+            />
+          )}
           <Button
             icon={TrashIcon}
             text="Delete"

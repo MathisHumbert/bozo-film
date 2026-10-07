@@ -11,6 +11,7 @@ export interface VideoAssetListItem {
   width: number | null;
   height: number | null;
   aspectRatio: number | null;
+  renditions: VideoRenditionItem[] | null;
   uploadedAt: string | null;
   uploadedBy: string | null;
   tags: string[] | null;
@@ -20,6 +21,13 @@ export interface VideoAssetListItem {
   storyboardAssetId: string | null;
   storyboardColumns: number | null;
   storyboardRows: number | null;
+}
+
+export interface VideoRenditionItem {
+  width: number | null;
+  height: number | null;
+  size: number | null;
+  storageKey: string | null;
 }
 
 const projection = /* groq */ `{
@@ -35,6 +43,7 @@ const projection = /* groq */ `{
   width,
   height,
   aspectRatio,
+  renditions[]{ width, height, size, storageKey },
   uploadedAt,
   uploadedBy,
   tags,

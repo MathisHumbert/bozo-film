@@ -2,28 +2,47 @@
 import { stegaClean } from "@sanity/client/stega";
 
 import type { VideoAsset } from "../lib/sanity/types";
-import { videoUrl } from "../lib/video-library/cdn";
+import { videoSources } from "../lib/video-library/sources";
 
 interface Props {
   asset?: VideoAsset | null;
   autoplay?: boolean | null;
   loop?: boolean | null;
   controls?: boolean | null;
+  quality?: string;
   class?: string;
 }
 
-const { asset, autoplay, loop, controls, class: className } = Astro.props;
+const {
+  asset,
+  autoplay,
+  loop,
+  controls,
+  quality = "1920",
+  class: className,
+} = Astro.props;
 
-const storageKey = stegaClean(asset?.storageKey);
-const poster = stegaClean(asset?.poster);
-const src = videoUrl(storageKey);
+const sources = asset
+  ? videoSources(
+      {
+        storageKey: stegaClean(asset.storageKey),
+        width: asset.width,
+        renditions: stegaClean(asset.renditions),
+      },
+      stegaClean(quality),
+    )
+  : [];
+
+const poster = autoplay
+  ? (stegaClean(asset?.posterLqip) ?? stegaClean(asset?.poster))
+  : stegaClean(asset?.poster);
 
 const hasIntrinsicSize = Boolean(asset?.width && asset?.height);
 const aspectRatio = asset?.aspectRatio ?? 16 / 9;
 ---
 
 {
-  asset && src && (
+  asset && sources.length > 0 && (
     <c-video
       class="block"
       data-autoplay={autoplay ? "" : undefined}
@@ -35,7 +54,6 @@ const aspectRatio = asset?.aspectRatio ?? 16 / 9;
       <video
         class={className}
         style={hasIntrinsicSize ? undefined : `aspect-ratio: ${aspectRatio}`}
-        data-src={src}
         poster={poster ?? undefined}
         width={asset.width ?? undefined}
         height={asset.height ?? undefined}
@@ -45,7 +63,11 @@ const aspectRatio = asset?.aspectRatio ?? 16 / 9;
         loop={Boolean(loop)}
         controls={Boolean(controls)}
         aria-label={asset.altText ?? asset.title ?? undefined}
-      />
+      >
+        {sources.map(({ src, media }) => (
+          <source data-src={src} media={media} />
+        ))}
+      </video>
     </c-video>
   )
 }

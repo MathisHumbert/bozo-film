@@ -24,6 +24,16 @@ export interface VideoLibraryConfig {
   maxFileSize: number;
   /** How many files upload at once. */
   concurrency: number;
+  /**
+   * Widths encoded beside the original, largest first. Only those below the
+   * original's width are produced, so a 4K upload gets all of them and a
+   * 1280-wide one only the smallest.
+   *
+   * An empty list turns renditions off: uploads skip the encoding step and the
+   * tool hides its Generate buttons. `[1920]` keeps only a cap for uploads
+   * larger than full HD.
+   */
+  renditionWidths: number[];
 }
 
 export const defaultConfig: VideoLibraryConfig = {
@@ -33,6 +43,7 @@ export const defaultConfig: VideoLibraryConfig = {
   acceptedTypes: ["video/mp4", "video/quicktime", "video/webm"],
   maxFileSize: 500 * 1024 * 1024,
   concurrency: 3,
+  renditionWidths: [1920, 1280, 640],
 };
 
 export function resolveConfig(

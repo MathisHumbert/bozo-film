@@ -16,6 +16,7 @@ const videoAssetProjection = `{
   width,
   height,
   aspectRatio,
+  "renditions": renditions[]{ width, storageKey },
   "poster": thumbnail.asset->url,
   "posterLqip": thumbnail.asset->metadata.lqip
 }`;

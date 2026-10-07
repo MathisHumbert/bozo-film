@@ -6,6 +6,7 @@ import { defaultConfig, type VideoLibraryConfig } from "../config";
 import { useAssetDeletion } from "../hooks/use-asset-deletion";
 import { useAssetView } from "../hooks/use-asset-view";
 import { usePickedColor } from "../hooks/use-picked-color";
+import { useRenditionGenerator } from "../hooks/use-rendition-generator";
 import { useSelection } from "../hooks/use-selection";
 import { useUploadQueue } from "../hooks/use-upload-queue";
 import { useVideoAssets } from "../hooks/use-video-assets";
@@ -43,6 +44,9 @@ export function VideoLibraryTool({ tool }: VideoLibraryToolProps) {
 
   const selection = useSelection(visibleIds);
   const deletion = useAssetDeletion(config, refresh);
+  // One instance for the whole tool, so a batch started from the selection
+  // bar shows its progress in the dialog too, and vice versa.
+  const generator = useRenditionGenerator(config);
 
   // Resolved from the live list rather than held in state, so an edit made
   // elsewhere reaches the dialog instead of leaving a stale copy on screen.
@@ -106,6 +110,7 @@ export function VideoLibraryTool({ tool }: VideoLibraryToolProps) {
                       selection={selection}
                       assets={view.visible}
                       deletion={deletion}
+                      generator={generator}
                     />
                   </>
                 )}
@@ -125,6 +130,7 @@ export function VideoLibraryTool({ tool }: VideoLibraryToolProps) {
           asset={open}
           config={config}
           deletion={deletion}
+          generator={generator}
           onClose={() => setOpenId(null)}
         />
       ) : null}

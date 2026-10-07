@@ -12,6 +12,7 @@ export interface VideoAsset {
   width: number | null;
   height: number | null;
   aspectRatio: number | null;
+  renditions: { width: number | null; storageKey: string | null }[] | null;
   poster: string | null;
   posterLqip: string | null;
 }

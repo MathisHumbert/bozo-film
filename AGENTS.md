@@ -191,18 +191,46 @@ Things that will bite:
 
 - **`STORAGE_PROVIDER=r2`** needs `requestChecksumCalculation: "WHEN_REQUIRED"` (already
   in `storage.ts`), or presigned PUTs fail with an opaque 400.
-- **`signableHeaders: new Set(["content-type"])`** in `sign-upload` is not optional: a
-  presigned URL signs only `host`, so without it any payload can be stored under any
-  type, `text/html` included.
-- **The upload order** — object first, document last, and a failed document deletes the
-  object. Reversing it leaves visibly broken assets.
-- **Deleting** removes the document, the object, _and_ the poster and storyboard images.
-  Sanity never collects unreferenced assets.
+- **`signableHeaders: new Set(["content-type", "cache-control"])`** in `signPut()`
+  (`src/lib/video-library/sign.ts`) is not optional: a presigned URL signs only `host`,
+  so without it any payload can be stored under any type, `text/html` included. The
+  sign routes return the exact `headers` the PUT must send.
+- **Every object is written `Cache-Control: public, max-age=31536000, immutable`**, at
+  PUT time, from code — not a CDN rule. That is only safe because no key is ever
+  overwritten. `npm run media:cache-control` backfills objects stored before this (dry
+  run; `-- --apply` to write).
+- **The upload order** — original, then renditions, then document last; a failed
+  document deletes every object. Reversing it leaves visibly broken assets.
+- **Deleting** removes the document, the original, its renditions, _and_ the poster and
+  storyboard images. Sanity never collects unreferenced assets.
 - **The storage key is opaque and immutable** (`videos/<id>-<slug>.<ext>`). Never derive
   it from a folder or title: that is what makes renaming a metadata patch.
 
 `npm run check:storage` verifies a bucket end to end, `npm run check:media` the whole
 API surface. Run both after touching either.
+
+### Renditions
+
+Each upload also gets smaller copies — 1920, 1280 and 640 wide (`renditionWidths` in the
+plugin config) — encoded **in the browser** with Mediabunny (WebCodecs), H.264 + AAC,
+fast-start MP4, constant quality rather than a bitrate. Only widths below the original's
+are encoded, and a copy is kept only if it weighs at most 90% of the next larger file
+kept. They are listed in `video-asset.renditions`; the original stays in `storageKey`.
+
+`renditionWidths: []` in `sanity.config.ts` turns the feature off — uploads skip the
+encode and the Generate buttons disappear; `[1920]` only caps uploads wider than full HD.
+The front end needs no change either way: `videoSources()` falls back to the original.
+
+- **Keys sit beside the original** with a revision segment:
+  `<id>-<slug>.1280-k3x9.mp4`. Built server-side by `buildRenditionKey()`, signed by
+  `/api/media/sign-renditions`. Regenerating writes new keys, then patches, then deletes
+  the old ones — never overwrite, the old URL is cached as immutable.
+- **A failed encode does not fail the upload.** The asset just has no renditions; the
+  details dialog and the selection bar both offer _Generate renditions_, which reads the
+  original back from the CDN and runs the same encoder. That is also how existing assets
+  get theirs — there is no ffmpeg path to keep in step.
+- Encodes are serialised (`exclusive()` in `lib/renditions.ts`) while uploads stay three
+  at a time: a hardware encoder serves few sessions.
 
 ### Rendering a video
 
@@ -229,9 +257,19 @@ import SanityVideo from "../sanity-video.astro";
 />
 ```
 
-`sanity-video.astro` takes `asset`, `autoplay`, `loop`, `controls` and `class`, typed with
-`VideoAsset` from `src/lib/sanity/types.ts` (derived from the query result, not the schema
-type). It renders nothing when the asset or its `storageKey` is missing.
+`sanity-video.astro` takes `asset`, `autoplay`, `loop`, `controls`, `quality` and `class`,
+typed with `VideoAsset` from `src/lib/sanity/types.ts` (derived from the query result, not
+the schema type). It renders nothing when the asset or its `storageKey` is missing.
+
+`quality` picks the file per breakpoint, Tailwind-style: `"1280 md:1920"` (the default),
+`"640"` for a thumbnail, `"original"` for the upload itself. `videoSources()` in
+`src/lib/video-library/sources.ts` resolves each width to the smallest file at least that
+wide, falling back to the original, and emits one `<source media>` per breakpoint, widest
+first. The browser picks **once**, at load — resizing does not switch files. Its
+breakpoint map mirrors Tailwind's by hand; keep it in step with `tailwind.css`.
+
+An autoplaying video gets `posterLqip` as its poster (it paints its own first frame as
+soon as it plays); one that waits for a click gets the full poster.
 
 It emits `width`/`height` from the asset so the browser reserves the space, and falls back
 to an inline `aspect-ratio` only when those are absent. It owns the `import("./video/video")`
@@ -239,8 +277,9 @@ side effect, so the custom element is registered once however many videos a page
 
 Playback is driven by Locomotive, not by an `IntersectionObserver`: `data-scroll-call`
 fires `video:inview` on `window`, and each `c-video` filters on `detail.target === this`.
-`preload="none"` plus `data-src` means nothing is fetched until the video is in view, which
-is why the Preloader's `videos` option has to attach `src` itself.
+`preload="none"` plus `<source data-src>` means nothing is fetched until the video is in
+view, which is why the Preloader's `videos` option has to attach the sources itself. Both
+go through `attachSources()` in `src/scripts/utils/video.ts`.
 
 ## Routes
 

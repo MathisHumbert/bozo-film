@@ -37,6 +37,24 @@ export function buildVideoKey(filename: string): string {
 }
 
 /**
+ * Key of one rendition, derived from the original's and stored beside it:
+ * `bozo-film/7bd6015b-hero.mov` → `bozo-film/7bd6015b-hero.1280-k3x9.mp4`.
+ *
+ * Sitting next to the original keeps it inside the managed prefix with no
+ * change to `isManagedKey`. The revision segment makes a regenerated rendition
+ * a new URL: the old one is cached as immutable, so overwriting it in place
+ * would keep serving stale bytes for a year.
+ */
+export function buildRenditionKey(storageKey: string, width: number): string {
+  const slash = storageKey.lastIndexOf("/");
+  const dot = storageKey.lastIndexOf(".");
+  const base = dot > slash ? storageKey.slice(0, dot) : storageKey;
+  const revision = crypto.randomUUID().slice(0, 4);
+
+  return `${base}.${width}-${revision}.mp4`;
+}
+
+/**
  * Guard for every route that acts on a caller-supplied key. The IAM policy is
  * broad enough to reach the whole bucket, so this check is the only thing
  * keeping a delete request inside the library's own namespace.

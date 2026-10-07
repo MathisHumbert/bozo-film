@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import type { VideoLibraryConfig } from "../config";
 import type { AssetDeletion } from "../hooks/use-asset-deletion";
+import type { RenditionGenerator } from "../hooks/use-rendition-generator";
 import type { VideoAssetListItem } from "../queries";
 import { AssetDetails } from "./asset-details";
 
@@ -10,6 +11,7 @@ interface AssetDialogProps {
   asset: VideoAssetListItem;
   config: VideoLibraryConfig;
   deletion: AssetDeletion;
+  generator: RenditionGenerator;
   onClose: () => void;
 }
 
@@ -25,6 +27,7 @@ export function AssetDialog({
   asset,
   config,
   deletion,
+  generator,
   onClose,
 }: AssetDialogProps) {
   const [confirming, setConfirming] = useState(false);
@@ -78,7 +81,7 @@ export function AssetDialog({
       }
     >
       {/* No padding here: each column carries its own, as in theirs. */}
-      <AssetDetails asset={asset} config={config} />
+      <AssetDetails asset={asset} config={config} generator={generator} />
     </Dialog>
   );
 }

@@ -158,6 +158,41 @@ export const videoAssetType = defineType({
       readOnly: true,
     }),
     defineField({
+      name: "renditions",
+      title: "Renditions",
+      type: "array",
+      group: "technical",
+      readOnly: true,
+      of: [
+        defineArrayMember({
+          name: "rendition",
+          type: "object",
+          fields: [
+            defineField({ name: "width", type: "number" }),
+            defineField({ name: "height", type: "number" }),
+            defineField({
+              name: "size",
+              description: "In bytes.",
+              type: "number",
+            }),
+            defineField({ name: "storageKey", type: "string" }),
+          ],
+          preview: {
+            select: { width: "width", height: "height", size: "size" },
+            prepare({ width, height, size }) {
+              return {
+                title: `${width}×${height}`,
+                subtitle:
+                  typeof size === "number"
+                    ? `${(size / 1024 / 1024).toFixed(1)} MB`
+                    : undefined,
+              };
+            },
+          },
+        }),
+      ],
+    }),
+    defineField({
       name: "uploadedAt",
       title: "Uploaded At",
       type: "datetime",

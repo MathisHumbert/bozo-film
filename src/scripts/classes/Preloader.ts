@@ -2,6 +2,7 @@ import imagesLoaded from "imagesloaded";
 import FontFaceObserver from "fontfaceobserver";
 
 import { events } from "../utils/events";
+import { attachSources } from "../utils/video";
 
 export interface PreloaderOptions {
   images?: boolean;
@@ -88,7 +89,9 @@ export default class Preloader {
 
   private loadVideos({ timeout }: Required<PreloaderOptions>) {
     const videos = Array.from(
-      document.querySelectorAll<HTMLVideoElement>("video[data-src]"),
+      document.querySelectorAll<HTMLVideoElement>(
+        "video:has(> source[data-src])",
+      ),
     ).filter((video) => video.getBoundingClientRect().top < window.innerHeight);
 
     if (videos.length === 0) {
@@ -117,10 +120,7 @@ export default class Preloader {
       video.addEventListener("canplay", done, { once: true });
       video.addEventListener("error", done, { once: true });
 
-      if (!video.src && video.dataset.src) {
-        video.src = video.dataset.src;
-        video.load();
-      }
+      attachSources(video);
     });
   }
 

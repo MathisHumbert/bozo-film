@@ -54,6 +54,7 @@ export default defineConfig({
       exclude: [
         "/api/revalidate",
         "/api/media/sign-upload",
+        "/api/media/sign-renditions",
         "/api/media/delete",
         "/api/media/list",
         "/api/media/config",

@@ -10,7 +10,7 @@ export interface UploadItem {
   id: string;
   file: File;
   phase: UploadPhase;
-  /** 0 to 1, for the bytes transfer only. */
+  /** 0 to 1, for the current phase: the transfer, then the encoding. */
   progress: number;
   error: string | null;
   documentId: string | null;
@@ -29,6 +29,7 @@ const ACTIVE_PHASES: UploadPhase[] = [
   "queued",
   "analysing",
   "uploading",
+  "encoding",
   "finalising",
 ];
 

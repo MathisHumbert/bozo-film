@@ -45,7 +45,10 @@ export function useAssetDeletion(
         await transaction.commit();
 
         const keys = assets
-          .map((asset) => asset.storageKey)
+          .flatMap((asset) => [
+            asset.storageKey,
+            ...(asset.renditions ?? []).map(({ storageKey }) => storageKey),
+          ])
           .filter((key): key is string => Boolean(key));
 
         if (keys.length) {

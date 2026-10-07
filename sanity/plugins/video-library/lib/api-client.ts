@@ -3,7 +3,16 @@ import type { VideoLibraryConfig } from "../config";
 export interface SignUploadResponse {
   key: string;
   uploadUrl: string;
+  /** Sent verbatim with the PUT: they are part of the signature. */
+  headers: Record<string, string>;
   cdnUrl: string;
+}
+
+export interface SignedRendition {
+  width: number;
+  key: string;
+  uploadUrl: string;
+  headers: Record<string, string>;
 }
 
 export interface StoredObject {
@@ -14,6 +23,10 @@ export interface StoredObject {
 
 export interface MediaApi {
   signUpload(file: File): Promise<SignUploadResponse>;
+  signRenditions(
+    storageKey: string,
+    renditions: { width: number; size: number }[],
+  ): Promise<SignedRendition[]>;
   deleteObjects(
     keys: string[],
   ): Promise<{ deleted: number; failed: unknown[] }>;
@@ -68,6 +81,12 @@ export function createMediaApi(
         }),
       }),
 
+    signRenditions: (storageKey, renditions) =>
+      request<{ renditions: SignedRendition[] }>("/sign-renditions", {
+        method: "POST",
+        body: JSON.stringify({ storageKey, renditions }),
+      }).then((body) => body.renditions),
+
     deleteObjects: (keys) =>
       request<{ deleted: number; failed: unknown[] }>("/delete", {
         method: "POST",
@@ -87,7 +106,8 @@ export function createMediaApi(
  */
 export function putWithProgress(
   url: string,
-  file: File,
+  body: Blob,
+  headers: Record<string, string>,
   onProgress: (ratio: number) => void,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -95,8 +115,11 @@ export function putWithProgress(
     const request = new XMLHttpRequest();
 
     request.open("PUT", url);
-    // Must match the type the URL was signed for, or the signature fails.
-    request.setRequestHeader("content-type", file.type);
+
+    // Exactly the headers the URL was signed for, or the signature fails.
+    for (const [name, value] of Object.entries(headers)) {
+      request.setRequestHeader(name, value);
+    }
 
     request.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
@@ -123,6 +146,6 @@ export function putWithProgress(
 
     signal?.addEventListener("abort", () => request.abort(), { once: true });
 
-    request.send(file);
+    request.send(body);
   });
 }

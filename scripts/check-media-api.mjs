@@ -110,7 +110,7 @@ if (signed.status !== 200) {
   process.exit(1);
 }
 
-const { key, uploadUrl, cdnUrl } = await signed.json();
+const { key, uploadUrl, headers, cdnUrl } = await signed.json();
 
 const signedHeaders =
   new URL(uploadUrl).searchParams.get("X-Amz-SignedHeaders") ?? "";
@@ -121,11 +121,16 @@ check(
   signedHeaders,
 );
 
+check(
+  "signature covers cache-control",
+  signedHeaders.includes("cache-control"),
+);
+
 // --- upload -------------------------------------------------------------
 
 const tampered = await fetch(uploadUrl, {
   method: "PUT",
-  headers: { "content-type": "text/plain" },
+  headers: { ...headers, "content-type": "text/plain" },
   body: payload,
 });
 
@@ -139,11 +144,59 @@ check(
 
 const upload = await fetch(uploadUrl, {
   method: "PUT",
-  headers: { "content-type": "video/mp4" },
+  headers,
   body: payload,
 });
 
 check("uploads through the presigned URL", upload.ok, key);
+
+// --- renditions ---------------------------------------------------------
+
+const signRenditions = (body) =>
+  api("/api/media/sign-renditions", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+const outsidePrefix = await signRenditions({
+  storageKey: "../elsewhere/x.mp4",
+  renditions: [{ width: 640, size: 1000 }],
+});
+check("renditions refuse an unmanaged key", outsidePrefix.status === 400);
+
+const oddWidth = await signRenditions({
+  storageKey: key,
+  renditions: [{ width: 641, size: 1000 }],
+});
+check("renditions refuse an odd width", oddWidth.status === 400);
+
+const renditionPayload = randomBytes(50_000);
+const signedRendition = await signRenditions({
+  storageKey: key,
+  renditions: [{ width: 640, size: renditionPayload.byteLength }],
+});
+
+check("signs a rendition", signedRendition.status === 200);
+
+const [rendition] = signedRendition.ok
+  ? (await signedRendition.json()).renditions
+  : [];
+
+check(
+  "rendition sits beside its original",
+  rendition?.key.startsWith(key.replace(/\.[^.]+$/, ".640-")),
+  rendition?.key ?? "",
+);
+
+const renditionUpload = rendition
+  ? await fetch(rendition.uploadUrl, {
+      method: "PUT",
+      headers: rendition.headers,
+      body: renditionPayload,
+    })
+  : null;
+
+check("uploads the rendition", Boolean(renditionUpload?.ok));
 
 // --- delivery -----------------------------------------------------------
 
@@ -156,6 +209,12 @@ check(
   "keeps the declared content type",
   delivered.headers.get("content-type") === "video/mp4",
   delivered.headers.get("content-type") ?? "",
+);
+
+check(
+  "serves an immutable cache-control",
+  delivered.headers.get("cache-control")?.includes("immutable"),
+  delivered.headers.get("cache-control") ?? "none",
 );
 
 const ranged = await fetch(cdnUrl, { headers: { range: "bytes=0-1023" } });
@@ -189,19 +248,21 @@ const escaped = await api("/api/media/delete", {
 });
 check("refuses keys outside the prefix", escaped.status === 400);
 
+const created = [key, rendition?.key].filter(Boolean);
+
 const removed = await api("/api/media/delete", {
   method: "POST",
-  body: JSON.stringify({ keys: [key] }),
+  body: JSON.stringify({ keys: created }),
 });
-check("deletes the object", removed.status === 200);
+check("deletes the objects", removed.status === 200);
 
 // The CDN would still serve it from cache, so ask the bucket instead.
 const listedAfter = await api("/api/media/list");
 const remaining = listedAfter.ok ? await listedAfter.json() : { objects: [] };
 
 check(
-  "the object is gone from the bucket",
-  !remaining.objects?.some((object) => object.key === key),
+  "the objects are gone from the bucket",
+  !remaining.objects?.some((object) => created.includes(object.key)),
 );
 
 // --- summary ------------------------------------------------------------

@@ -8,6 +8,7 @@ const PHASE_LABELS: Record<UploadItem["phase"], string> = {
   queued: "Waiting",
   analysing: "Reading frames",
   uploading: "Uploading",
+  encoding: "Encoding smaller versions",
   finalising: "Saving",
   done: "Done",
   failed: "Failed",
@@ -18,6 +19,7 @@ const ACTIVE: UploadItem["phase"][] = [
   "queued",
   "analysing",
   "uploading",
+  "encoding",
   "finalising",
 ];
 
@@ -69,7 +71,11 @@ function UploadRow({
               {item.file.name}
             </Text>
             <Text size={0} muted>
-              {PHASE_LABELS[item.phase]} · {formatBytes(item.file.size)}
+              {PHASE_LABELS[item.phase]}
+              {item.phase === "encoding"
+                ? ` ${Math.round(item.progress * 100)}%`
+                : ""}{" "}
+              · {formatBytes(item.file.size)}
               {item.error ? ` · ${item.error}` : ""}
             </Text>
           </Stack>
