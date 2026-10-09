@@ -7,6 +7,7 @@ import { aboutQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
 import SanityVideo from "../components/sanity-video.astro";
 import Year from "../components/year/year.astro";
+import AboutBio from "../components/about-bio/about-bio.astro";
 
 const about = await loadQuery(aboutQuery);
 
@@ -23,12 +24,7 @@ const phone = stegaClean(about?.contact?.phone);
 >
   <h1 class="sr-only">{about?.title ?? "About"}</h1>
 
-  <section class="flex flex-col items-center gap-48 pt-358">
-    <h2 class="text-h4">( Bio )</h2>
-    <p style="white-space: pre-line" class="text-h2 w-col-10 text-center">
-      {about?.description}
-    </p>
-  </section>
+  <AboutBio description={about?.description} />
 
   <section class="px-grid gap-gutter relative grid grid-cols-2 pt-240">
     <div class="sticky top-[calc(var(--grid-margin)*3)] h-fit">

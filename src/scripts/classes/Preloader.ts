@@ -39,9 +39,12 @@ export default class Preloader {
   }
 
   preloadPage(options: PreloaderOptions = {}) {
+    console.log("Starting page preload");
+
     return this.run({ ...PRELOAD_DEFAULTS, ...this.options, ...options }).then(
       () => {
         events.emit("page:loaded");
+        console.log("Page preloaded successfully");
       },
     );
   }

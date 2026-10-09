@@ -1,0 +1,40 @@
+---
+import Illustration from "../../icons/illustration.svg";
+
+interface Props {
+  description?: string | null;
+}
+
+const { description } = Astro.props;
+---
+
+<c-about-bio class="flex flex-col items-center gap-48 pt-358">
+  <h2 class="text-h4">( Bio )</h2>
+
+  <div class="relative">
+    <div
+      aria-hidden="true"
+      data-about-bio="track"
+      class="pointer-events-none absolute inset-x-0 top-120 -bottom-120"
+    >
+      <div
+        data-about-bio="anchor"
+        class="absolute inset-x-0 top-0 flex h-0 items-center justify-center will-change-transform"
+      >
+        <Illustration data-about-bio="illustration" class="size-160" />
+      </div>
+    </div>
+
+    <p
+      data-about-bio="text"
+      style="white-space: pre-line"
+      class="text-h2 w-col-8 text-center"
+    >
+      {description}
+    </p>
+  </div>
+</c-about-bio>
+
+<script>
+  import("./about-bio");
+</script>

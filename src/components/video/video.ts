@@ -10,7 +10,7 @@ type ScrollCallDetail = {
   from: string;
 };
 
-class Video extends HTMLElement {
+export class Video extends HTMLElement {
   private $video: HTMLVideoElement | null = null;
 
   private wantsAutoplay = false;
@@ -33,6 +33,12 @@ class Video extends HTMLElement {
 
     window.addEventListener(INVIEW_EVENT, this.onInview);
     events.on("device:motion", this.onMotionPreferenceChange);
+
+    if (this.classList.contains("is-inview")) {
+      this.visible = true;
+      this.load();
+      this.play();
+    }
   }
 
   disconnectedCallback() {
@@ -97,6 +103,28 @@ class Video extends HTMLElement {
 
   autoplays() {
     return this.wantsAutoplay && !device.reducedMotion;
+  }
+
+  // gives up the <video> so another c-video can adopt it; this one then
+  release() {
+    const video = this.$video;
+
+    this.$video = null;
+
+    return video;
+  }
+
+  // the element is never detached long enough to pause or reload
+  adopt(video: HTMLVideoElement) {
+    if (!this.$video) return;
+
+    video.className = this.$video.className;
+
+    this.$video.replaceWith(video);
+    this.$video = video;
+    this.visible = true;
+
+    this.play();
   }
 }
 

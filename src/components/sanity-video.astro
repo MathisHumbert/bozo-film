@@ -11,6 +11,7 @@ interface Props {
   controls?: boolean | null;
   quality?: string;
   class?: string;
+  wrapperClass?: string;
 }
 
 const {
@@ -20,6 +21,7 @@ const {
   controls,
   quality = "1920",
   class: className,
+  wrapperClass,
 } = Astro.props;
 
 const sources = asset
@@ -44,12 +46,11 @@ const aspectRatio = asset?.aspectRatio ?? 16 / 9;
 {
   asset && sources.length > 0 && (
     <c-video
-      class="block"
+      class:list={["block", wrapperClass]}
       data-autoplay={autoplay ? "" : undefined}
       data-scroll
       data-scroll-repeat
       data-scroll-call="video:inview"
-      data-scroll-offset="-20%"
     >
       <video
         class={className}

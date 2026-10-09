@@ -33,3 +33,10 @@
   line-height: 1.05;
   letter-spacing: -0.02em;
 }
+
+@utility text-initial {
+  font-weight: 400;
+  font-size: 4.2rem;
+  line-height: 1.05;
+  letter-spacing: -0.0225em;
+}

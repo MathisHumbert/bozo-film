@@ -44,3 +44,15 @@ export function nextFrame() {
     requestAnimationFrame(() => requestAnimationFrame(() => res())),
   );
 }
+
+export function smoothMin(a: number, b: number, k: number) {
+  const h = Math.max(k - Math.abs(a - b), 0) / k;
+
+  return Math.min(a, b) - (h * h * k) / 4;
+}
+
+export function smoothMax(a: number, b: number, k: number) {
+  const h = Math.max(k - Math.abs(a - b), 0) / k;
+
+  return Math.max(a, b) + (h * h * k) / 4;
+}

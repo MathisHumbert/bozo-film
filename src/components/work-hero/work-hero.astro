@@ -1,0 +1,103 @@
+---
+import type { VideoAsset } from "../../lib/sanity/types";
+import SanityVideo from "../sanity-video.astro";
+
+interface Props {
+  title?: string | null;
+  previewVideo?: VideoAsset | null;
+  mainVideo?: VideoAsset | null;
+}
+
+const { title, previewVideo, mainVideo } = Astro.props;
+
+function formatDuration(duration?: number | null) {
+  if (!duration) return null;
+
+  const total = Math.round(duration);
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+
+  return {
+    minutes: String(minutes).padStart(2, "0"),
+    seconds: String(seconds).padStart(2, "0"),
+    iso: `PT${minutes}M${seconds}S`,
+    label: `${minutes} minute${minutes === 1 ? "" : "s"} ${seconds} second${seconds === 1 ? "" : "s"}`,
+  };
+}
+
+const duration = formatDuration(mainVideo?.duration);
+---
+
+<c-work-hero class="relative block h-svh w-full">
+  <div class="absolute top-0 left-0 h-[200svh] w-full">
+    <div class="sticky top-0 h-svh w-full">
+      <div data-work-hero="preview" aria-hidden="true" class="cover">
+        <SanityVideo
+          asset={previewVideo}
+          autoplay
+          loop
+          wrapperClass="cover"
+          class="h-full w-full object-cover"
+        />
+      </div>
+
+      <div class="cover pointer-events-none bg-black/20"></div>
+
+      {
+        mainVideo && (
+          <div
+            id="work-hero-main"
+            data-work-hero="main"
+            class="cover invisible opacity-0"
+          >
+            <SanityVideo
+              asset={mainVideo}
+              wrapperClass="cover"
+              class="h-full w-full object-cover"
+            />
+          </div>
+        )
+      }
+
+      <h1
+        data-work-hero="title"
+        class="text-h2 bottom-grid absolute left-1/2 -translate-x-1/2"
+      >
+        {title}
+      </h1>
+
+      {
+        duration && (
+          <time
+            data-work-hero="duration"
+            datetime={duration.iso}
+            class="text-title px-grid pointer-events-none absolute top-1/2 right-0 left-0 flex -translate-y-1/2 justify-center"
+          >
+            <span class="sr-only">{duration.label}</span>
+            <span aria-hidden="true" class="w-col-6 flex justify-between">
+              <span>{duration.minutes}</span>
+              <span class="text-right">{duration.seconds}</span>
+            </span>
+          </time>
+        )
+      }
+
+      {
+        mainVideo && (
+          <button
+            type="button"
+            data-work-hero="toggle"
+            aria-controls="work-hero-main"
+            class="text-h4 absolute top-1/2 left-1/2 -translate-1/2"
+          >
+            ( <span data-work-hero="label">WATCH</span> )
+          </button>
+        )
+      }
+    </div>
+  </div>
+</c-work-hero>
+
+<script>
+  import("./work-hero");
+</script>

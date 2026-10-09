@@ -1,0 +1,46 @@
+---
+import type { VideoAsset } from "../../lib/sanity/types";
+import { hrefFor } from "../../lib/routes";
+import SanityVideo from "../sanity-video.astro";
+
+interface Props {
+  title?: string | null;
+  slug?: string | null;
+  previewVideo?: VideoAsset | null;
+}
+
+const { title, slug, previewVideo } = Astro.props;
+---
+
+<c-work-next class="relative block h-svh w-full">
+  <SanityVideo
+    asset={previewVideo}
+    autoplay
+    loop
+    wrapperClass="cover"
+    class="h-full w-full object-cover"
+  />
+
+  <div class="cover pointer-events-none bg-black/20"></div>
+
+  <!-- Transition hands this block's video to the next hero -->
+  <a
+    href={hrefFor({ _type: "work", slug })}
+    data-transition="work-to-work"
+    data-work-next="ui"
+    class="text-h4 absolute top-1/2 left-1/2 -translate-1/2"
+  >
+    ( Next Project )
+  </a>
+
+  <p
+    data-work-next="ui"
+    class="text-h2 absolute bottom-58 left-1/2 -translate-x-1/2"
+  >
+    {title}
+  </p>
+</c-work-next>
+
+<script>
+  import("./work-next");
+</script>
