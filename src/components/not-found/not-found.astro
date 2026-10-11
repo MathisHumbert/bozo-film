@@ -1,0 +1,51 @@
+---
+import Mouth from "../../icons/mouth.svg";
+
+// enough for the smallest to be invisible when the largest leaves the screen
+const MOUTHS = 3;
+---
+
+<c-not-found class="block">
+  <div aria-hidden="true" class="h-svh"></div>
+  <div aria-hidden="true" class="h-svh"></div>
+
+  <div
+    class="fixed inset-0 flex h-svh w-full items-center justify-center overflow-clip"
+  >
+    <div class="gap-grid relative flex items-center">
+      <h1 class="sr-only">404</h1>
+
+      <span class="text-h4 absolute top-1/2 left-1/2 z-10 -translate-1/2"
+        >( ERROR )</span
+      >
+
+      <span class="text-h1">4</span>
+
+      <div
+        data-not-found="mouths"
+        aria-hidden="true"
+        class="w-col-2 relative aspect-[0.87]"
+      >
+        {
+          Array.from({ length: MOUTHS }, () => (
+            <Mouth
+              data-not-found="mouth"
+              class="absolute inset-0 size-full scale-0"
+            />
+          ))
+        }
+      </div>
+
+      <span class="text-h1">4</span>
+    </div>
+    <a
+      href="/"
+      class="text-title bottom-grid absolute left-1/2 z-10 -translate-x-1/2 underline!"
+      >TAKE ME HOME</a
+    >
+  </div>
+</c-not-found>
+
+<script>
+  import("./not-found");
+</script>

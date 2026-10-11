@@ -1,5 +1,20 @@
 ---
+export const prerender = false;
 
+import Layout from "../layouts/layout.astro";
+import NotFound from "../components/not-found/not-found.astro";
 ---
 
-<div>TODO</div>
+<Layout
+  seo={{
+    metaTitle: "Page not found",
+    metaDescription: null,
+    noIndex: true,
+    ogImage: null,
+  }}
+  background="#000000"
+  color="#FFFFFF"
+  infiniteScroll
+>
+  <NotFound />
+</Layout>
