@@ -53,6 +53,7 @@ const works = (Astro.props.works ?? []).map((work) => {
               <h3>
                 <a
                   href={work.href ?? undefined}
+                  data-transition="home-to-work"
                   class="text-h2 flex items-center gap-24"
                 >
                   <span class="sr-only">{work.title}</span>

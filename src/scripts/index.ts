@@ -4,7 +4,7 @@ import "./classes/Gsap";
 import gsap from "gsap";
 
 import Preloader from "./classes/Preloader";
-import Transition from "./classes/Transition";
+import Transition from "./transitions";
 import AnimationManager from "./classes/AnimationManager";
 import Scroll from "./classes/Scroll";
 import Canvas from "./canvas";
@@ -39,6 +39,8 @@ class App {
         // After loadPage: it waits for the page's custom elements.
         this.canvas.show(window.location.pathname);
       },
+      releaseVideo: (slug) => this.canvas.release(slug),
+      adoptVideo: (slug, video) => this.canvas.adopt(slug, video),
     });
 
     this.preloader.preloadPage();

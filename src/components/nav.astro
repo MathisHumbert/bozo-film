@@ -23,7 +23,10 @@ import Logo from "../icons/logo.svg";
   <nav class="grid grid-cols-3">
     <ul class="flex gap-24">
       <li>
-        <a href="/" class="pointer-events-auto hidden sm:block"
+        <a
+          href="/"
+          data-transition="work-to-home"
+          class="pointer-events-auto hidden sm:block"
           >Film
           <!-- afficher nombre de projet -->
           <span>(12)</span>
@@ -42,7 +45,11 @@ import Logo from "../icons/logo.svg";
       </li>
     </ul>
 
-    <a href="/" class="pointer-events-auto flex justify-center">
+    <a
+      href="/"
+      data-transition="work-to-home"
+      class="pointer-events-auto flex justify-center"
+    >
       <span class="sr-only">Bozo Logo</span>
       <Logo class="h-auto w-112 sm:w-240" aria-hidden="true" />
     </a>

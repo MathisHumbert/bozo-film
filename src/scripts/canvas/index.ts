@@ -3,7 +3,9 @@ import { Camera, Renderer, Transform, type OGLRenderingContext } from "ogl";
 import Home from "./Home";
 
 import { responsive } from "../classes/Responsive";
-import { events } from "../utils/events";
+import { events, type TransitionType } from "../utils/events";
+
+type TransitionStart = { from: string; to: string; type: TransitionType };
 
 export default class Canvas {
   renderer!: Renderer;
@@ -66,9 +68,10 @@ export default class Canvas {
     }
   }
 
-  hide = async ({ from, to }: { from: string; to: string }) => {
+  hide = async ({ from, to, type }: TransitionStart) => {
+    if (type === "home-to-work") return;
+
     if (from === "/" && this.home) {
-      // Nulled first: show() may create the next one before this resolves.
       const home = this.home;
       this.home = null;
 
@@ -77,9 +80,24 @@ export default class Canvas {
     }
   };
 
+  release(slug: string) {
+    return this.home?.release(slug) ?? null;
+  }
+
+  adopt(slug: string, video: HTMLVideoElement) {
+    this.home?.adopt(slug, video);
+  }
+
   /**
    * Events.
    */
+  onTransitionEnd = () => {
+    if (this.pathname === "/" || !this.home) return;
+
+    this.home.destroy();
+    this.home = null;
+  };
+
   onResize = () => {
     this.renderer.dpr = Math.min(window.devicePixelRatio, 2);
     this.renderer.setSize(responsive.screen.width, responsive.screen.height);
@@ -98,6 +116,7 @@ export default class Canvas {
     events.on("resize", this.onResize);
     events.on("end-update", this.update);
     events.on("transition:start", this.hide);
+    events.on("transition:end", this.onTransitionEnd);
   }
 
   /**

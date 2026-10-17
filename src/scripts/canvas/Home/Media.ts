@@ -36,8 +36,6 @@ type UpdateOptions = {
   hero: Hero | null;
 };
 
-// Only for changing page: the switch between the views is eased by
-// c-home-wide and c-home-list, and read here every frame.
 const DURATION = {
   // The videos appearing, and leaving with the page.
   fade: 0.6,
@@ -63,6 +61,7 @@ export default class Media {
   imageResolution = new Vec2(16, 9);
   hasFrame = false;
   uploadedTime = -1;
+  isReleased = false;
 
   constructor({ item, gl, geometry, scene }: MediaOptions) {
     this.item = item;
@@ -180,6 +179,26 @@ export default class Media {
     if (!this.video.paused) this.video.pause();
   }
 
+  release() {
+    const video = this.video;
+
+    this.isReleased = true;
+    this.mesh.visible = false;
+    this.video = createMutedVideo();
+
+    return video;
+  }
+
+  adopt(video: HTMLVideoElement) {
+    this.video.pause();
+    this.video.removeAttribute("src");
+    this.video.load();
+
+    this.video = video;
+    this.hasFrame = false;
+    this.uploadedTime = -1;
+  }
+
   /**
    * Update.
    */
@@ -195,7 +214,6 @@ export default class Media {
       );
     }
 
-    // Only when the frame changed: a paused video costs no upload.
     if (this.video.currentTime !== this.uploadedTime) {
       this.uploadedTime = this.video.currentTime;
       this.texture.needsUpdate = true;
@@ -233,6 +251,8 @@ export default class Media {
    * Loop.
    */
   update({ wide, list, slots, hero }: UpdateOptions) {
+    if (this.isReleased) return;
+
     const slug = this.item.slug;
 
     let frame: Frame | null = null;
@@ -260,7 +280,6 @@ export default class Media {
       isPlaying ||= list.state === "visible" || list.state === "arriving";
     }
 
-    // The travelling work, drawn over both views.
     if (hero && hero.from.slug === slug) {
       const { from, to, progress, seal } = hero;
 

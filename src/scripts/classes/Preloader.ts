@@ -134,11 +134,10 @@ export default class Preloader {
     });
   }
 
-  // `[data-preload]` boxes the WebGL canvas draws into: their poster, and up
-  // to the first frame of their video for "video". Cached as soon as created,
-  // so the canvas reuses them even if the timeout wins.
   private loadTextures({ timeout }: Required<PreloaderOptions>) {
-    const elements = document.querySelectorAll<HTMLElement>("[data-preload]");
+    const elements = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-preload]"),
+    ).filter((element) => !element.closest(".is-previous-container"));
     const tasks: Promise<void>[] = [];
 
     elements.forEach((element) => {

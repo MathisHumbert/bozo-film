@@ -328,6 +328,29 @@ export class HomeList extends HTMLElement {
     events.emit("home:shown", { view: "list" });
   }
 
+  // Work to home: the list opens straight on a work, centred, frozen until
+  // arrive() hands it the page's scroll.
+  park(item: ListItem) {
+    this.isFrozen = true;
+    this.hidden = false;
+    this.state = "arriving";
+
+    this.measure();
+    this.moveTo(item, 0);
+  }
+
+  arrive() {
+    Scroll.resize();
+    Scroll.scrollTo(0, { immediate: true, force: true });
+    this.lastScroll = Scroll.scroll;
+    this.isFrozen = false;
+    ScrollTrigger.refresh();
+
+    this.state = "visible";
+
+    events.emit("home:shown", { view: "list" });
+  }
+
   moveTo(item: ListItem, duration: number) {
     gsap.killTweensOf(this.shift);
 

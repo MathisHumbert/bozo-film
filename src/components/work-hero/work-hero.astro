@@ -3,12 +3,13 @@ import type { VideoAsset } from "../../lib/sanity/types";
 import SanityVideo from "../sanity-video.astro";
 
 interface Props {
+  slug?: string | null;
   title?: string | null;
   previewVideo?: VideoAsset | null;
   mainVideo?: VideoAsset | null;
 }
 
-const { title, previewVideo, mainVideo } = Astro.props;
+const { slug, title, previewVideo, mainVideo } = Astro.props;
 
 function formatDuration(duration?: number | null) {
   if (!duration) return null;
@@ -28,7 +29,7 @@ function formatDuration(duration?: number | null) {
 const duration = formatDuration(mainVideo?.duration);
 ---
 
-<c-work-hero class="relative block h-svh w-full">
+<c-work-hero data-slug={slug} class="relative block h-svh w-full">
   <div class="absolute top-0 left-0 h-[200svh] w-full">
     <div class="sticky top-0 h-svh w-full">
       <div data-work-hero="preview" aria-hidden="true" class="cover">
@@ -41,7 +42,11 @@ const duration = formatDuration(mainVideo?.duration);
         />
       </div>
 
-      <div class="cover pointer-events-none bg-black/20"></div>
+      <div
+        data-work-hero="overlay"
+        class="cover pointer-events-none bg-black/20"
+      >
+      </div>
 
       {
         mainVideo && (

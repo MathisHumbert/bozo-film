@@ -21,6 +21,9 @@ export type UpdateData = {
 
 export type View = "wide" | "list";
 
+export type TransitionType =
+  "default" | "work-to-work" | "home-to-work" | "work-to-home";
+
 export type Bounds = {
   top: number;
   left: number;
@@ -51,7 +54,7 @@ export type HomeLeave = {
 type AppEvents = {
   loaded: void;
   "page:loaded": void;
-  "transition:start": { from: string; to: string };
+  "transition:start": { from: string; to: string; type: TransitionType };
   "transition:end": void;
   resize: ResizeData;
   "start-update": FrameData;

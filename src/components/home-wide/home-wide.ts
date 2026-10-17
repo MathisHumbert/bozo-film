@@ -321,6 +321,26 @@ export class HomeWide extends HTMLElement {
     events.emit("home:shown", { view: "wide" });
   }
 
+  // Work to home: the page opens straight on a work, before it has a scroll
+  // of its own, so the stack is set by hand until arrive().
+  park(index: number) {
+    const progress = index / this.items.length;
+
+    this.stackTl?.scrollTrigger?.disable(false);
+    this.stackTl?.progress(progress);
+    this.setCurrent(progress);
+  }
+
+  // Once the page has its scroll: brought to the same work, nothing moves.
+  arrive(index: number) {
+    Scroll.resize();
+    this.stackTl?.scrollTrigger?.enable(false);
+    Scroll.scrollTo(this.getScroll(index), { immediate: true, force: true });
+    ScrollTrigger.update();
+
+    events.emit("home:shown", { view: "wide" });
+  }
+
   /**
    * Stack.
    */

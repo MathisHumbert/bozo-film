@@ -12,7 +12,6 @@ const FADE = 0.6;
 const SCROLL = 1.2;
 
 export class WorkHero extends HTMLElement {
-  private $preview: HTMLVideoElement | null;
   private $mainWrapper: HTMLElement | null;
   private $main: HTMLVideoElement | null;
   private $title: HTMLElement | null;
@@ -29,7 +28,6 @@ export class WorkHero extends HTMLElement {
   constructor() {
     super();
 
-    this.$preview = this.querySelector('[data-work-hero="preview"] video');
     this.$mainWrapper = this.querySelector('[data-work-hero="main"]');
     this.$main = this.querySelector('[data-work-hero="main"] video');
     this.$title = this.querySelector('[data-work-hero="title"]');
@@ -113,6 +111,15 @@ export class WorkHero extends HTMLElement {
       this.wake();
     }
   };
+
+  /**
+   * Getters
+   */
+  private get $preview() {
+    return this.querySelector<HTMLVideoElement>(
+      '[data-work-hero="preview"] video',
+    );
+  }
 
   /**
    * Methods

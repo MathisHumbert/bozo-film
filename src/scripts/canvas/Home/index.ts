@@ -46,6 +46,16 @@ export default class Home {
     return Promise.all(this.medias.map((media) => media.hide()));
   }
 
+  release(slug: string) {
+    const media = this.medias.find(({ item }) => item.slug === slug);
+
+    return media?.release() ?? null;
+  }
+
+  adopt(slug: string, video: HTMLVideoElement) {
+    this.medias.find(({ item }) => item.slug === slug)?.adopt(video);
+  }
+
   /**
    * Loop.
    */
