@@ -1,15 +1,19 @@
 ---
 import type { VideoAsset } from "../../lib/sanity/types";
 import { hrefFor } from "../../lib/routes";
+import { formatDuration } from "../../lib/video-library/duration";
 import SanityVideo from "../sanity-video.astro";
 
 interface Props {
   title?: string | null;
   slug?: string | null;
   previewVideo?: VideoAsset | null;
+  mainDuration?: number | null;
 }
 
-const { title, slug, previewVideo } = Astro.props;
+const { title, slug, previewVideo, mainDuration } = Astro.props;
+
+const duration = formatDuration(mainDuration);
 ---
 
 <c-work-next class="relative block h-svh w-full">
@@ -23,7 +27,22 @@ const { title, slug, previewVideo } = Astro.props;
 
   <div class="cover pointer-events-none bg-black/20"></div>
 
-  <!-- Transition hands this block's video to the next hero -->
+  {
+    duration && (
+      <time
+        data-work-next="duration"
+        datetime={duration.iso}
+        class="text-title px-grid pointer-events-none absolute top-1/2 right-0 left-0 flex -translate-y-1/2 justify-center"
+      >
+        <span class="sr-only">{duration.label}</span>
+        <span aria-hidden="true" class="flex w-full justify-between">
+          <span>{duration.minutes}</span>
+          <span class="text-right">{duration.seconds}</span>
+        </span>
+      </time>
+    )
+  }
+
   <a
     href={hrefFor({ _type: "work", slug })}
     data-transition="work-to-work"
@@ -35,7 +54,7 @@ const { title, slug, previewVideo } = Astro.props;
 
   <p
     data-work-next="title"
-    class="text-h2 absolute bottom-58 left-1/2 -translate-x-1/2"
+    class="text-h2 px-grid absolute bottom-40 left-1/2 w-full -translate-x-1/2 text-center md:bottom-58"
   >
     {title}
   </p>

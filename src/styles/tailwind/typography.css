@@ -1,42 +1,70 @@
 @utility text-h1 {
-  font-size: 19.2rem;
+  font-size: 8rem;
   line-height: 1;
   letter-spacing: -0.02em;
+
+  @variant md {
+    font-size: 19.2rem;
+  }
 }
 
 @utility text-h2 {
-  font-size: 12rem;
+  font-size: 6.4rem;
   line-height: 1.05;
   letter-spacing: -0.02em;
+
+  @variant md {
+    font-size: 12rem;
+  }
 }
 
 @utility text-h3 {
-  font-size: 5.6rem;
+  font-size: 4rem;
   line-height: 1.05;
   letter-spacing: -0.02em;
+
+  @variant md {
+    font-size: 5.6rem;
+  }
 }
 
 @utility text-h4 {
-  font-size: 2.4rem;
+  font-size: 2rem;
   line-height: 1;
   letter-spacing: -0.02em;
+
+  @variant md {
+    font-size: 2.4rem;
+  }
 }
 
 @utility text-body {
-  font-size: 2.4rem;
+  font-size: 2rem;
   line-height: 1.2;
   letter-spacing: -0.02em;
+
+  @variant md {
+    font-size: 2.4rem;
+  }
 }
 
 @utility text-title {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   line-height: 1.05;
   letter-spacing: -0.02em;
+
+  @variant md {
+    font-size: 1.3rem;
+  }
 }
 
 @utility text-initial {
   font-weight: 400;
-  font-size: 4.2rem;
+  font-size: 3.4rem;
   line-height: 1.05;
   letter-spacing: -0.0225em;
+
+  @variant md {
+    font-size: 4.2rem;
+  }
 }

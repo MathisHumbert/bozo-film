@@ -1,9 +1,13 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
+import type Lenis from "lenis";
+import Snap from "lenis/snap";
 
 import Scroll from "../../scripts/classes/Scroll";
 import { device } from "../../scripts/classes/Device";
 import { mattEasing } from "../../scripts/utils/easing";
+import { reveal } from "../../scripts/utils/reveal";
 import {
   events,
   type Bounds,
@@ -19,6 +23,8 @@ type WideItem = {
   $media: HTMLElement;
   $texts: HTMLElement[];
   $titles: HTMLElement[];
+  $durations: HTMLElement[];
+  $durationLines: HTMLElement[];
   $link: HTMLElement | null;
   split: { value: number };
 };
@@ -26,7 +32,8 @@ type WideItem = {
 const SCALE = 1.25;
 
 const DURATION = {
-  // Scrolls the stack onto a whole video before leaving.
+  // Scrolls the stack onto a whole video before leaving, and when the user
+  // lets go of the scroll.
   settle: 0.6,
   // The view leaving, and the view arriving.
   fadeOut: 0.4,
@@ -35,6 +42,12 @@ const DURATION = {
   morph: 1.2,
   // Closes the gap between the halves, ahead of the morph.
   seal: 0.4,
+  // Page transitions: the current work's link slides through its line, like
+  // the footer's text.
+  linkShow: 0.8,
+  linkHide: 0.4,
+  // Share of one work's scroll the duration takes to roll out, or in.
+  durationRoll: 0.7,
 };
 
 const EASE = {
@@ -42,6 +55,8 @@ const EASE = {
   fade: "power2.out",
   morph: mattEasing,
   seal: "power2.out",
+  linkShow: "expo.out",
+  linkHide: "expo.out",
 };
 
 export class HomeWide extends HTMLElement {
@@ -55,11 +70,22 @@ export class HomeWide extends HTMLElement {
   $clone: HTMLElement | null;
   $cloneMedia: HTMLElement | null;
   $cloneTexts: HTMLElement[];
+  $cloneDurations: HTMLElement[];
+  $cloneDurationLines: HTMLElement[] = [];
+  $indexes: HTMLElement[];
+  indexLines: HTMLElement[][] = [];
 
   stackTl: gsap.core.Timeline | null = null;
   current = 0;
   width = 0;
   height = 0;
+
+  snap: Snap | null = null;
+  snapLenis: Lenis | null = null;
+  removeSnaps: (() => void)[] = [];
+
+  linkSplits: SplitText[] = [];
+  durationSplits: SplitText[] = [];
 
   constructor() {
     super();
@@ -77,6 +103,10 @@ export class HomeWide extends HTMLElement {
       $titles: Array.from(
         $item.querySelectorAll<HTMLElement>('[data-home-wide="title"]'),
       ),
+      $durations: Array.from(
+        $item.querySelectorAll<HTMLElement>('[data-home-wide="duration"]'),
+      ),
+      $durationLines: [],
       $link: $item.querySelector("a"),
       split: { value: 0 },
     }));
@@ -84,6 +114,12 @@ export class HomeWide extends HTMLElement {
     this.$cloneMedia = this.querySelector('[data-home-wide="clone-media"]');
     this.$cloneTexts = Array.from(
       this.querySelectorAll<HTMLElement>('[data-home-wide="clone-text"]'),
+    );
+    this.$cloneDurations = Array.from(
+      this.querySelectorAll<HTMLElement>('[data-home-wide="clone-duration"]'),
+    );
+    this.$indexes = Array.from(
+      this.querySelectorAll<HTMLElement>('[data-home-wide="index"]'),
     );
   }
 
@@ -102,6 +138,13 @@ export class HomeWide extends HTMLElement {
     this.stackTl?.scrollTrigger?.kill();
     this.stackTl?.kill();
     this.tl?.kill();
+    this.snap?.destroy();
+
+    this.linkSplits.forEach((split) => split.revert());
+    this.linkSplits = [];
+
+    this.durationSplits.forEach((split) => split.revert());
+    this.durationSplits = [];
   }
 
   get isEnabled() {
@@ -115,6 +158,7 @@ export class HomeWide extends HTMLElement {
     events.on("resize", this.onResize);
     events.on("home:view", this.onView);
     events.on("home:leave", this.onLeave);
+    events.on("page:revealed", this.reveal);
 
     this.addEventListener("focusin", this.onFocusIn);
   }
@@ -123,6 +167,7 @@ export class HomeWide extends HTMLElement {
     events.off("resize", this.onResize);
     events.off("home:view", this.onView);
     events.off("home:leave", this.onLeave);
+    events.off("page:revealed", this.reveal);
 
     this.removeEventListener("focusin", this.onFocusIn);
   }
@@ -162,10 +207,88 @@ export class HomeWide extends HTMLElement {
   /**
    * Animations.
    */
+
+  reveal = () => {
+    if (!this.isEnabled) return;
+
+    const { $texts, $durationLines } = this.items[this.current];
+
+    reveal([
+      ...$texts,
+      ...$durationLines,
+      ...(this.indexLines[this.current] ?? []),
+    ]);
+  };
+
+  hideLink(tl: gsap.core.Timeline, index: number, position: number) {
+    const speed = device.reducedMotion ? 0 : 1;
+
+    tl.to(
+      this.splitLink(index),
+      {
+        yPercent: 100,
+        duration: DURATION.linkHide * speed,
+        ease: EASE.linkHide,
+      },
+      position,
+    );
+  }
+
+  showLink(tl: gsap.core.Timeline, index: number, position: number) {
+    const speed = device.reducedMotion ? 0 : 1;
+
+    tl.fromTo(
+      this.splitLink(index),
+      { yPercent: 100 },
+      {
+        yPercent: 0,
+        duration: DURATION.linkShow * speed,
+        ease: EASE.linkShow,
+      },
+      position,
+    );
+  }
+
+  splitLink(index: number) {
+    const isClone = index >= this.items.length;
+    const $link = isClone ? this.$cloneTexts[1] : this.items[index].$link;
+
+    if (!$link) return [];
+
+    let split = this.linkSplits.find(
+      (entry) => (entry.elements as HTMLElement[])[0] === $link,
+    );
+
+    if (!split) {
+      split = SplitText.create($link, {
+        type: "lines",
+        mask: "lines",
+        aria: "none",
+      });
+      this.linkSplits.push(split);
+    }
+
+    return split.lines as HTMLElement[];
+  }
+
+  splitDurations($durations: HTMLElement[]) {
+    if (!$durations.length) return [];
+
+    const split = SplitText.create($durations, {
+      type: "lines",
+      mask: "lines",
+      aria: "none",
+    });
+    this.durationSplits.push(split);
+
+    return split.lines as HTMLElement[];
+  }
+
   async hide() {
     const speed = device.reducedMotion ? 0 : 1;
 
     Scroll.stop();
+    this.snap?.stop();
 
     // Settle the stack on a whole video before leaving.
     const scroll = { value: Scroll.scroll };
@@ -314,6 +437,7 @@ export class HomeWide extends HTMLElement {
     Scroll.resize();
     ScrollTrigger.refresh();
     Scroll.resume();
+    this.snap?.start();
 
     this.state = "visible";
     this.hero = null;
@@ -354,17 +478,32 @@ export class HomeWide extends HTMLElement {
         scrub: true,
         invalidateOnRefresh: true,
         onUpdate: ({ progress }) => this.setCurrent(progress),
-        onRefresh: ({ progress }) => this.setCurrent(progress),
+        onRefresh: ({ progress }) => {
+          this.setCurrent(progress);
+          this.createSnap();
+        },
       },
     });
 
     gsap.set(this.items[0].$media, { scale: SCALE });
 
-    this.items.forEach(({ $item, $media, $texts, split }, index) => {
+    this.items.forEach((item) => {
+      item.$durationLines = this.splitDurations(item.$durations);
+    });
+    this.$cloneDurationLines = this.splitDurations(this.$cloneDurations);
+    this.indexLines = this.$indexes.map(($index) =>
+      this.splitDurations([$index]),
+    );
+
+    this.items.forEach((item, index) => {
+      const { $item, $media, $texts, $durationLines, split } = item;
       const next = this.items[index + 1];
       const $next = next ? next.$item : this.$clone;
       const $nextMedia = next ? next.$media : this.$cloneMedia;
       const $nextTexts = next ? next.$texts : this.$cloneTexts;
+      const $nextDurationLines = next
+        ? next.$durationLines
+        : this.$cloneDurationLines;
 
       // The next item's text shows only in the gap between the parting halves.
       this.stackTl!.fromTo(
@@ -391,7 +530,51 @@ export class HomeWide extends HTMLElement {
         { scale: 1, yPercent: 0 },
         index,
       );
+
+      this.stackTl!.to(
+        [...$durationLines, ...(this.indexLines[index] ?? [])],
+        { yPercent: -100, duration: DURATION.durationRoll },
+        index,
+      );
+      this.stackTl!.fromTo(
+        [...$nextDurationLines, ...(this.indexLines[index + 1] ?? [])],
+        { yPercent: 100 },
+        { yPercent: 0, duration: DURATION.durationRoll },
+        index + 1 - DURATION.durationRoll,
+      );
     });
+  }
+
+  createSnap() {
+    const lenis = Scroll.lenis;
+
+    if (!lenis) return;
+
+    if (this.snapLenis !== lenis) {
+      this.snap?.destroy();
+      this.snap = new Snap(lenis, {
+        type: "mandatory",
+        duration: device.reducedMotion ? 0 : DURATION.settle,
+        easing: EASE.settle,
+        debounce: 200,
+      });
+      this.snapLenis = lenis;
+      this.removeSnaps = [];
+    }
+
+    const snap = this.snap!;
+
+    this.removeSnaps.forEach((remove) => remove());
+
+    this.removeSnaps = [...this.items, null].map((_, index) =>
+      snap.add(this.getScroll(index)),
+    );
+
+    if (this.isEnabled) {
+      snap.start();
+    } else {
+      snap.stop();
+    }
   }
 
   setCurrent(progress: number) {

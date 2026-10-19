@@ -177,6 +177,8 @@ export default class Transition {
       Scroll.init();
       Scroll.start();
 
+      events.emit("page:revealed");
+
       await this.animateInDefault();
 
       events.emit("transition:end");

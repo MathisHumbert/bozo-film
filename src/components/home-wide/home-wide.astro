@@ -2,6 +2,7 @@
 import { stegaClean } from "@sanity/client/stega";
 
 import { hrefFor } from "../../lib/routes";
+import { formatDuration } from "../../lib/video-library/duration";
 import type { HomeQueryResult } from "../../../sanity/sanity.types";
 
 type Props = {
@@ -19,10 +20,39 @@ const works = (Astro.props.selectedWorks ?? []).map((work) => {
     href: hrefFor({ _type: work._type, slug: stegaClean(work.slug) }),
     split: Boolean(left && right),
     spaced: title === `${left} ${right}`,
+    duration: formatDuration(work.mainDuration),
   };
 });
 
 const first = works[0];
+
+function toRoman(value: number) {
+  const numerals: [number, string][] = [
+    [50, "L"],
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+
+  let rest = value;
+  let roman = "";
+
+  numerals.forEach(([amount, numeral]) => {
+    while (rest >= amount) {
+      roman += numeral;
+      rest -= amount;
+    }
+  });
+
+  return roman;
+}
+
+const indexes = [...works, first].map((_, index) =>
+  toRoman((index % works.length) + 1),
+);
 ---
 
 {
@@ -36,6 +66,23 @@ const first = works[0];
         style={`height: ${(works.length + 1) * 100}svh`}
       >
         <div class="sticky top-0 h-svh w-full overflow-clip">
+          <span
+            aria-hidden="true"
+            class="text-h4 pointer-events-none absolute top-1/2 left-1/2 -translate-1/2 whitespace-nowrap"
+            style={`z-index: ${works.length + 2}`}
+          >
+            <span class="inline-grid">
+              {indexes.map((numeral) => (
+                <span
+                  data-home-wide="index"
+                  class="col-start-1 row-start-1 text-center"
+                >
+                  ( {numeral} )
+                </span>
+              ))}
+            </span>
+          </span>
+
           {works.map((work, index) => (
             <article
               data-home-wide="item"
@@ -49,9 +96,26 @@ const first = works[0];
                 class="absolute inset-0"
               />
 
+              {work.duration && (
+                <time
+                  datetime={work.duration.iso}
+                  class="text-title px-grid pointer-events-none absolute top-1/2 right-0 left-0 z-2 flex -translate-y-1/2 justify-center text-white"
+                >
+                  <span class="sr-only">{work.duration.label}</span>
+                  <span aria-hidden="true" class="flex w-full justify-between">
+                    <span data-home-wide="duration">
+                      {work.duration.minutes}
+                    </span>
+                    <span data-home-wide="duration" class="text-right">
+                      {work.duration.seconds}
+                    </span>
+                  </span>
+                </time>
+              )}
+
               <h3
                 data-home-wide="text"
-                class="text-h2 absolute bottom-58 left-1/2 z-2 -translate-x-1/2 whitespace-nowrap text-white"
+                class="text-h2 absolute bottom-40 left-1/2 z-2 -translate-x-1/2 whitespace-nowrap text-white md:bottom-58"
               >
                 {work.split ? (
                   <>
@@ -103,6 +167,19 @@ const first = works[0];
             >
               VIEW PROJECT
             </p>
+
+            {first.duration && (
+              <p class="text-title px-grid absolute top-1/2 right-0 left-0 z-2 flex -translate-y-1/2 justify-center text-white">
+                <span class="flex w-full justify-between">
+                  <span data-home-wide="clone-duration">
+                    {first.duration.minutes}
+                  </span>
+                  <span data-home-wide="clone-duration" class="text-right">
+                    {first.duration.seconds}
+                  </span>
+                </span>
+              </p>
+            )}
           </article>
         </div>
       </section>

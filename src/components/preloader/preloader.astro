@@ -1,12 +1,63 @@
 ---
-console.log("preloader.astro");
+const images = [
+  {
+    src: "/preloader-1.png",
+    width: 140,
+    height: 176,
+    class: "w-96 h-121 md:w-140 md:h-176",
+  },
+  {
+    src: "/preloader-2.png",
+    width: 144,
+    height: 203,
+    class: "w-99 h-140 md:w-144 md:h-203",
+  },
+  {
+    src: "/preloader-3.png",
+    width: 114,
+    height: 160,
+    class: "w-78 h-110 md:w-114 md:h-160",
+  },
+  {
+    src: "/preloader-4.png",
+    width: 180,
+    height: 180,
+    class: "w-124 h-124 md:w-180 md:h-180",
+  },
+];
 ---
 
-<c-preloader
-  class="js:flex px-grid z-preloader fixed inset-0 hidden items-end justify-between bg-white pb-64 text-black"
->
-  <p class="text-label uppercase">Loading</p>
-  <p data-preloader="count" class="text-display tabular-nums">00</p>
+<c-preloader class="js:block z-preloader fixed inset-0 hidden">
+  <div
+    data-preloader="panel"
+    class="px-grid p-grid absolute inset-0 flex items-end justify-center bg-black text-white"
+  >
+    <div
+      aria-hidden="true"
+      class="absolute top-1/2 left-1/2 grid size-165 -translate-1/2 place-items-center md:size-240"
+    >
+      {
+        images.map((image, index) => (
+          <img
+            data-preloader="image"
+            src={image.src}
+            width={image.width}
+            height={image.height}
+            alt=""
+            class:list={[
+              "col-start-1 row-start-1",
+              image.class,
+              index !== 0 && "invisible",
+            ]}
+          />
+        ))
+      }
+    </div>
+    <div data-preloader="progress" class="text-title tabular-nums">
+      <span data-preloader="count">00</span>
+      <span>%</span>
+    </div>
+  </div>
 </c-preloader>
 
 <script>

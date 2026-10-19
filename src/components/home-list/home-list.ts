@@ -20,6 +20,12 @@ export type ListItem = {
   $media: HTMLElement | null;
   $video: HTMLElement | null;
   $titles: HTMLElement[];
+  stacked: boolean;
+  extra: number;
+  push: number;
+  position: number;
+  // What render() last wrote, so an unchanged item never touches the DOM.
+  rendered: { y: number; scale: number; extra: number };
   top: number;
   height: number;
   videoWidth: number;
@@ -61,11 +67,14 @@ export class HomeList extends HTMLElement {
   $gradient: HTMLElement | null;
 
   resizeObserver: ResizeObserver | null = null;
+  listSize = { width: 0, height: 0 };
   height = 0;
   distance = 0;
   origin = 0;
   shift = { value: 0 };
   current = -1;
+  // The stacked items with an open video this frame, reused across frames.
+  opening: ListItem[] = [];
   lastScroll = 0;
   isFrozen = false;
 
@@ -84,6 +93,11 @@ export class HomeList extends HTMLElement {
       $titles: Array.from(
         $item.querySelectorAll<HTMLElement>('[data-home-list="title"]'),
       ),
+      stacked: false,
+      extra: 0,
+      push: 0,
+      position: 0,
+      rendered: { y: NaN, scale: NaN, extra: NaN },
       top: 0,
       height: 0,
       videoWidth: 0,
@@ -100,7 +114,7 @@ export class HomeList extends HTMLElement {
 
     this.lastScroll = Scroll.scroll;
 
-    this.resizeObserver = new ResizeObserver(this.measure);
+    this.resizeObserver = new ResizeObserver(this.onListResize);
     this.resizeObserver.observe(this.$list);
 
     this.bindEvents();
@@ -371,7 +385,52 @@ export class HomeList extends HTMLElement {
   /**
    * List.
    */
+  // The stacked items' negative margins are fractional, so an opening video
+  // can move the list's height by a sub-pixel: not a resize.
+  onListResize = ([entry]: ResizeObserverEntry[]) => {
+    const { width, height } = entry.contentRect;
+
+    if (
+      Math.abs(width - this.listSize.width) < 1 &&
+      Math.abs(height - this.listSize.height) < 1
+    ) {
+      return;
+    }
+
+    this.listSize = { width, height };
+    this.measure();
+  };
+
   measure = () => {
+    // A title that would wrap once its video opens is stacked from the start:
+    // halves above and below the video, which opens in height instead.
+    const available = this.$list?.clientWidth ?? 0;
+
+    this.items.forEach((item) => {
+      // Measured closed, then reopened by the render() below.
+      item.$item.style.marginBlock = "";
+      if (item.$media) {
+        item.$media.style.width = "";
+        item.$media.style.height = "";
+      }
+      item.rendered = { y: NaN, scale: NaN, extra: NaN };
+
+      const $link = item.$item.querySelector("a");
+      const gap = $link
+        ? parseFloat(getComputedStyle($link).columnGap) || 0
+        : 0;
+      const titles = item.$titles.reduce(
+        (width, $title) => width + $title.getBoundingClientRect().width,
+        0,
+      );
+      const video = item.$video
+        ? parseFloat(getComputedStyle(item.$video).width) || 0
+        : 0;
+
+      item.stacked = titles + video + gap * 2 > available;
+      item.$item.toggleAttribute("data-stacked", item.stacked);
+    });
+
     this.height = this.$list?.getBoundingClientRect().height ?? 0;
 
     this.items.forEach((item) => {
@@ -394,6 +453,9 @@ export class HomeList extends HTMLElement {
 
     const [first] = this.items;
     this.origin = first.top + first.height / 2 - window.innerHeight / 2;
+
+    // Reopens what was closed to measure, before the frame is painted.
+    this.render();
   };
 
   render() {
@@ -405,26 +467,71 @@ export class HomeList extends HTMLElement {
     let current = this.current;
     let best = Infinity;
 
-    this.items.forEach((item, index) => {
-      const position = this.getPosition(item);
-      const offset = Math.abs(position + item.height / 2 - center) / step;
+    const opening = this.opening;
+    opening.length = 0;
+
+    for (let index = 0; index < this.items.length; index++) {
+      const item = this.items[index];
+      item.position = this.getPosition(item);
+
+      const offset = Math.abs(item.position + item.height / 2 - center) / step;
 
       item.scale = Math.max(0, 1 - offset);
-      item.$item.style.transform = `translate3d(0, ${position - item.top}px, 0)`;
+      item.extra = item.stacked ? item.scale * item.videoHeight : 0;
 
-      if (item.$media) {
-        item.$media.style.width = `${item.scale * item.videoWidth}px`;
-      }
-
-      if (item.$video) {
-        item.$video.style.scale = String(item.scale);
-      }
+      if (item.extra) opening.push(item);
 
       if (offset < best) {
         best = offset;
         current = index;
       }
-    });
+    }
+
+    for (const item of this.items) {
+      const { rendered } = item;
+
+      // An opening stacked item grows around its centre, so its neighbours
+      // make room: half its growth above it, half below.
+      item.push = 0;
+
+      for (const other of opening) {
+        if (other === item) continue;
+
+        item.push +=
+          other.position < item.position ? other.extra / 2 : -other.extra / 2;
+      }
+
+      const y = item.position + item.push - item.top;
+
+      if (y !== rendered.y) {
+        item.$item.style.transform = `translate3d(0, ${y}px, 0)`;
+        rendered.y = y;
+      }
+
+      if (item.scale !== rendered.scale) {
+        if (item.$video) {
+          item.$video.style.scale = String(item.scale);
+        }
+
+        if (item.$media && !item.stacked) {
+          item.$media.style.width = `${item.scale * item.videoWidth}px`;
+        }
+
+        rendered.scale = item.scale;
+      }
+
+      // The negative margins keep its place in the flow, so the list's height
+      // never changes and nothing reflows.
+      if (item.stacked && item.extra !== rendered.extra) {
+        item.$item.style.marginBlock = `${-item.extra / 2}px`;
+
+        if (item.$media) {
+          item.$media.style.height = `${item.extra}px`;
+        }
+
+        rendered.extra = item.extra;
+      }
+    }
 
     if (current !== this.current) {
       this.items[this.current]?.$item.removeAttribute("data-active");
@@ -448,7 +555,7 @@ export class HomeList extends HTMLElement {
 
     const width = item.videoWidth * item.scale;
     const height = item.videoHeight * item.scale;
-    const centerY = this.getPosition(item) + item.videoY;
+    const centerY = this.getPosition(item) + item.push + item.videoY;
 
     return {
       top: centerY - height / 2,

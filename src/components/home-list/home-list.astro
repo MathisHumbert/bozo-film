@@ -42,30 +42,38 @@ const works = (Astro.props.works ?? []).map((work) => {
     <section aria-labelledby="home-list-title">
       <h2 id="home-list-title" class="sr-only">All Works</h2>
 
-      <ul data-home-list="list" class="flex flex-col items-center gap-4 pb-4">
+      <ul
+        data-home-list="list"
+        class="flex flex-col items-center gap-2 pb-2 md:gap-4 md:pb-4"
+      >
         {
           works.map((work) => (
             <li
               data-home-list="item"
               data-slug={work.slug}
               data-featured={featured.includes(work.slug ?? "") || undefined}
+              class="group"
             >
               <h3>
                 <a
                   href={work.href ?? undefined}
                   data-transition="home-to-work"
-                  class="text-h2 flex items-center gap-24"
+                  class="text-h2 flex items-center gap-8 group-data-stacked:flex-col md:gap-24"
                 >
                   <span class="sr-only">{work.title}</span>
 
-                  <span data-home-list="title" aria-hidden="true">
+                  <span
+                    data-home-list="title"
+                    aria-hidden="true"
+                    class="whitespace-nowrap"
+                  >
                     {work.titleLeft}
                   </span>
 
                   <span
                     data-home-list="media"
                     aria-hidden="true"
-                    class="flex w-0 shrink-0 justify-center"
+                    class="flex w-0 shrink-0 items-center justify-center group-data-stacked:h-0 group-data-stacked:w-auto"
                   >
                     <span
                       data-home-list="video"
@@ -78,11 +86,15 @@ const works = (Astro.props.works ?? []).map((work) => {
                             ? "poster"
                             : undefined
                       }
-                      class="block aspect-video w-240 shrink-0 scale-0"
+                      class="block aspect-video w-100 shrink-0 scale-0 md:w-240"
                     />
                   </span>
 
-                  <span data-home-list="title" aria-hidden="true">
+                  <span
+                    data-home-list="title"
+                    aria-hidden="true"
+                    class="whitespace-nowrap"
+                  >
                     {work.titleRight}
                   </span>
                 </a>

@@ -60,7 +60,8 @@ export const allWorkQuery = defineQuery(
     titleLeft,
     titleRight,
     "slug": slug.current,
-    previewVideo-> ${videoAssetProjection}
+    previewVideo-> ${videoAssetProjection},
+    "mainDuration": mainVideo->duration
   }`,
 );
 

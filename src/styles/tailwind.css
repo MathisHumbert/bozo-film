@@ -12,12 +12,13 @@
   --breakpoint-md: 768px;
 
   --sizes-desktop: 1600;
-  --sizes-mobile: 175;
+  --sizes-mobile: 375;
   --sizes-multiplier: 10;
 
   --grid-count: 12;
   --grid-gutter: 0.9rem;
   --grid-margin: 1.8rem;
+
   --grid-width: calc(100vw - (2 * var(--grid-margin)));
   --grid-column-width: calc(
     (var(--grid-width) - ((var(--grid-count) - 1) * var(--grid-gutter))) /

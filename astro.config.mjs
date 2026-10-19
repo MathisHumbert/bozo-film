@@ -90,7 +90,16 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      include: ["@sanity/visual-editing/react", "@sanity/mutate"],
+      // Reached only through components' lazy import(): bundled up front, or
+      // finding them mid-session re-optimises and 504s ("Outdated Optimize
+      // Dep"), and the custom element that needs them never loads.
+      include: [
+        "@sanity/visual-editing/react",
+        "@sanity/mutate",
+        "lenis/snap",
+        "gsap/SplitText",
+        "@swup/parallel-plugin",
+      ],
     },
   },
 });

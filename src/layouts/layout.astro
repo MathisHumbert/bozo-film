@@ -82,7 +82,7 @@ const isDev = import.meta.env.DEV;
   <body>
     <script src="../scripts/index.ts"></script>
 
-    {site?.showPreloader && <Preloader />}
+    {!isDev && site?.showPreloader && <Preloader />}
 
     <Progress />
 

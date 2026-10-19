@@ -60,57 +60,82 @@ function widthFor(media?: { width?: number | null; height?: number | null }) {
   />
 
   <div class="z-above relative bg-black">
-    <section class="flex justify-center py-128 text-center">
-      <div class="w-col-4 flex flex-col items-center gap-64">
-        <div class="flex flex-col gap-32">
+    <section class="px-grid flex justify-center py-96 text-center md:py-128">
+      <h2 class="sr-only">Project Details</h2>
+      <div class="md:w-col-4 flex flex-col items-center gap-56 md:gap-64">
+        <div class="flex flex-col gap-24 md:gap-32">
           <span class="text-title uppercase">Project</span>
-          <h2 class="text-h3">{work.title}</h2>
+          <h3 class="text-h3">{work.title}</h3>
         </div>
 
-        <p class="text-body first-letter:text-initial">{work.excerpt}</p>
+        {
+          work.excerpt && (
+            <p class="text-body first-letter:text-initial">{work.excerpt}</p>
+          )
+        }
 
-        <div class="flex flex-col gap-32">
-          <h2 class="text-title uppercase">Category</h2>
-          <ul class="text-h4 flex flex-col gap-8">
-            {work.category?.map((category) => <li>{category}</li>)}
-          </ul>
-        </div>
+        {
+          work.category && work.category.length > 0 && (
+            <div class="flex flex-col gap-24 md:gap-32">
+              <h3 class="text-title uppercase">Category</h3>
+              <ul class="text-h4 flex flex-col gap-8">
+                {work.category?.map((category) => (
+                  <li>{category}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
 
-        <div class="flex flex-col gap-32">
-          <h2 class="text-title uppercase">Roles</h2>
-          <ul class="text-h4 flex flex-col gap-8">
-            {work.roles?.map((role) => <li>{role}</li>)}
-          </ul>
-        </div>
+        {
+          work.roles && work.roles.length > 0 && (
+            <div class="flex flex-col gap-24 md:gap-32">
+              <h3 class="text-title uppercase">Roles</h3>
+              <ul class="text-h4 flex flex-col gap-8">
+                {work.roles?.map((role) => (
+                  <li>{role}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
       </div>
     </section>
 
-    <section class="flex flex-col items-center gap-32 py-96">
-      {
-        work.media?.map((item) =>
-          item._type === "image" ? (
-            <SanityImage image={item} class:list={["h-auto", widthFor(item)]} />
-          ) : (
-            <SanityVideo
-              asset={item.asset}
-              autoplay={item.autoplay}
-              loop={item.loop}
-              controls={item.controls}
-              class:list={["h-auto", widthFor(item.asset)]}
-            />
-          ),
-        )
-      }
-    </section>
-  </div>
+    {
+      work.media && work.media.length > 0 && (
+        <section class="flex flex-col items-center gap-16 py-64 md:gap-32 md:py-96">
+          <h2 class="sr-only">List of Media</h2>
 
-  {
-    next && (
-      <WorkNext
-        title={next.title}
-        slug={next.slug}
-        previewVideo={next.previewVideo}
-      />
-    )
-  }
+          {work.media?.map((item) =>
+            item._type === "image" ? (
+              <SanityImage
+                image={item}
+                class:list={["h-auto", widthFor(item)]}
+              />
+            ) : (
+              <SanityVideo
+                asset={item.asset}
+                autoplay={item.autoplay}
+                loop={item.loop}
+                controls={item.controls}
+                class:list={["h-auto", widthFor(item.asset)]}
+              />
+            ),
+          )}
+        </section>
+      )
+    }
+
+    {
+      next && (
+        <WorkNext
+          title={next.title}
+          slug={next.slug}
+          previewVideo={next.previewVideo}
+          mainDuration={next.mainDuration}
+        />
+      )
+    }
+  </div>
 </Layout>

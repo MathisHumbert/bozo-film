@@ -8,8 +8,10 @@ interface Props {
 const { description } = Astro.props;
 ---
 
-<c-about-bio class="flex flex-col items-center gap-48 pt-358">
-  <h2 class="text-h4">( Bio )</h2>
+<c-about-bio
+  class="mwd flex flex-col items-center gap-32 pt-178 md:gap-48 md:pt-358"
+>
+  <h2 class="text-h4 uppercase">( Bio )</h2>
 
   <div class="relative">
     <div
@@ -21,14 +23,17 @@ const { description } = Astro.props;
         data-about-bio="anchor"
         class="absolute inset-x-0 top-0 flex h-0 items-center justify-center will-change-transform"
       >
-        <Illustration data-about-bio="illustration" class="size-160" />
+        <Illustration
+          data-about-bio="illustration"
+          class="size-100 md:size-160"
+        />
       </div>
     </div>
 
     <p
       data-about-bio="text"
       style="white-space: pre-line"
-      class="text-h2 w-col-8 text-center"
+      class="text-h2 w-col-10 md:w-col-8 text-center"
     >
       {description}
     </p>

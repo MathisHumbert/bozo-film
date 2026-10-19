@@ -77,6 +77,10 @@ export default class Scroll {
     this.loco?.scrollTo(target, options);
   }
 
+  static get lenis() {
+    return this.loco?.lenisInstance ?? null;
+  }
+
   static get scroll() {
     return this.loco?.lenisInstance?.scroll ?? 0;
   }

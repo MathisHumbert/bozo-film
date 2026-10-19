@@ -1,7 +1,27 @@
+import gsap from "gsap";
+import { SplitText } from "gsap/SplitText";
+
+import { device } from "../../scripts/classes/Device";
 import { events, type View } from "../../scripts/utils/events";
+import { reveal } from "../../scripts/utils/reveal";
+
+// Page transitions: the text slides through its line. The page appearing
+// uses the shared reveal, see utils/reveal.
+const DURATION = {
+  show: 0.8,
+  hide: 0.4,
+};
+
+const EASE = {
+  show: "expo.out",
+  hide: "expo.out",
+};
 
 export class HomeFooter extends HTMLElement {
   $toggles: HTMLButtonElement[];
+  $year: HTMLElement | null;
+
+  splits: SplitText[] = [];
 
   view: View = "wide";
   isTransitioning = false;
@@ -12,14 +32,38 @@ export class HomeFooter extends HTMLElement {
     this.$toggles = Array.from(
       this.querySelectorAll('[data-home-footer="toggle"]'),
     );
+    this.$year = this.querySelector('[data-home-footer="year"]');
   }
 
   connectedCallback() {
+    this.splits = this.$items.map(($item) =>
+      SplitText.create($item, {
+        type: "lines",
+        mask: "lines",
+        aria: "none",
+        autoSplit: true,
+      }),
+    );
+
     this.bindEvents();
   }
 
   disconnectedCallback() {
     this.unbindEvents();
+
+    this.splits.forEach((split) => split.revert());
+    this.splits = [];
+  }
+
+  /**
+   * Getters.
+   */
+  get $items() {
+    return [...this.$toggles, ...(this.$year ? [this.$year] : [])];
+  }
+
+  get $lines() {
+    return this.splits.flatMap((split) => split.lines as HTMLElement[]);
   }
 
   /**
@@ -31,6 +75,7 @@ export class HomeFooter extends HTMLElement {
     );
 
     events.on("home:shown", this.onShown);
+    events.on("page:revealed", this.reveal);
   }
 
   unbindEvents() {
@@ -39,6 +84,7 @@ export class HomeFooter extends HTMLElement {
     );
 
     events.off("home:shown", this.onShown);
+    events.off("page:revealed", this.reveal);
   }
 
   onToggle = (event: MouseEvent) => {
@@ -59,6 +105,39 @@ export class HomeFooter extends HTMLElement {
     this.view = view;
     this.press(view);
   };
+
+  /**
+   * Animations.
+   */
+  reveal = () => {
+    reveal(this.$items);
+  };
+
+  show(tl: gsap.core.Timeline, position: number) {
+    const speed = device.reducedMotion ? 0 : 1;
+
+    tl.fromTo(
+      this.$lines,
+      { yPercent: 100 },
+      {
+        yPercent: 0,
+        duration: DURATION.show * speed,
+        ease: EASE.show,
+        stagger: 0.03,
+      },
+      position,
+    );
+  }
+
+  hide(tl: gsap.core.Timeline, position: number) {
+    const speed = device.reducedMotion ? 0 : 1;
+
+    tl.to(
+      this.$lines,
+      { yPercent: 100, duration: DURATION.hide * speed, ease: EASE.hide },
+      position,
+    );
+  }
 
   /**
    * Methods.

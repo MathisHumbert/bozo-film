@@ -27,12 +27,10 @@ const works = allWork ?? [];
   infiniteScroll
 >
   <h1 class="sr-only">{home?.title ?? "Home"}</h1>
-
   <HomeWide selectedWorks={selectedWorks} />
   <HomeList
     works={works}
     featured={selectedWorks.map((work) => stegaClean(work.slug) ?? "")}
   />
-
   <HomeFooter />
 </Layout>

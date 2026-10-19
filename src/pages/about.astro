@@ -26,16 +26,18 @@ const phone = stegaClean(about?.contact?.phone);
 
   <AboutBio description={about?.description} />
 
-  <section class="px-grid gap-gutter relative grid grid-cols-2 pt-240">
+  <section
+    class="px-grid gap-gutter relative grid grid-cols-2 pt-192 md:pt-240"
+  >
     <div class="sticky top-[calc(var(--grid-margin)*3)] h-fit">
-      <div class="w-col-2 aspect-[0.8] bg-black"></div>
+      <div class="w-col-4 md:w-col-2 aspect-[0.8] bg-black"></div>
     </div>
 
-    <div class="flex flex-col gap-96">
-      <div class="gap-gutter grid grid-cols-2">
-        <div class="flex flex-col gap-32">
-          <h2 class="text-title">Services</h2>
-          <ul class="flex flex-col gap-8">
+    <div class="flex flex-col gap-48 md:gap-96">
+      <div class="md:gap-gutter grid grid-cols-1 gap-48 md:grid-cols-2">
+        <div class="flex flex-col gap-24 md:gap-32">
+          <h2 class="text-title uppercase">Services</h2>
+          <ul class="flex flex-col gap-4 md:gap-8">
             {
               about?.services?.map((service) => (
                 <li class="text-h4">{service}</li>
@@ -44,9 +46,9 @@ const phone = stegaClean(about?.contact?.phone);
           </ul>
         </div>
 
-        <div class="flex flex-col gap-32">
-          <h2 class="text-title">Select Clients</h2>
-          <ul class="flex flex-col gap-8">
+        <div class="flex flex-col gap-24 md:gap-32">
+          <h2 class="text-title uppercase">Select Clients</h2>
+          <ul class="flex flex-col gap-4 md:gap-8">
             {about?.clients?.map((client) => <li class="text-h4">{client}</li>)}
           </ul>
         </div>
@@ -54,16 +56,17 @@ const phone = stegaClean(about?.contact?.phone);
 
       {
         about?.socialLinks?.length ? (
-          <div class="flex flex-col gap-32">
-            <h2 class="text-title">Follow me</h2>
+          <div class="flex flex-col gap-24 md:gap-32">
+            <h2 class="text-title uppercase">Follow me</h2>
 
-            <ul class="flex flex-col gap-8">
+            <ul class="flex flex-col gap-4 md:gap-8">
               {about.socialLinks.map((link) => (
                 <li class="text-h4">
                   <a
                     href={link.href ?? undefined}
                     target={link.external ? "_blank" : undefined}
                     rel={link.external ? "noopener noreferrer" : undefined}
+                    class="underline"
                   >
                     {link.label}
                   </a>
@@ -76,7 +79,7 @@ const phone = stegaClean(about?.contact?.phone);
 
       {
         (email || phone) && (
-          <div class="text-h4 flex flex-col gap-8">
+          <div class="text-h4 flex flex-col gap-4 md:gap-8">
             {email && <a href={`mailto:${email}`}>{email}</a>}
             {phone && (
               <a href={`tel:${phone.replace(/[^\d+]/g, "")}`}>{phone}</a>
@@ -87,7 +90,9 @@ const phone = stegaClean(about?.contact?.phone);
     </div>
   </section>
 
-  <section class="text-h1 flex flex-col items-center gap-64 py-240 text-center">
+  <section
+    class="text-h1 px-grid flex flex-col items-center gap-48 py-160 text-center md:gap-64 md:py-240"
+  >
     <h2 class="sr-only">Showreel</h2>
 
     <p style="white-space: pre-line" class="">{about?.reel?.textTop}</p>
@@ -96,7 +101,7 @@ const phone = stegaClean(about?.contact?.phone);
         asset={about?.reel?.preview}
         autoplay
         loop
-        class="w-col-4 aspect-video"
+        class="md:w-col-4 aspect-video"
       />
 
       <span
@@ -107,9 +112,14 @@ const phone = stegaClean(about?.contact?.phone);
     <p style="white-space: pre-line">{about?.reel?.textBottom}</p>
   </section>
 
-  <section class="text-tile p-grid grid grid-cols-3">
+  <section
+    class="text-title p-grid grid grid-cols-2 gap-y-8 pt-0 uppercase md:grid-cols-3"
+  >
     <span>© Copyright BOZO FILM.</span>
-    <span class="flex justify-center"><Year format="roman" /></span>
+    <span
+      class="order-first col-span-2 flex justify-center md:order-0 md:col-span-1"
+      ><Year format="roman" /></span
+    >
     <span class="flex justify-end">All rights reserved</span>
   </section>
 </Layout>

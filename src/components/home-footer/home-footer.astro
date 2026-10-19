@@ -11,7 +11,7 @@ const views = [
   <div
     class="p-grid text-title pointer-events-none fixed right-0 bottom-0 left-0 flex justify-between"
   >
-    <div class="flex gap-24">
+    <div class="flex gap-12 md:gap-24">
       {
         views.map((view, index) => (
           <button
@@ -39,7 +39,7 @@ const views = [
       }
     </div>
 
-    <span>© <Year /></span>
+    <span data-home-footer="year">© <Year /></span>
   </div>
 </c-home-footer>
 

@@ -66,6 +66,7 @@ class App {
     await document.querySelector<PreloaderElement>("c-preloader")?.play();
 
     document.documentElement.classList.add("is-ready");
+    events.emit("page:revealed");
 
     Scroll.start();
   };

@@ -9,6 +9,7 @@ import { store } from "../utils/store";
 import type { Video } from "../../components/video/video";
 import type { HomeWide } from "../../components/home-wide/home-wide";
 import type { HomeList } from "../../components/home-list/home-list";
+import type { HomeFooter } from "../../components/home-footer/home-footer";
 import type { Containers } from ".";
 
 const DURATION = {
@@ -140,6 +141,8 @@ export default class HomeToWork {
       this.animateWide(wide, morph);
     }
 
+    previous.querySelector<HomeFooter>("c-home-footer")?.hide(morph.tl, 0);
+
     await morph.tl;
 
     const video = this.releaseVideo(target.slug);
@@ -227,7 +230,7 @@ export default class HomeToWork {
     const isClone = target.index >= wide.items.length;
     const item = wide.items[target.index % wide.items.length];
     const $media = isClone ? wide.$cloneMedia : item.$media;
-    const [$title, ...$rest] = isClone ? wide.$cloneTexts : item.$texts;
+    const [$title] = isClone ? wide.$cloneTexts : item.$texts;
 
     if ($media) {
       wide.hero = {
@@ -246,18 +249,14 @@ export default class HomeToWork {
         wide.hero,
         { progress: 1, duration: DURATION.morph * speed, ease: EASE.morph },
         0,
-      )
-        .to(
-          wide.alpha,
-          { value: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
-          0,
-        )
-        .to(
-          $rest,
-          { opacity: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
-          0,
-        );
+      ).to(
+        wide.alpha,
+        { value: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
+        0,
+      );
     }
+
+    wide.hideLink(tl, target.index, 0);
 
     if (end && $title) {
       const start = $title.getBoundingClientRect();

@@ -9,6 +9,7 @@ import { store } from "../utils/store";
 
 import type { Video } from "../../components/video/video";
 import type { HomeWide } from "../../components/home-wide/home-wide";
+import type { HomeFooter } from "../../components/home-footer/home-footer";
 import type { HomeList, ListItem } from "../../components/home-list/home-list";
 import type { Containers } from ".";
 
@@ -94,7 +95,7 @@ export default class WorkToHome {
       '[data-work-hero="title"]',
     );
     const $heroUi = $hero.querySelectorAll<HTMLElement>(HERO_UI);
-    const $footer = next.querySelector<HTMLElement>("c-home-footer");
+    const footer = next.querySelector<HomeFooter>("c-home-footer");
 
     const morph: Morph = {
       tl: gsap.timeline({ paused: true }),
@@ -117,9 +118,7 @@ export default class WorkToHome {
       $arriving = this.parkList(list, listItem, wide, morph);
     }
 
-    if ($footer) {
-      $arriving.push($footer);
-    }
+    footer?.show(morph.tl, (DURATION.morph - DURATION.fadeIn) * morph.speed);
 
     gsap.set($arriving, { opacity: 0 });
     morph.tl.to(
@@ -160,7 +159,7 @@ export default class WorkToHome {
     wide.park(index);
 
     const item = wide.items[index];
-    const [$title, ...$rest] = item.$texts;
+    const [$title] = item.$texts;
 
     wide.hero = {
       from: { slug, bounds: screen, split: 0, order: 3 },
@@ -186,7 +185,9 @@ export default class WorkToHome {
       );
     }
 
-    return [...$rest];
+    wide.showLink(tl, index, (DURATION.morph - DURATION.fadeIn) * speed);
+
+    return [];
   }
 
   parkList(
