@@ -187,8 +187,9 @@ export default class Preloader {
   }
 
   private loadWebComponents({ timeout }: Required<PreloaderOptions>) {
-    // Visual Editing mounts <sanity-visual-editing> and only defines it inside
-    // the Studio: waiting for it holds every page for the whole timeout.
+    // In draft mode, Visual Editing mounts <sanity-visual-editing> but only
+    // defines it inside the Studio: an editor browsing the site outside it
+    // would wait the whole timeout on every page. Visitors never get the tag.
     const tags = new Set(
       Array.from(
         document.querySelectorAll(":not(:defined):not(sanity-visual-editing)"),

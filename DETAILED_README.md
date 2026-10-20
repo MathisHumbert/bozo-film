@@ -39,18 +39,27 @@ so it executes per request rather than at build time. There is no `getStaticPath
 on-demand route cannot enumerate its paths, so an unknown slug is handled explicitly:
 
 ```ts
-const work = await loadQuery(workQuery, { slug });
+const work = await loadQuery(
+  workQuery,
+  { slug },
+  { cookies: Astro.cookies },
+);
 
 if (!work) return new Response(null, { status: 404 });
 ```
 
 **2. `loadQuery` fetches.** `src/lib/sanity/load-query.ts` is the only place that talks to
-Sanity from the front end. It decides three things:
+Sanity from the front end. Everything hangs on one question — is this browser in draft
+mode, i.e. does it carry the `sanity-preview-perspective` cookie — and it decides three
+things:
 
-- **perspective** — `drafts` when Visual Editing is on, `published` otherwise
-- **stega** — the invisible Unicode that makes Visual Editing clickable, on unless the
-  caller passes `{ stega: false }`
-- **token** — only sent when Visual Editing is on, since drafts need authentication
+- **perspective** — the cookie's value (`drafts`, or a release) in draft mode,
+  `published` otherwise
+- **stega** — the invisible Unicode that makes Visual Editing clickable; draft mode
+  only, and even then off when the caller passes `{ stega: false }`
+- **token** — draft mode only, since drafts need authentication
+
+A call without `cookies` always loads published content.
 
 It deliberately does _not_ set `useCdn`. The Sanity integration pins it to `false`, and
 that has to hold: right after a purge the page re-renders immediately, and `apicdn` can

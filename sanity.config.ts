@@ -25,7 +25,15 @@ export default defineConfig({
       resolve,
       // The site's own origin when embedded at /admin, SANITY_STUDIO_SITE_URL
       // when the Studio is served on its own.
-      previewUrl: siteUrl(),
+      previewUrl: {
+        initial: siteUrl(),
+        // Sets the draft mode cookies for this browser only, after checking
+        // the secret Presentation writes to the dataset.
+        previewMode: {
+          enable: "/api/draft-mode/enable",
+          disable: "/api/draft-mode/disable",
+        },
+      },
     }),
     media(),
     videoLibrary({

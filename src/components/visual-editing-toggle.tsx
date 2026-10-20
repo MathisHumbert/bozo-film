@@ -1,46 +1,17 @@
-import { useState } from "react";
 import { useIsPresentationTool } from "@sanity/visual-editing/react";
 import { VisualEditingComponent } from "@sanity/astro/visual-editing/component";
 
-const STORAGE_KEY = "sanity-visual-editing-disabled";
-
-interface Props {
-  enabled: boolean;
-}
-
-export default function VisualEditingToggle({ enabled }: Props) {
+export default function VisualEditingToggle() {
   const isPresentationTool = useIsPresentationTool();
-  const [disabled, setDisabled] = useState(
-    () => window.localStorage.getItem(STORAGE_KEY) === "1",
-  );
-
-  if (!enabled) return null;
-
-  // Outside the Presentation Tool's iframe, give the editor a way to turn the
-  // hover overlay off (and back on) for this browser, since it otherwise stays
-  // on indefinitely once PUBLIC_SANITY_VISUAL_EDITING_ENABLED is set.
-  const showToggle = isPresentationTool === false;
-
-  const toggle = () => {
-    const next = !disabled;
-
-    if (next) {
-      window.localStorage.setItem(STORAGE_KEY, "1");
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-
-    setDisabled(next);
-  };
 
   return (
     <>
-      {!disabled && <VisualEditingComponent />}
+      <VisualEditingComponent />
 
-      {showToggle && (
-        <button
-          type="button"
-          onClick={toggle}
+      {isPresentationTool === false && (
+        <a
+          href="/api/draft-mode/disable"
+          data-no-swup
           style={{
             position: "fixed",
             bottom: "1rem",
@@ -51,12 +22,11 @@ export default function VisualEditingToggle({ enabled }: Props) {
             background: "#101112",
             color: "#fff",
             fontSize: "1rem",
-            border: "none",
-            cursor: "pointer",
+            textDecoration: "none",
           }}
         >
-          {disabled ? "Enable visual editing" : "Disable visual editing"}
-        </button>
+          Exit draft mode
+        </a>
       )}
     </>
   );

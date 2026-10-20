@@ -177,8 +177,7 @@ Development), with production values:
 | Variable                                            | Notes                                                                  |
 | :-------------------------------------------------- | :--------------------------------------------------------------------- |
 | `PUBLIC_SANITY_PROJECT_ID`, `PUBLIC_SANITY_DATASET` |                                                                        |
-| `PUBLIC_SANITY_VISUAL_EDITING_ENABLED`              | `false` in Production, `true` in Preview if you want overlays          |
-| `SANITY_API_READ_TOKEN`                             | required whenever Visual Editing is on                                 |
+| `SANITY_API_READ_TOKEN`                             | Viewer token — draft mode and Visual Editing                           |
 | `PUBLIC_SITE_URL`                                   | the production origin, e.g. `https://example.com`                      |
 | `SANITY_REVALIDATE_SECRET`                          | same value as the Sanity webhook's secret                              |
 | `VERCEL_BYPASS_TOKEN`                               | **must be available at build time** — it is read in `astro.config.mjs` |

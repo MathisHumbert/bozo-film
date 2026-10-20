@@ -11,13 +11,18 @@ import WorkNext from "../../components/work-next/work-next.astro";
 
 const { slug } = Astro.params;
 
-const work = await loadQuery(workBySlugQuery, { slug });
+const work = await loadQuery(
+  workBySlugQuery,
+  { slug },
+  { cookies: Astro.cookies },
+);
 
 if (!work) {
   return new Response(null, { status: 404 });
 }
 
-const allWork = (await loadQuery(allWorkQuery)) ?? [];
+const allWork =
+  (await loadQuery(allWorkQuery, {}, { cookies: Astro.cookies })) ?? [];
 const currentIndex = allWork.findIndex((item) => item.slug === slug);
 const next =
   currentIndex !== -1 && allWork.length > 1

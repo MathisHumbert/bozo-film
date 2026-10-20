@@ -9,7 +9,7 @@ import SanityVideo from "../components/sanity-video.astro";
 import Year from "../components/year/year.astro";
 import AboutBio from "../components/about-bio/about-bio.astro";
 
-const about = await loadQuery(aboutQuery);
+const about = await loadQuery(aboutQuery, {}, { cookies: Astro.cookies });
 
 const email = stegaClean(about?.contact?.email);
 const phone = stegaClean(about?.contact?.phone);

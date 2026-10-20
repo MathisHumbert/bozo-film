@@ -11,8 +11,8 @@ import HomeWide from "../components/home-wide/home-wide.astro";
 import HomeList from "../components/home-list/home-list.astro";
 import HomeFooter from "../components/home-footer/home-footer.astro";
 
-const home = await loadQuery(homeQuery);
-const allWork = await loadQuery(allWorkQuery);
+const home = await loadQuery(homeQuery, {}, { cookies: Astro.cookies });
+const allWork = await loadQuery(allWorkQuery, {}, { cookies: Astro.cookies });
 
 const selectedWorks = home?.featuredWork ?? [];
 const works = allWork ?? [];

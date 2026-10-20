@@ -53,6 +53,8 @@ export default defineConfig({
       // would be cached like a page and never execute.
       exclude: [
         "/api/revalidate",
+        "/api/draft-mode/enable",
+        "/api/draft-mode/disable",
         "/api/media/sign-upload",
         "/api/media/sign-renditions",
         "/api/media/delete",

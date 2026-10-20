@@ -108,6 +108,30 @@ development file bakes `localhost` into the client's Studio.
 A Studio outside `/admin` calls the media API cross-origin, so add its origin to
 `STUDIO_ORIGINS` (and to the bucket's own CORS rules). Empty means same-origin only.
 
+## Draft mode
+
+Visual Editing is **per browser, never per deployment**. There is no env flag: a visitor
+is in draft mode when they carry the `sanity-preview-perspective` cookie, and only then
+does `loadQuery` fetch drafts with the token and stega, and the layout render the
+overlay.
+
+- **`/api/draft-mode/enable`** — Presentation calls it (`previewMode` in
+  `sanity.config.ts`) with a secret it has just written to the dataset.
+  `validatePreviewUrl` reads it back with `SANITY_API_READ_TOKEN`; only then are the
+  cookies set. A guessed URL gets a 401.
+- **`/api/draft-mode/disable`** — expires them. The _Exit draft mode_ link outside the
+  Studio points here.
+- **Two cookies, not one.** `__prerender_bypass = VERCEL_BYPASS_TOKEN` is what makes
+  Vercel skip the ISR cache for that browser; without it the editor gets the cached
+  published page. Both are `SameSite=None; Secure`, plus `Partitioned` when framed
+  (Safari), and the disable route clears both variants — hence hand-written headers in
+  `src/lib/sanity/draft-mode.ts` rather than `Astro.cookies`.
+- **Every `loadQuery` call in a page passes `{ cookies: Astro.cookies }`.** Forget it and
+  that query stays published in draft mode. The llms endpoints deliberately do not.
+
+Check: `curl -s localhost:3000/` must contain no stega characters and no
+`visual-editing-toggle` island.
+
 ## ISR revalidation
 
 `output: "static"` on the Vercel adapter, with pages served from the ISR cache and
@@ -338,9 +362,9 @@ the value in the Studio or a machine parses it:
 - `buildMeta()` and `buildGraph()` each **end** with `stegaClean()`, because the page
   queries must keep stega for Visual Editing.
 
-Add a new machine-readable endpoint and it needs one of the two. Verify with
-`PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true` and grep the output for invisible
-characters — a non-zero count means a chokepoint was missed.
+Add a new machine-readable endpoint and it needs one of the two. Verify by
+requesting it with `Cookie: sanity-preview-perspective=drafts` and grepping the output
+for invisible characters — a non-zero count means a chokepoint was missed.
 
 ### Prerender, deliberately split
 
