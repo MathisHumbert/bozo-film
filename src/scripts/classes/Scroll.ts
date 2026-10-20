@@ -13,6 +13,8 @@ export default class Scroll {
   static isActive = false;
 
   static init() {
+    const infinite = Boolean(document.querySelector("[data-scroll-infinite]"));
+
     this.loco = new LocomotiveScroll({
       autoStart: false,
       initCustomTicker: (render) => {
@@ -31,7 +33,10 @@ export default class Scroll {
         lerp: device.reducedMotion ? 1 : 0.125,
         wheelMultiplier: 0.75,
         touchMultiplier: 0.75,
-        infinite: Boolean(document.querySelector("[data-scroll-infinite]")),
+        infinite,
+        // Lenis only loops the scroll it drives: a native touch scroll stops
+        // at the bottom of the page, so on touch it has to take over too.
+        syncTouch: infinite && !isDev,
       },
     });
 

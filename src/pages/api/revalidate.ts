@@ -12,20 +12,19 @@ interface WebhookDoc {
 
 const AI_PATHS = ["/llms.txt", "/llms-full.txt"];
 
-const SITE_WIDE_TYPES = ["settings", "video-asset"];
+const SITE_WIDE_TYPES = ["settings", "video-asset", "work", "about"];
 
 async function resolvePaths(doc: WebhookDoc): Promise<string[]> {
   const type = doc._type;
+  const own = isRoutable(type) ? hrefFor(doc) : null;
 
   if (SITE_WIDE_TYPES.includes(type ?? "")) {
-    return [...allPaths(), ...AI_PATHS];
+    return [...new Set([...allPaths(), ...(own ? [own] : []), ...AI_PATHS])];
   }
 
   if (!isRoutable(type)) return [];
 
   const paths = new Set(AI_PATHS);
-
-  const own = hrefFor(doc);
 
   if (own) {
     paths.add(own);

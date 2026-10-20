@@ -5,9 +5,10 @@ import { stegaClean } from "@sanity/client/stega";
 import { loadQuery } from "../lib/sanity/load-query";
 import { aboutQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
-import SanityVideo from "../components/sanity-video.astro";
 import Year from "../components/year/year.astro";
 import AboutBio from "../components/about-bio/about-bio.astro";
+import AboutReel from "../components/about-reel/about-reel.astro";
+import Underline from "../components/underline.astro";
 
 const about = await loadQuery(aboutQuery, {}, { cookies: Astro.cookies });
 
@@ -66,9 +67,11 @@ const phone = stegaClean(about?.contact?.phone);
                     href={link.href ?? undefined}
                     target={link.external ? "_blank" : undefined}
                     rel={link.external ? "noopener noreferrer" : undefined}
-                    class="underline"
+                    data-animation="link"
+                    class="relative pb-[max(1px,0.1rem)]"
                   >
                     {link.label}
+                    <Underline />
                   </a>
                 </li>
               ))}
@@ -80,9 +83,25 @@ const phone = stegaClean(about?.contact?.phone);
       {
         (email || phone) && (
           <div class="text-h4 flex flex-col gap-4 md:gap-8">
-            {email && <a href={`mailto:${email}`}>{email}</a>}
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                data-animation="link"
+                class="relative w-fit pb-[max(1px,0.1rem)]"
+              >
+                {email}
+                <Underline />
+              </a>
+            )}
             {phone && (
-              <a href={`tel:${phone.replace(/[^\d+]/g, "")}`}>{phone}</a>
+              <a
+                href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+                data-animation="link"
+                class="relative w-fit pb-[max(1px,0.1rem)]"
+              >
+                {phone}
+                <Underline />
+              </a>
             )}
           </div>
         )
@@ -96,19 +115,9 @@ const phone = stegaClean(about?.contact?.phone);
     <h2 class="sr-only">Showreel</h2>
 
     <p style="white-space: pre-line" class="">{about?.reel?.textTop}</p>
-    <div class="relative">
-      <SanityVideo
-        asset={about?.reel?.preview}
-        autoplay
-        loop
-        class="md:w-col-4 aspect-video"
-      />
 
-      <span
-        class="text-h4 absolute top-1/2 left-1/2 -translate-1/2 text-white uppercase"
-        >( Play Reel )</span
-      >
-    </div>
+    <AboutReel preview={about?.reel?.preview} main={about?.reel?.main} />
+
     <p style="white-space: pre-line">{about?.reel?.textBottom}</p>
   </section>
 

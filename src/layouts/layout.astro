@@ -8,7 +8,7 @@ import type { SeoPage } from "../lib/seo/types";
 import { canonicalUrl } from "../lib/seo/url";
 import type { SeoFields } from "../lib/sanity/types";
 
-import Nav from "../components/nav.astro";
+import Nav from "../components/nav/nav.astro";
 import Noise from "../components/noise.astro";
 import Preloader from "../components/preloader/preloader.astro";
 import Progress from "../components/progress/progress.astro";
@@ -88,7 +88,7 @@ const isDev = import.meta.env.DEV;
     <Noise />
 
     <div class="site">
-      <Nav links={site?.nav} />
+      <Nav links={site?.nav} workCount={site?.workCount} about={site?.about} />
 
       {
         isDev ? (

@@ -1,6 +1,7 @@
 ---
 import { stegaClean } from "@sanity/client/stega";
 
+import Underline from "../underline.astro";
 import { hrefFor } from "../../lib/routes";
 import { formatDuration } from "../../lib/video-library/duration";
 import type { HomeQueryResult } from "../../../sanity/sanity.types";
@@ -145,10 +146,14 @@ const indexes = [...works, first].map((_, index) =>
               <a
                 data-home-wide="text"
                 data-transition="home-to-work"
+                data-animation="link"
                 href={work.href ?? "#"}
-                class="text-title absolute bottom-20 left-1/2 z-2 -translate-x-1/2 text-white underline!"
+                class="text-title absolute bottom-20 left-1/2 z-2 -translate-x-1/2 pb-[max(1px,0.1rem)] text-white"
               >
-                VIEW PROJECT
+                <span data-home-wide="link-label" class="block">
+                  VIEW PROJECT
+                </span>
+                <Underline />
               </a>
             </article>
           ))}
@@ -182,9 +187,13 @@ const indexes = [...works, first].map((_, index) =>
 
             <p
               data-home-wide="clone-text"
-              class="text-title absolute bottom-20 left-1/2 z-2 -translate-x-1/2 text-white"
+              data-animation="link"
+              class="text-title absolute bottom-20 left-1/2 z-2 -translate-x-1/2 pb-[max(1px,0.1rem)] text-white"
             >
-              VIEW PROJECT
+              <span data-home-wide="link-label" class="block">
+                VIEW PROJECT
+              </span>
+              <Underline />
             </p>
 
             {first.duration && (

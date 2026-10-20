@@ -1,0 +1,162 @@
+---
+import { stegaClean } from "@sanity/client/stega";
+
+import Modal from "../modal/modal.astro";
+import Underline from "../underline.astro";
+import type { SiteSettingsQueryResult } from "../../../sanity/sanity.types";
+
+interface Link {
+  label: string | null;
+  href: string | null;
+  external: boolean;
+}
+
+interface Props {
+  links?: Link[] | null;
+  workCount?: number | null;
+  about?: NonNullable<SiteSettingsQueryResult>["about"];
+}
+
+const { links, workCount, about } = Astro.props;
+
+const email = stegaClean(about?.contact?.email);
+
+import Logo from "../../icons/logo.svg";
+---
+
+<c-nav class="contents">
+  <header
+    data-nav
+    class="p-grid z-navigation text-title pointer-events-none fixed top-0 right-0 left-0 uppercase"
+  >
+    <nav class="grid grid-cols-3">
+      <ul class="flex gap-24">
+        <li class="pointer-events-auto hidden md:block">
+          <a href="/" data-transition="work-to-home"
+            ><span data-animation="split-hover">Film</span>
+            {
+              workCount ? (
+                <span class="relative top-[-0.5em] ml-4 text-[0.6em] leading-none">
+                  {workCount}
+                </span>
+              ) : null
+            }
+          </a>
+        </li>
+        <li class="pointer-events-auto hidden md:block">
+          <a href="/photo"
+            ><span data-animation="split-hover">Photo</span>
+            <span class="relative top-[-0.5em] ml-4 text-[0.6em] leading-none"
+              >8</span
+            >
+          </a>
+        </li>
+        <li class="pointer-events-auto md:hidden">
+          <button
+            data-modal-open="menu"
+            type="button"
+            class="text-title uppercase"
+            ><span data-animation="split-hover">Menu</span></button
+          >
+        </li>
+      </ul>
+
+      <a
+        href="/"
+        data-transition="work-to-home"
+        class="pointer-events-auto flex justify-center"
+      >
+        <span class="sr-only">Bozo Logo</span>
+        <Logo class="h-auto w-112 md:w-240" aria-hidden="true" />
+      </a>
+
+      <ul class="flex justify-end gap-24">
+        <li>
+          <a href="/about" class="pointer-events-auto hidden md:block"
+            ><span data-animation="split-hover">Bio</span></a
+          >
+        </li>
+        {
+          email && (
+            <li>
+              <a href={`mailto:${email}`} class="pointer-events-auto">
+                <span data-animation="split-hover">Contact</span>
+              </a>
+            </li>
+          )
+        }
+      </ul>
+    </nav>
+  </header>
+</c-nav>
+
+<Modal name="menu" labelledby="menu-title">
+  <div
+    class="p-grid flex min-h-dvh flex-col justify-between bg-white text-black"
+  >
+    <div class="grid grid-cols-3">
+      <div>
+        <button data-modal-close type="button" class="text-title uppercase"
+          >Close</button
+        >
+      </div>
+      <a
+        href="/"
+        data-transition="work-to-home"
+        class="pointer-events-auto flex justify-center"
+      >
+        <span class="sr-only">Bozo Logo</span>
+        <Logo class="h-auto w-112" aria-hidden="true" />
+      </a>
+      <div></div>
+    </div>
+
+    <nav
+      aria-label="Menu"
+      class="flex shrink-0 flex-col items-center justify-center text-center"
+    >
+      <ul class="text-h2 flex flex-col gap-8">
+        <li>
+          <a href="/" data-modal-reveal
+            >Film
+            {
+              workCount ? (
+                <span class="relative top-[-1.9em] mx-[0.4em] text-[0.25em] leading-none">
+                  {workCount}
+                </span>
+              ) : null
+            }
+          </a>
+        </li>
+        <li>
+          <a href="/photo" data-modal-reveal
+            >Photo
+            <span
+              class="relative top-[-1.9em] mx-[0.4em] text-[0.25em] leading-none"
+              >8</span
+            >
+          </a>
+        </li>
+        <li>
+          <a href="/about" data-modal-reveal>Bio</a>
+        </li>
+      </ul>
+    </nav>
+
+    {
+      email && (
+        <a
+          href={`mailto:${email}`}
+          class="text-title relative mx-auto pb-[max(1px,0.1rem)] uppercase"
+        >
+          <span data-modal-reveal class="block">{email}</span>
+          <Underline />
+        </a>
+      )
+    }
+  </div>
+</Modal>
+
+<script>
+  import("./nav");
+</script>

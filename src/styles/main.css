@@ -1,6 +1,6 @@
 html {
-  font-size: calc(100vw / var(--sizes-mobile) * 10);
-  /* font-size: clamp(9px, calc(100vw / var(--sizes-mobile) * 10), 12px); */
+  /* font-size: calc(100vw / var(--sizes-mobile) * 10); */
+  font-size: clamp(9px, calc(100vw / var(--sizes-mobile) * 10), 12px);
   font-family: var(--font-feature-display-condensed);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,8 +18,8 @@ html::-webkit-scrollbar {
 
 @media (min-width: theme(--breakpoint-md)) {
   html {
-    font-size: calc(100vw / var(--sizes-desktop) * 10);
-    /* font-size: clamp(7px, calc(100vw / var(--sizes-desktop) * 10), 12px); */
+    /* font-size: calc(100vw / var(--sizes-desktop) * 10); */
+    font-size: clamp(7px, calc(100vw / var(--sizes-desktop) * 10), 12px);
   }
 }
 

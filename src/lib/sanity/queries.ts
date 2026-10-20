@@ -113,6 +113,8 @@ export const aboutQuery = defineQuery(`*[_type == "about"][0]{
 export const siteSettingsQuery = defineQuery(`*[_type == "settings"][0]{
   showPreloader,
   nav[] ${linkProjection},
+  "workCount": count(*[_type == "work" && defined(slug.current)]),
+  "about": *[_type == "about"][0]{ contact{ email } },
   siteIdentity{
     entityType,
     name,

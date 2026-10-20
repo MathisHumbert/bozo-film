@@ -1,5 +1,5 @@
-import { events } from "../scripts/utils/events";
-import { reveal } from "../scripts/utils/reveal";
+import { events } from "../../scripts/utils/events";
+import { reveal } from "../../scripts/utils/reveal";
 
 export class Nav extends HTMLElement {
   $items: HTMLElement[];

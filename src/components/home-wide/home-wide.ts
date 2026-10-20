@@ -43,9 +43,10 @@ const DURATION = {
   // Closes the gap between the halves, ahead of the morph.
   seal: 0.4,
   // Page transitions: the current work's link slides through its line, like
-  // the footer's text.
+  // the footer's text, and its underline draws in a beat later.
   linkShow: 0.8,
   linkHide: 0.4,
+  underlineAt: 0.2,
   // Share of one work's scroll the duration takes to roll out, or in.
   durationRoll: 0.7,
 };
@@ -218,6 +219,17 @@ export class HomeWide extends HTMLElement {
       ...$durationLines,
       ...(this.indexLines[this.current] ?? []),
     ]);
+
+    gsap.fromTo(
+      this.getUnderlines(this.current),
+      { scaleX: 0, transformOrigin: "left" },
+      {
+        scaleX: 1,
+        duration: device.reducedMotion ? 0 : DURATION.linkShow,
+        delay: device.reducedMotion ? 0 : DURATION.underlineAt,
+        ease: EASE.linkShow,
+      },
+    );
   };
 
   hideLink(tl: gsap.core.Timeline, index: number, position: number) {
@@ -229,6 +241,15 @@ export class HomeWide extends HTMLElement {
         yPercent: 100,
         duration: DURATION.linkHide * speed,
         ease: EASE.linkHide,
+      },
+      position,
+    ).to(
+      this.getLink(index)?.querySelectorAll("[data-link-line]") ?? [],
+      {
+        scaleX: 0,
+        duration: DURATION.linkHide * speed,
+        ease: EASE.linkHide,
+        overwrite: "auto",
       },
       position,
     );
@@ -246,12 +267,34 @@ export class HomeWide extends HTMLElement {
         ease: EASE.linkShow,
       },
       position,
+    ).fromTo(
+      this.getUnderlines(index),
+      { scaleX: 0, transformOrigin: "left" },
+      {
+        scaleX: 1,
+        duration: DURATION.linkShow * speed,
+        ease: EASE.linkShow,
+      },
+      position + DURATION.underlineAt * speed,
+    );
+  }
+
+  getLink(index: number) {
+    return index >= this.items.length
+      ? this.$cloneTexts[1]
+      : this.items[index].$link;
+  }
+
+  getUnderlines(index: number) {
+    return (
+      this.getLink(index)?.querySelectorAll('[data-link-line="first"]') ?? []
     );
   }
 
   splitLink(index: number) {
-    const isClone = index >= this.items.length;
-    const $link = isClone ? this.$cloneTexts[1] : this.items[index].$link;
+    const $link = this.getLink(index)?.querySelector<HTMLElement>(
+      '[data-home-wide="link-label"]',
+    );
 
     if (!$link) return [];
 

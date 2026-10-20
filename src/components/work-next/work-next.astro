@@ -58,11 +58,11 @@ const spaced = stegaClean(title) === `${left} ${right}`;
     href={hrefFor({ _type: "work", slug })}
     data-transition="work-to-work"
     data-work-next="ui"
-    class="text-h4 absolute top-1/2 left-1/2 -translate-1/2"
+    class="text-h4 absolute top-1/2 left-1/2 -translate-1/2 uppercase"
   >
     <span class="block overflow-clip">
       <span data-work-next="line" class="block whitespace-nowrap">
-        ( Next Project )
+        ( <span data-animation="split-hover">Next Project</span> )
       </span>
     </span>
   </a>

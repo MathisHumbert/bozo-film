@@ -7,6 +7,7 @@ import { gsap } from "gsap";
 
 import Scroll from "../classes/Scroll";
 import { events, type TransitionType } from "../utils/events";
+import type { Modal } from "../../components/modal/modal";
 
 import WorkToWork from "./WorkToWork";
 import HomeToWork from "./HomeToWork";
@@ -17,6 +18,14 @@ const isDev = import.meta.env.MODE === "development";
 const INCOMING_CLASS = "is-incoming-container";
 
 export type Containers = { previous: HTMLElement; next: HTMLElement };
+
+function getModals() {
+  return Array.from(document.querySelectorAll<Modal>("c-modal"));
+}
+
+function closeModals() {
+  return Promise.all(getModals().map((modal) => modal.close()));
+}
 
 type PageTransition = {
   prepare: (link: HTMLAnchorElement) => Promise<string> | null;
@@ -112,6 +121,22 @@ export default class Transition {
 
     if (!link || !type || type === "default") return;
 
+    if (getModals().some((modal) => modal.isOpen)) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      await closeModals();
+
+      const prepared = this.transitions[type]?.prepare(link);
+
+      if (prepared) {
+        this.pendingType = type;
+      }
+
+      this.swup.navigate(prepared ? await prepared : link.href);
+      return;
+    }
+
     const prepared = this.transitions[type]?.prepare(link);
 
     if (!prepared) return;
@@ -128,16 +153,17 @@ export default class Transition {
   /**
    * Hooks, in the order a visit runs them
    */
-  private onVisitStart = (visit: Visit) => {
+  private onVisitStart = async (visit: Visit) => {
     this.type = visit.history.popstate ? "default" : this.pendingType;
     this.pendingType = "default";
 
     if (!this.isParallel()) {
       visit.animation.parallel = false;
-      return;
+    } else {
+      visit.scroll.reset = false;
     }
 
-    visit.scroll.reset = false;
+    await closeModals();
   };
 
   private onAnimationOutStart = async (visit: Visit) => {

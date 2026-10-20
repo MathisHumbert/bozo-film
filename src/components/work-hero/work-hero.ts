@@ -237,7 +237,13 @@ export class WorkHero extends HTMLElement {
   }
 
   private setLabel(label: string) {
-    if (this.$label) {
+    if (!this.$label) return;
+
+    const $halves = this.$label.querySelectorAll("[data-split-half]");
+
+    if ($halves.length) {
+      $halves.forEach(($half) => ($half.textContent = label));
+    } else {
       this.$label.textContent = label;
     }
   }

@@ -1,5 +1,6 @@
 ---
 import Mouth from "../../icons/mouth.svg";
+import Underline from "../underline.astro";
 
 // enough for the smallest to be invisible when the largest leaves the screen
 const MOUTHS = 3;
@@ -40,8 +41,9 @@ const MOUTHS = 3;
     </div>
     <a
       href="/"
-      class="text-title bottom-grid absolute left-1/2 z-10 -translate-x-1/2 underline!"
-      >TAKE ME HOME</a
+      data-animation="link"
+      class="text-title bottom-grid absolute left-1/2 z-10 -translate-x-1/2 pb-[max(1px,0.1rem)]"
+      >TAKE ME HOME<Underline /></a
     >
   </div>
 </c-not-found>
