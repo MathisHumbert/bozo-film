@@ -187,9 +187,12 @@ export default class Preloader {
   }
 
   private loadWebComponents({ timeout }: Required<PreloaderOptions>) {
+    // Visual Editing mounts <sanity-visual-editing> and only defines it inside
+    // the Studio: waiting for it holds every page for the whole timeout.
     const tags = new Set(
-      Array.from(document.querySelectorAll(":not(:defined)"), (el) =>
-        el.tagName.toLowerCase(),
+      Array.from(
+        document.querySelectorAll(":not(:defined):not(sanity-visual-editing)"),
+        (el) => el.tagName.toLowerCase(),
       ),
     );
 

@@ -21,6 +21,9 @@ const DURATION = {
   // The home leaving, the hero's own UI arriving.
   fadeOut: 0.4,
   fadeIn: 0.6,
+  // The centre label and the duration sliding through their line.
+  rollOut: 0.4,
+  rollIn: 0.8,
 };
 
 const EASE = {
@@ -28,10 +31,8 @@ const EASE = {
   center: "expo.out",
   morph: mattEasing,
   fade: "power2.out",
+  roll: "expo.out",
 };
-
-const HERO_UI =
-  '[data-work-hero="overlay"], [data-work-hero="duration"], [data-work-hero="toggle"]';
 
 type Target = { slug: string; index: number };
 
@@ -40,7 +41,11 @@ type Morph = {
   target: Target;
   screen: Bounds;
   end: DOMRect | undefined;
+  halves: HTMLElement[];
   speed: number;
+  // Wide shows the same duration in the same place: it stays, the hero's
+  // only rolls in when coming from the list.
+  keepsDuration: boolean;
 };
 
 export default class HomeToWork {
@@ -120,7 +125,15 @@ export default class HomeToWork {
     const $heroTitle = next.querySelector<HTMLElement>(
       '[data-work-hero="title"]',
     );
-    const $heroUi = [...next.querySelectorAll<HTMLElement>(HERO_UI)];
+    const $overlay = next.querySelector<HTMLElement>(
+      '[data-work-hero="overlay"]',
+    );
+    const $durationLines = [
+      ...next.querySelectorAll<HTMLElement>('[data-work-hero="duration-line"]'),
+    ];
+    const $toggleLines = [
+      ...next.querySelectorAll<HTMLElement>('[data-work-hero="toggle-line"]'),
+    ];
 
     const morph: Morph = {
       tl: gsap.timeline(),
@@ -132,7 +145,11 @@ export default class HomeToWork {
         height: window.innerHeight,
       },
       end: $heroTitle?.getBoundingClientRect(),
+      halves: [
+        ...next.querySelectorAll<HTMLElement>('[data-work-hero="half"]'),
+      ],
       speed: device.reducedMotion ? 0 : 1,
+      keepsDuration: false,
     };
 
     if (list && !list.hidden) {
@@ -149,20 +166,40 @@ export default class HomeToWork {
 
     if (video && to) to.adopt(video);
 
-    gsap.set($heroUi, { opacity: 0 });
+    const $rolling = morph.keepsDuration
+      ? $toggleLines
+      : [...$durationLines, ...$toggleLines];
+
+    gsap.set($overlay, { opacity: 0 });
+    gsap.set($rolling, { yPercent: 100 });
     gsap.set(next, { autoAlpha: 1 });
 
-    await gsap.to($heroUi, {
-      opacity: 1,
-      duration: DURATION.fadeIn * morph.speed,
-      ease: EASE.fade,
-      stagger: 0.05,
-    });
+    await gsap
+      .timeline()
+      .to(
+        $overlay,
+        {
+          opacity: 1,
+          duration: DURATION.fadeIn * morph.speed,
+          ease: EASE.fade,
+        },
+        0,
+      )
+      .to(
+        $rolling,
+        {
+          yPercent: 0,
+          duration: DURATION.rollIn * morph.speed,
+          ease: EASE.roll,
+          stagger: 0.05,
+        },
+        0,
+      );
 
-    gsap.set($heroUi, { clearProps: "opacity" });
+    gsap.set([$overlay, ...$rolling], { clearProps: "opacity,transform" });
   }
 
-  animateList(list: HomeList, { tl, target, screen, end, speed }: Morph) {
+  animateList(list: HomeList, { tl, target, screen, halves, speed }: Morph) {
     const item = list.items.find(({ slug }) => slug === target.slug);
     const bounds = item && list.getBounds(item);
 
@@ -196,41 +233,50 @@ export default class HomeToWork {
         0,
       );
 
-    const [$left, $right] = item.$titles;
+    // Each half onto the hero's own: stacked or not, on one line or two.
+    if (halves.length !== item.$titles.length) {
+      tl.to(
+        item.$titles,
+        { opacity: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
+        0,
+      );
+      return;
+    }
 
-    if (!end || !$left || !$right) return;
+    item.$titles.forEach(($title, index) => {
+      const start = $title.getBoundingClientRect();
+      const end = halves[index].getBoundingClientRect();
 
-    const left = $left.getBoundingClientRect();
-    const right = $right.getBoundingClientRect();
-    const offsetY = (rect: DOMRect) =>
-      end.top + end.height / 2 - (rect.top + rect.height / 2);
-
-    tl.to(
-      $left,
-      {
-        x: end.left - left.left,
-        y: offsetY(left),
-        duration: DURATION.morph * speed,
-        ease: EASE.morph,
-      },
-      0,
-    ).to(
-      $right,
-      {
-        x: end.right - right.right,
-        y: offsetY(right),
-        duration: DURATION.morph * speed,
-        ease: EASE.morph,
-      },
-      0,
-    );
+      tl.to(
+        $title,
+        {
+          x: end.left - start.left,
+          y: end.top - start.top,
+          duration: DURATION.morph * speed,
+          ease: EASE.morph,
+        },
+        0,
+      );
+    });
   }
 
-  animateWide(wide: HomeWide, { tl, target, screen, end, speed }: Morph) {
+  animateWide(wide: HomeWide, morph: Morph) {
+    const { tl, target, screen, end, speed } = morph;
     const isClone = target.index >= wide.items.length;
     const item = wide.items[target.index % wide.items.length];
     const $media = isClone ? wide.$cloneMedia : item.$media;
     const [$title] = isClone ? wide.$cloneTexts : item.$texts;
+
+    morph.keepsDuration = isClone
+      ? wide.$cloneDurationLines.length > 0
+      : item.$durationLines.length > 0;
+
+    // "( I )" leaves its line; "( WATCH )" takes it once the hero is in.
+    tl.to(
+      wide.indexLines[target.index] ?? [],
+      { yPercent: -100, duration: DURATION.rollOut * speed, ease: EASE.roll },
+      0,
+    );
 
     if ($media) {
       wide.hero = {

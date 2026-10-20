@@ -12,18 +12,15 @@ const DURATION = {
   scroll: 1,
   // The next block's title travelling to the hero's.
   morph: 1.2,
-  // The next block's link leaving, the hero's own UI arriving.
-  fadeOut: 0.4,
-  fadeIn: 0.6,
+  // "( Next Project )" leaving its line, "( WATCH )" taking it.
+  rollOut: 0.4,
+  rollIn: 0.8,
 };
 
 const EASE = {
   morph: mattEasing,
-  fade: "power2.out",
+  roll: "expo.out",
 };
-
-const NEXT_UI = '[data-work-next="ui"]';
-const HERO_UI = '[data-work-hero="duration"], [data-work-hero="toggle"]';
 
 export default class WorkToWork {
   prepare(link: HTMLAnchorElement) {
@@ -47,7 +44,10 @@ export default class WorkToWork {
     const from = previous.querySelector<Video>("c-work-next c-video");
     const to = next.querySelector<Video>('[data-work-hero="preview"] c-video');
 
-    const $heroUi = next.querySelectorAll<HTMLElement>(HERO_UI);
+    // The duration is the same, in the same place: it stays through the swap.
+    const $toggleLines = next.querySelectorAll<HTMLElement>(
+      '[data-work-hero="toggle-line"]',
+    );
     const $nextTitle = previous.querySelector<HTMLElement>(
       '[data-work-next="title"]',
     );
@@ -59,8 +59,8 @@ export default class WorkToWork {
     const tl = gsap.timeline();
 
     tl.to(
-      previous.querySelectorAll(NEXT_UI),
-      { autoAlpha: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
+      previous.querySelectorAll('[data-work-next="line"]'),
+      { yPercent: -100, duration: DURATION.rollOut * speed, ease: EASE.roll },
       0,
     );
 
@@ -89,16 +89,15 @@ export default class WorkToWork {
       to.adopt(video);
     }
 
-    gsap.set($heroUi, { opacity: 0 });
+    gsap.set($toggleLines, { yPercent: 100 });
     gsap.set(next, { autoAlpha: 1 });
 
-    await gsap.to($heroUi, {
-      opacity: 1,
-      duration: DURATION.fadeIn * speed,
-      ease: EASE.fade,
-      stagger: 0.05,
+    await gsap.to($toggleLines, {
+      yPercent: 0,
+      duration: DURATION.rollIn * speed,
+      ease: EASE.roll,
     });
 
-    gsap.set($heroUi, { clearProps: "opacity" });
+    gsap.set($toggleLines, { clearProps: "transform" });
   }
 }

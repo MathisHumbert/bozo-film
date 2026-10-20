@@ -81,6 +81,8 @@ export const workBySlugQuery =
   defineQuery(`*[_type == "work" && slug.current == $slug][0]{
   _updatedAt,
   title,
+  titleLeft,
+  titleRight,
   excerpt,
   category,
   roles,

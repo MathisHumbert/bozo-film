@@ -21,21 +21,23 @@ const DURATION = {
   // The hero's own UI leaving, the rest of the home arriving.
   fadeOut: 0.4,
   fadeIn: 0.6,
+  // The centre label and the duration sliding through their line.
+  rollOut: 0.4,
+  rollIn: 0.8,
 };
 
 const EASE = {
   morph: mattEasing,
   fade: "power2.out",
+  roll: "expo.out",
 };
-
-const HERO_UI =
-  '[data-work-hero="overlay"], [data-work-hero="duration"], [data-work-hero="toggle"]';
 
 type Morph = {
   tl: gsap.core.Timeline;
   slug: string;
   screen: Bounds;
   start: DOMRect | undefined;
+  halves: HTMLElement[];
   speed: number;
 };
 
@@ -94,7 +96,17 @@ export default class WorkToHome {
     const $heroTitle = $hero.querySelector<HTMLElement>(
       '[data-work-hero="title"]',
     );
-    const $heroUi = $hero.querySelectorAll<HTMLElement>(HERO_UI);
+    const $overlay = $hero.querySelector<HTMLElement>(
+      '[data-work-hero="overlay"]',
+    );
+    const $durationLines = [
+      ...$hero.querySelectorAll<HTMLElement>(
+        '[data-work-hero="duration-line"]',
+      ),
+    ];
+    const $toggleLines = [
+      ...$hero.querySelectorAll<HTMLElement>('[data-work-hero="toggle-line"]'),
+    ];
     const footer = next.querySelector<HomeFooter>("c-home-footer");
 
     const morph: Morph = {
@@ -107,6 +119,9 @@ export default class WorkToHome {
         height: window.innerHeight,
       },
       start: $heroTitle?.getBoundingClientRect(),
+      halves: [
+        ...$hero.querySelectorAll<HTMLElement>('[data-work-hero="half"]'),
+      ],
       speed: device.reducedMotion ? 0 : 1,
     };
 
@@ -129,11 +144,31 @@ export default class WorkToHome {
 
     this.arrival = { view, index: wideIndex };
 
-    await gsap.to($heroUi, {
-      opacity: 0,
-      duration: DURATION.fadeOut * morph.speed,
-      ease: EASE.fade,
-    });
+    // Wide shows the same duration in the same place: the hero's stays until
+    // the swap. The list has none, so it leaves with the label.
+    const $rolling =
+      view === "wide" ? $toggleLines : [...$durationLines, ...$toggleLines];
+
+    await gsap
+      .timeline()
+      .to(
+        $overlay,
+        {
+          opacity: 0,
+          duration: DURATION.fadeOut * morph.speed,
+          ease: EASE.fade,
+        },
+        0,
+      )
+      .to(
+        $rolling,
+        {
+          yPercent: -100,
+          duration: DURATION.rollOut * morph.speed,
+          ease: EASE.roll,
+        },
+        0,
+      );
 
     const video = from?.release();
 
@@ -187,6 +222,14 @@ export default class WorkToHome {
 
     wide.showLink(tl, index, (DURATION.morph - DURATION.fadeIn) * speed);
 
+    // "( WATCH )" has left its line: "( I )" takes it.
+    tl.fromTo(
+      wide.indexLines[index] ?? [],
+      { yPercent: 100 },
+      { yPercent: 0, duration: DURATION.rollIn * speed, ease: EASE.roll },
+      (DURATION.morph - DURATION.fadeIn) * speed,
+    );
+
     return [];
   }
 
@@ -194,7 +237,7 @@ export default class WorkToHome {
     list: HomeList,
     item: ListItem,
     wide: HomeWide | null,
-    { tl, slug, screen, start, speed }: Morph,
+    { tl, slug, screen, halves, speed }: Morph,
   ) {
     if (wide) {
       wide.hidden = true;
@@ -227,30 +270,26 @@ export default class WorkToHome {
       (DURATION.morph - DURATION.fadeIn) * speed,
     );
 
-    const [$left, $right] = item.$titles;
+    // Each half from the hero's own: stacked or not, on one line or two.
+    if (halves.length === item.$titles.length) {
+      item.$titles.forEach(($title, index) => {
+        const start = halves[index].getBoundingClientRect();
+        const end = $title.getBoundingClientRect();
 
-    if (start && $left && $right) {
-      const left = $left.getBoundingClientRect();
-      const right = $right.getBoundingClientRect();
-      const offsetY = (rect: DOMRect) =>
-        start.top + start.height / 2 - (rect.top + rect.height / 2);
-
-      tl.fromTo(
-        $left,
-        { x: start.left - left.left, y: offsetY(left) },
-        { x: 0, y: 0, duration: DURATION.morph * speed, ease: EASE.morph },
-        0,
-      ).fromTo(
-        $right,
-        { x: start.right - right.right, y: offsetY(right) },
-        { x: 0, y: 0, duration: DURATION.morph * speed, ease: EASE.morph },
-        0,
-      );
+        tl.fromTo(
+          $title,
+          { x: start.left - end.left, y: start.top - end.top },
+          { x: 0, y: 0, duration: DURATION.morph * speed, ease: EASE.morph },
+          0,
+        );
+      });
     }
 
     return [
       ...list.items.filter((entry) => entry !== item).map(({ $item }) => $item),
       ...(list.$gradient ? [list.$gradient] : []),
+      // Nothing to travel from: the title fades in with the rest.
+      ...(halves.length === item.$titles.length ? [] : item.$titles),
     ];
   }
 

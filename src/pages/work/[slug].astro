@@ -55,6 +55,8 @@ function widthFor(media?: { width?: number | null; height?: number | null }) {
   <WorkHero
     slug={slug}
     title={work.title}
+    titleLeft={work.titleLeft}
+    titleRight={work.titleRight}
     previewVideo={work.previewVideo}
     mainVideo={work.mainVideo}
   />
@@ -131,6 +133,8 @@ function widthFor(media?: { width?: number | null; height?: number | null }) {
       next && (
         <WorkNext
           title={next.title}
+          titleLeft={next.titleLeft}
+          titleRight={next.titleRight}
           slug={next.slug}
           previewVideo={next.previewVideo}
           mainDuration={next.mainDuration}

@@ -113,19 +113,26 @@ const indexes = [...works, first].map((_, index) =>
                 </time>
               )}
 
+              {/* Breaks only between the halves, like the list and the hero. */}
               <h3
                 data-home-wide="text"
-                class="text-h2 absolute bottom-40 left-1/2 z-2 -translate-x-1/2 whitespace-nowrap text-white md:bottom-58"
+                class="text-h2 px-grid absolute right-0 bottom-40 left-0 z-2 text-center text-white md:bottom-58"
               >
                 {work.split ? (
                   <>
                     <span class="sr-only">{work.title}</span>
                     <span aria-hidden="true">
-                      <span data-home-wide="title" class="inline-block">
+                      <span
+                        data-home-wide="title"
+                        class="inline-block whitespace-nowrap"
+                      >
                         {work.titleLeft}
                       </span>
                       {work.spaced && " "}
-                      <span data-home-wide="title" class="inline-block">
+                      <span
+                        data-home-wide="title"
+                        class="inline-block whitespace-nowrap"
+                      >
                         {work.titleRight}
                       </span>
                     </span>
@@ -156,9 +163,21 @@ const indexes = [...works, first].map((_, index) =>
 
             <p
               data-home-wide="clone-text"
-              class="text-h2 absolute bottom-58 left-1/2 z-2 -translate-x-1/2 whitespace-nowrap text-white"
+              class="text-h2 px-grid absolute right-0 bottom-40 left-0 z-2 text-center text-white md:bottom-58"
             >
-              {first.title}
+              {first.split ? (
+                <>
+                  <span class="inline-block whitespace-nowrap">
+                    {first.titleLeft}
+                  </span>
+                  {first.spaced && " "}
+                  <span class="inline-block whitespace-nowrap">
+                    {first.titleRight}
+                  </span>
+                </>
+              ) : (
+                first.title
+              )}
             </p>
 
             <p

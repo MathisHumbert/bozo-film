@@ -1,4 +1,6 @@
 ---
+import { stegaClean } from "@sanity/client/stega";
+
 import type { VideoAsset } from "../../lib/sanity/types";
 import { hrefFor } from "../../lib/routes";
 import { formatDuration } from "../../lib/video-library/duration";
@@ -6,14 +8,23 @@ import SanityVideo from "../sanity-video.astro";
 
 interface Props {
   title?: string | null;
+  titleLeft?: string | null;
+  titleRight?: string | null;
   slug?: string | null;
   previewVideo?: VideoAsset | null;
   mainDuration?: number | null;
 }
 
-const { title, slug, previewVideo, mainDuration } = Astro.props;
+const { title, titleLeft, titleRight, slug, previewVideo, mainDuration } =
+  Astro.props;
 
 const duration = formatDuration(mainDuration);
+
+// The same halves as the hero it becomes, so both break in the same place.
+const left = stegaClean(titleLeft);
+const right = stegaClean(titleRight);
+const split = Boolean(left && right);
+const spaced = stegaClean(title) === `${left} ${right}`;
 ---
 
 <c-work-next class="relative block h-svh w-full">
@@ -49,14 +60,31 @@ const duration = formatDuration(mainDuration);
     data-work-next="ui"
     class="text-h4 absolute top-1/2 left-1/2 -translate-1/2"
   >
-    ( Next Project )
+    <span class="block overflow-clip">
+      <span data-work-next="line" class="block whitespace-nowrap">
+        ( Next Project )
+      </span>
+    </span>
   </a>
 
   <p
     data-work-next="title"
     class="text-h2 px-grid absolute bottom-40 left-1/2 w-full -translate-x-1/2 text-center md:bottom-58"
   >
-    {title}
+    {
+      split ? (
+        <>
+          <span class="sr-only">{title}</span>
+          <span aria-hidden="true">
+            <span class="inline-block whitespace-nowrap">{titleLeft}</span>
+            {spaced && " "}
+            <span class="inline-block whitespace-nowrap">{titleRight}</span>
+          </span>
+        </>
+      ) : (
+        title
+      )
+    }
   </p>
 </c-work-next>
 
