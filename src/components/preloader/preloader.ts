@@ -168,8 +168,6 @@ export class Preloader extends HTMLElement {
   }
 
   public play() {
-    console.log(this.isLoaded);
-
     return new Promise<void>((resolve) => {
       const finish = () => {
         gsap.killTweensOf(this.progress);

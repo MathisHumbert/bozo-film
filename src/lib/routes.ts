@@ -1,4 +1,4 @@
-export const ROUTABLE_TYPES = ["home", "about", "work"] as const;
+export const ROUTABLE_TYPES = ["home", "about", "photo", "work"] as const;
 
 export const REPEATABLE_TYPES = ["work"] as const;
 
@@ -31,6 +31,8 @@ export function hrefFor(doc?: RoutableDocument | null): string | null {
       return "/";
     case "about":
       return "/about";
+    case "photo":
+      return "/photo";
     case "work":
       return doc.slug ? `/work/${doc.slug}` : null;
     default:

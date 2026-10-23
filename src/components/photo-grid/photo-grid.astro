@@ -1,0 +1,111 @@
+---
+import type { PhotoQueryResult } from "../../../sanity/sanity.types";
+import SanityImage from "../sanity-image.astro";
+import { masonry } from "../../scripts/utils/dom";
+
+interface Props {
+  images?: NonNullable<PhotoQueryResult>["images"];
+}
+
+const images = Astro.props.images ?? [];
+
+const COLUMNS = 4;
+
+const layouts = [
+  { columns: 1, label: "I", desktop: false },
+  { columns: 2, label: "II", desktop: false },
+  { columns: 3, label: "III", desktop: false },
+  { columns: 4, label: "IV", desktop: true },
+];
+
+const ratios = images.map((image) =>
+  image.width && image.height ? image.height / image.width : 1,
+);
+
+const groups = masonry(ratios, COLUMNS);
+---
+
+<c-photo-grid class="block">
+  <div aria-hidden="true" class="h-svh"></div>
+  <div aria-hidden="true" class="h-svh"></div>
+
+  <div
+    data-photo-grid="grid"
+    class="px-grid gap-gutter fixed inset-0 flex overflow-clip"
+  >
+    {
+      groups.map((indexes) => (
+        <div data-photo-grid="window" class="min-w-0 flex-1 overflow-clip">
+          <div data-photo-grid="column" class="pt-118 md:pt-358">
+            <ul
+              data-photo-grid="set"
+              class="gap-gutter flex flex-col pb-(--grid-gutter)"
+            >
+              {indexes.map((index) => (
+                <li
+                  data-photo-grid="item"
+                  data-index={index}
+                  data-ratio={ratios[index]}
+                >
+                  <SanityImage
+                    image={images[index]}
+                    width={1200}
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    loading={index < 8 ? "eager" : "lazy"}
+                    class="h-auto w-full"
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div
+    aria-hidden="true"
+    class="pointer-events-none fixed inset-x-0 top-0 h-256 bg-linear-to-b from-black to-black/0"
+  >
+  </div>
+  <div
+    aria-hidden="true"
+    class="pointer-events-none fixed inset-x-0 bottom-0 h-256 bg-linear-to-t from-black to-black/0"
+  >
+  </div>
+
+  <div class="p-grid text-title fixed bottom-0 left-0 flex gap-12 md:gap-24">
+    {
+      layouts.map(({ columns, label, desktop }) => (
+        <button
+          type="button"
+          data-photo-grid="toggle"
+          data-columns={columns}
+          aria-pressed={columns === COLUMNS ? "true" : "false"}
+          aria-label={`${columns} column${columns > 1 ? "s" : ""}`}
+          class:list={["group", desktop && "max-md:hidden"]}
+        >
+          <span
+            aria-hidden="true"
+            class="duration-medium ease-expo-out reduced-motion:transition-none inline-block translate-x-[0.4em] opacity-0 transition group-aria-pressed:translate-x-0 group-aria-pressed:opacity-100"
+          >
+            (
+          </span>{" "}
+          <span data-animation="split-hover" class="inline-block">
+            {label}
+          </span>{" "}
+          <span
+            aria-hidden="true"
+            class="duration-medium ease-expo-out reduced-motion:transition-none inline-block translate-x-[-0.4em] opacity-0 transition group-aria-pressed:translate-x-0 group-aria-pressed:opacity-100"
+          >
+            )
+          </span>
+        </button>
+      ))
+    }
+  </div>
+</c-photo-grid>
+
+<script>
+  import("./photo-grid");
+</script>

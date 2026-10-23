@@ -1,5 +1,6 @@
 import { CogIcon } from "@sanity/icons/Cog";
 import { DocumentIcon } from "@sanity/icons/Document";
+import { ImagesIcon } from "@sanity/icons/Images";
 import { InfoOutlineIcon } from "@sanity/icons/InfoOutline";
 import { ProjectsIcon } from "@sanity/icons/Projects";
 import { orderableDocumentListDeskItem } from "@sanity/orderable-document-list";
@@ -25,6 +26,7 @@ export const structure: StructureResolver = (S: StructureBuilder, context) =>
     .items([
       documentTypeSingletonItem(S, "Home", DocumentIcon, "home", "home"),
       documentTypeSingletonItem(S, "About", InfoOutlineIcon, "about", "about"),
+      documentTypeSingletonItem(S, "Photo", ImagesIcon, "photo", "photo"),
 
       S.divider(),
       orderableDocumentListDeskItem({

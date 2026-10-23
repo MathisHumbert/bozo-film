@@ -1,5 +1,8 @@
+import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
 
+import { device } from "../../scripts/classes/Device";
+import { mattEasing } from "../../scripts/utils/easing";
 import { events, type UpdateData } from "../../scripts/utils/events";
 import { smoothMin, smoothMax } from "../../scripts/utils/math";
 
@@ -29,6 +32,10 @@ const EASE = 400;
 // it, in viewport heights of scroll: 0 is a hard stop, like position: sticky
 const SOFT = 0.2;
 
+// Arriving on the page: the illustration falls from `from` viewport heights
+// above its place, parting the text line by line as it passes through.
+const REVEAL = { from: 0.6, duration: 1.4, ease: mattEasing };
+
 export class AboutBio extends HTMLElement {
   private $text: HTMLElement | null;
   private $track: HTMLElement | null;
@@ -38,6 +45,10 @@ export class AboutBio extends HTMLElement {
   private split: SplitText | null = null;
   private lines: Line[] = [];
   private size = { width: 0, height: 0 };
+
+  // added to the illustration's place, in px: above the screen until the
+  // page is revealed, then 0
+  private drop = 0;
 
   constructor() {
     super();
@@ -62,11 +73,19 @@ export class AboutBio extends HTMLElement {
       onSplit: this.measure,
     });
 
+    // Above the screen from the start, under the preloader or the page
+    // transition: the text is closed when the page shows.
+    if (!device.reducedMotion) {
+      this.drop = -window.innerHeight * REVEAL.from;
+    }
+
     this.bindEvents();
   }
 
   disconnectedCallback() {
     this.unbindEvents();
+
+    gsap.killTweensOf(this);
 
     this.split?.revert();
     this.split = null;
@@ -78,11 +97,28 @@ export class AboutBio extends HTMLElement {
    */
   private bindEvents() {
     events.on("update", this.update);
+    events.on("page:revealed", this.reveal);
   }
 
   private unbindEvents() {
     events.off("update", this.update);
+    events.off("page:revealed", this.reveal);
   }
+
+  /**
+   * Animations
+   */
+  // Only the drop is tweened: update() opens the lines around wherever the
+  // illustration is, so they part as it falls through them.
+  private reveal = () => {
+    events.off("page:revealed", this.reveal);
+
+    gsap.to(this, {
+      drop: 0,
+      duration: REVEAL.duration,
+      ease: REVEAL.ease,
+    });
+  };
 
   /**
    * Methods
@@ -130,7 +166,8 @@ export class AboutBio extends HTMLElement {
     // catching and dropping the illustration dead
     const soft = window.innerHeight * SOFT;
     const screen = window.innerHeight / 2 - track.top;
-    const position = smoothMin(smoothMax(screen, 0, soft), track.height, soft);
+    const position =
+      smoothMin(smoothMax(screen, 0, soft), track.height, soft) + this.drop;
 
     this.$anchor.style.transform = `translate3d(0, ${position}px, 0)`;
 

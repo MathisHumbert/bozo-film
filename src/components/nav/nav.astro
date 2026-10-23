@@ -5,19 +5,13 @@ import Modal from "../modal/modal.astro";
 import Underline from "../underline.astro";
 import type { SiteSettingsQueryResult } from "../../../sanity/sanity.types";
 
-interface Link {
-  label: string | null;
-  href: string | null;
-  external: boolean;
-}
-
 interface Props {
-  links?: Link[] | null;
   workCount?: number | null;
+  photoCount?: number | null;
   about?: NonNullable<SiteSettingsQueryResult>["about"];
 }
 
-const { links, workCount, about } = Astro.props;
+const { workCount, photoCount, about } = Astro.props;
 
 const email = stegaClean(about?.contact?.email);
 
@@ -46,9 +40,13 @@ import Logo from "../../icons/logo.svg";
         <li class="pointer-events-auto hidden md:block">
           <a href="/photo"
             ><span data-animation="split-hover">Photo</span>
-            <span class="relative top-[-0.5em] ml-4 text-[0.6em] leading-none"
-              >8</span
-            >
+            {
+              photoCount ? (
+                <span class="relative top-[-0.5em] ml-4 text-[0.6em] leading-none">
+                  {photoCount}
+                </span>
+              ) : null
+            }
           </a>
         </li>
         <li class="pointer-events-auto md:hidden">
@@ -131,10 +129,13 @@ import Logo from "../../icons/logo.svg";
         <li>
           <a href="/photo" data-modal-reveal
             >Photo
-            <span
-              class="relative top-[-1.9em] mx-[0.4em] text-[0.25em] leading-none"
-              >8</span
-            >
+            {
+              photoCount ? (
+                <span class="relative top-[-1.9em] mx-[0.4em] text-[0.25em] leading-none">
+                  {photoCount}
+                </span>
+              ) : null
+            }
           </a>
         </li>
         <li>

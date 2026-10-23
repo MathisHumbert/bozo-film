@@ -81,14 +81,18 @@ const isDev = import.meta.env.DEV;
   <body>
     <script src="../scripts/index.ts"></script>
 
-    {site?.showPreloader && <Preloader />}
+    {!isDev && <Preloader />}
 
     <Progress />
 
     <Noise />
 
     <div class="site">
-      <Nav links={site?.nav} workCount={site?.workCount} about={site?.about} />
+      <Nav
+        workCount={site?.workCount}
+        photoCount={site?.photoCount}
+        about={site?.about}
+      />
 
       {
         isDev ? (

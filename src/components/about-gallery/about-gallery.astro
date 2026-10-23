@@ -1,0 +1,43 @@
+---
+import type { AboutQueryResult } from "../../../sanity/sanity.types";
+import SanityImage from "../sanity-image.astro";
+
+interface Props {
+  images?: NonNullable<AboutQueryResult>["images"];
+}
+
+const images = Astro.props.images ?? [];
+---
+
+<c-about-gallery
+  class="sticky top-[calc(var(--grid-margin)*3)] block h-fit"
+  style={`--count: ${images.length}`}
+>
+  <div
+    class="w-col-4 md:w-col-2 relative aspect-[0.8] min-h-0 overflow-clip bg-black"
+  >
+    <div
+      class="translate-y-[calc(var(--progress,0)*(1/var(--count)-1)*100%)] will-change-transform"
+    >
+      {
+        images.map((image, index) => (
+          <div
+            class="relative aspect-[0.8] overflow-clip [--p:clamp(0,calc((1-var(--index)+var(--progress,0)*(var(--count)-1))/2),1)]"
+            style={`--index: ${index}`}
+          >
+            <SanityImage
+              image={image}
+              width={1000}
+              loading={index < 2 ? "eager" : "lazy"}
+              class="absolute inset-0 size-full translate-y-[calc((var(--p)-0.5)*20%)] scale-125 object-cover"
+            />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</c-about-gallery>
+
+<script>
+  import("./about-gallery");
+</script>

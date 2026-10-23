@@ -11,5 +11,8 @@ export const resolve: PresentationPluginOptions["resolve"] = {
     about: defineLocations({
       locations: [{ title: "About", href: hrefFor({ _type: "about" })! }],
     }),
+    photo: defineLocations({
+      locations: [{ title: "Photo", href: hrefFor({ _type: "photo" })! }],
+    }),
   },
 };

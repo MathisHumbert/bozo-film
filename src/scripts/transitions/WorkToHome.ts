@@ -107,6 +107,12 @@ export default class WorkToHome {
     const $toggleLines = [
       ...$hero.querySelectorAll<HTMLElement>('[data-work-hero="toggle-line"]'),
     ];
+    // Moved towards the toggle if the video was played: work-hero.ts.
+    const $timestamps = [
+      ...$hero.querySelectorAll<HTMLElement>(
+        '[data-work-hero="minutes"], [data-work-hero="seconds"]',
+      ),
+    ];
     const footer = next.querySelector<HomeFooter>("c-home-footer");
 
     const morph: Morph = {
@@ -164,6 +170,17 @@ export default class WorkToHome {
         $rolling,
         {
           yPercent: -100,
+          duration: DURATION.rollOut * morph.speed,
+          ease: EASE.roll,
+        },
+        0,
+      )
+      // Back to the edges before the swap: wide shows its own duration in
+      // exactly that place, and the hero's has to be there to hand over.
+      .to(
+        $timestamps,
+        {
+          x: 0,
           duration: DURATION.rollOut * morph.speed,
           ease: EASE.roll,
         },

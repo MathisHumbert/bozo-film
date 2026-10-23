@@ -627,7 +627,7 @@ wait for are ready.
 
 | Option   | Default              | Waits for                                                                    |
 | :------- | :------------------- | :--------------------------------------------------------------------------- |
-| `images` | `true`               | every image in `document.body`, backgrounds included                         |
+| `images` | `true`               | every `<img>` not `loading="lazy"` — a lazy one out of view never loads       |
 | `fonts`  | `true` \| `string[]` | each family, via `FontFaceObserver` — `["Satoshi"]` unless you pass an array |
 | `videos` | `false`              | `canplay` on every `video[data-src]` inside the first viewport               |
 | `textures` | `true`             | the poster of every `[data-preload]` box, and the first frame of its video for `"video"` |

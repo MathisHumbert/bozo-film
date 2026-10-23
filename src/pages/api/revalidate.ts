@@ -12,7 +12,7 @@ interface WebhookDoc {
 
 const AI_PATHS = ["/llms.txt", "/llms-full.txt"];
 
-const SITE_WIDE_TYPES = ["settings", "video-asset", "work", "about"];
+const SITE_WIDE_TYPES = ["settings", "video-asset", "work", "about", "photo"];
 
 async function resolvePaths(doc: WebhookDoc): Promise<string[]> {
   const type = doc._type;

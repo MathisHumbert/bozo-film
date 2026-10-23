@@ -2,6 +2,7 @@ import gsap from "gsap";
 
 import Scroll from "../../scripts/classes/Scroll";
 import { device } from "../../scripts/classes/Device";
+import { responsive } from "../../scripts/classes/Responsive";
 import { events } from "../../scripts/utils/events";
 import { attachSources } from "../../scripts/utils/video";
 
@@ -11,6 +12,17 @@ const EASE = "power2.out";
 const FADE = 0.6;
 const SCROLL = 1.2;
 
+// rem left between the timestamps and the toggle once they have closed in on
+// it: they follow the playback, from the edges at 0 to the toggle at the end
+const GAP = 2.4;
+
+// back to the edges once the video has ended
+const RETURN = 1.2;
+
+// iOS's own player, on HTMLVideoElement only: Safari on iPhone has no
+// requestFullscreen.
+type NativeVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+
 export class WorkHero extends HTMLElement {
   private $mainWrapper: HTMLElement | null;
   private $main: HTMLVideoElement | null;
@@ -18,8 +30,13 @@ export class WorkHero extends HTMLElement {
   private $duration: HTMLElement | null;
   private $toggle: HTMLButtonElement | null;
   private $label: HTMLElement | null;
+  private $minutes: HTMLElement | null;
+  private $seconds: HTMLElement | null;
 
   private $nav: HTMLElement | null = null;
+
+  // how far each timestamp travels to reach the toggle, in px
+  private travel = { minutes: 0, seconds: 0 };
 
   private isPlaying = false;
   private isIdle = false;
@@ -34,6 +51,8 @@ export class WorkHero extends HTMLElement {
     this.$duration = this.querySelector('[data-work-hero="duration"]');
     this.$toggle = this.querySelector('[data-work-hero="toggle"]');
     this.$label = this.querySelector('[data-work-hero="label"]');
+    this.$minutes = this.querySelector('[data-work-hero="minutes"]');
+    this.$seconds = this.querySelector('[data-work-hero="seconds"]');
   }
 
   /**
@@ -67,24 +86,38 @@ export class WorkHero extends HTMLElement {
   private bindEvents() {
     this.$toggle?.addEventListener("click", this.onToggle);
     this.$main?.addEventListener("ended", this.onEnded);
+    this.$main?.addEventListener("webkitendfullscreen", this.onNativeExit);
+    document.addEventListener("fullscreenchange", this.onNativeExit);
 
     window.addEventListener("keydown", this.onKeyDown);
     events.on("touchmove", this.onActivity);
     events.on("touchdown", this.onActivity);
     events.on("wheel", this.onActivity);
+    events.on("update", this.update);
+    events.on("resize", this.measure);
   }
 
   private unbindEvents() {
     this.$toggle?.removeEventListener("click", this.onToggle);
     this.$main?.removeEventListener("ended", this.onEnded);
+    this.$main?.removeEventListener("webkitendfullscreen", this.onNativeExit);
+    document.removeEventListener("fullscreenchange", this.onNativeExit);
 
     window.removeEventListener("keydown", this.onKeyDown);
     events.off("touchmove", this.onActivity);
     events.off("touchdown", this.onActivity);
     events.off("wheel", this.onActivity);
+    events.off("update", this.update);
+    events.off("resize", this.measure);
   }
 
   private onToggle = () => {
+    // A touch screen hands the video to the device's own player.
+    if (device.isTouch || device.isMobile) {
+      this.playNative();
+      return;
+    }
+
     if (this.isPlaying) {
       this.pause();
     } else {
@@ -112,6 +145,21 @@ export class WorkHero extends HTMLElement {
     }
   };
 
+  // Out of the device's player, by its close button or by the video ending:
+  // fullscreenchange also fires on the way in, hence the check.
+  private onNativeExit = () => {
+    if (!this.$main || document.fullscreenElement === this.$main) return;
+    if (this.$main.controls === false) return;
+
+    this.$main.pause();
+    this.$main.controls = false;
+    this.$main.setAttribute("playsinline", "");
+
+    gsap.set(this.$mainWrapper, { autoAlpha: 0 });
+
+    this.$preview?.play().catch(() => undefined);
+  };
+
   /**
    * Getters
    */
@@ -130,16 +178,26 @@ export class WorkHero extends HTMLElement {
     this.isPlaying = true;
     this.setLabel("PAUSE");
 
+    // After the label: PAUSE is not as wide as WATCH.
+    this.measure();
+
     attachSources(this.$main);
     this.$main.play().catch(() => this.pause());
     this.$preview?.pause();
 
+    // The page holds still while the video plays: back to the top first if
+    // it has to, locked so a wheel cannot cut in, then stopped.
     if (Scroll.scroll > 0) {
       Scroll.scrollTo(0, {
         force: true,
+        lock: true,
         duration: this.duration(SCROLL),
-        onComplete: () => Scroll.stop(),
+        onComplete: () => {
+          if (this.isPlaying) Scroll.stop();
+        },
       });
+    } else {
+      Scroll.stop();
     }
 
     gsap.to(this.$mainWrapper, {
@@ -160,6 +218,37 @@ export class WorkHero extends HTMLElement {
     });
 
     this.wake();
+  }
+
+  // Nothing of the inline player: no scroll lock, no idle, no timestamps.
+  // The device draws its own controls and closes on its own.
+  private playNative() {
+    const video = this.$main as NativeVideo | null;
+
+    if (!video) return;
+
+    attachSources(video);
+
+    // Without playsinline, an iPhone plays it in its own player by itself.
+    video.removeAttribute("playsinline");
+    video.controls = true;
+    video.play().catch(() => undefined);
+
+    this.$preview?.pause();
+
+    // Visible: a fullscreen element still inherits its wrapper's
+    // visibility, and Android shows the element itself.
+    gsap.set(this.$mainWrapper, { autoAlpha: 1 });
+
+    try {
+      if (video.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
+      } else {
+        video.requestFullscreen?.().catch(() => undefined);
+      }
+    } catch {
+      // Not ready yet on some iPads: it keeps playing inline, with controls.
+    }
   }
 
   private pause() {
@@ -185,6 +274,12 @@ export class WorkHero extends HTMLElement {
   }
 
   private reset() {
+    gsap.to([this.$minutes, this.$seconds], {
+      x: 0,
+      duration: this.duration(RETURN),
+      ease: EASE,
+    });
+
     gsap.to(this.$mainWrapper, {
       autoAlpha: 0,
       duration: this.duration(FADE),
@@ -235,6 +330,39 @@ export class WorkHero extends HTMLElement {
     window.clearTimeout(this.idleTimer);
     this.idleTimer = null;
   }
+
+  // Measured where they rest, without the travel already done, so a resize
+  // mid-video keeps them at the same point of their way.
+  private measure = () => {
+    if (!this.$minutes || !this.$seconds || !this.$toggle) return;
+
+    const toggle = this.$toggle.getBoundingClientRect();
+    const minutes = this.$minutes.getBoundingClientRect();
+    const seconds = this.$seconds.getBoundingClientRect();
+    const gap = GAP * responsive.fontSize;
+
+    const minutesX = Number(gsap.getProperty(this.$minutes, "x")) || 0;
+    const secondsX = Number(gsap.getProperty(this.$seconds, "x")) || 0;
+
+    this.travel = {
+      minutes: toggle.left - gap - (minutes.right - minutesX),
+      seconds: toggle.right + gap - (seconds.left - secondsX),
+    };
+  };
+
+  // Follows the video's own clock, so a pause holds them and a stall waits.
+  private update = () => {
+    if (!this.isPlaying || !this.$main) return;
+
+    const { currentTime, duration } = this.$main;
+
+    if (!Number.isFinite(duration) || duration <= 0) return;
+
+    const progress = Math.min(currentTime / duration, 1);
+
+    gsap.set(this.$minutes, { x: this.travel.minutes * progress });
+    gsap.set(this.$seconds, { x: this.travel.seconds * progress });
+  };
 
   private setLabel(label: string) {
     if (!this.$label) return;

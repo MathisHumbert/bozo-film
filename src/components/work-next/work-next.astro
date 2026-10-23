@@ -20,19 +20,21 @@ const { title, titleLeft, titleRight, slug, previewVideo, mainDuration } =
 
 const duration = formatDuration(mainDuration);
 
-// The same halves as the hero it becomes, so both break in the same place.
 const left = stegaClean(titleLeft);
 const right = stegaClean(titleRight);
 const split = Boolean(left && right);
 const spaced = stegaClean(title) === `${left} ${right}`;
 ---
 
-<c-work-next class="relative block h-svh w-full">
+<!-- The video waits zoomed in: WorkToWork zooms it out to the next hero's
+scale before handing the <video> over. A transform, not Tailwind's scale-*,
+which is the separate `scale` property GSAP's scale would multiply. -->
+<c-work-next class="relative block h-svh w-full overflow-clip">
   <SanityVideo
     asset={previewVideo}
     autoplay
     loop
-    wrapperClass="cover"
+    wrapperClass="cover [transform:scale(1.2)]"
     class="h-full w-full object-cover"
   />
 

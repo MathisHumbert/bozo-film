@@ -64,6 +64,16 @@ export default class WorkToWork {
       0,
     );
 
+    // Zoomed in while it waited (work-next.astro): back to the hero's scale,
+    // so the <video> it hands over below lands at the size it shows.
+    if (from) {
+      tl.to(
+        from,
+        { scale: 1, duration: DURATION.morph * speed, ease: EASE.morph },
+        0,
+      );
+    }
+
     // Straight down, from bottom-58 to the hero's bottom-grid: both are
     // centred the same way, so only the bottoms differ.
     if ($nextTitle && $heroTitle) {

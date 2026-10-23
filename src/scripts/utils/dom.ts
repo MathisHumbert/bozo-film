@@ -30,3 +30,17 @@ export function getIndex(node: Element) {
 
   return index;
 }
+
+export function masonry(ratios: number[], columns: number): number[][] {
+  const groups: number[][] = Array.from({ length: columns }, () => []);
+  const heights = new Array<number>(columns).fill(0);
+
+  ratios.forEach((ratio, index) => {
+    const shortest = heights.indexOf(Math.min(...heights));
+
+    groups[shortest].push(index);
+    heights[shortest] += ratio;
+  });
+
+  return groups;
+}

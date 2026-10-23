@@ -1,4 +1,3 @@
-import { MenuIcon } from "@sanity/icons/Menu";
 import { CogIcon } from "@sanity/icons/Cog";
 import { EarthGlobeIcon } from "@sanity/icons/EarthGlobe";
 import { UsersIcon } from "@sanity/icons/Users";
@@ -10,27 +9,10 @@ export const settingsType = defineType({
   type: "document",
   icon: CogIcon,
   groups: [
-    { name: "general", title: "General", icon: CogIcon, default: true },
-    { name: "nav", title: "Navigation", icon: MenuIcon },
-    { name: "seo", title: "SEO & AI", icon: EarthGlobeIcon },
+    { name: "seo", title: "SEO & AI", icon: EarthGlobeIcon, default: true },
     { name: "identity", title: "Site identity", icon: UsersIcon },
   ],
   fields: [
-    defineField({
-      name: "showPreloader",
-      title: "Show preloader",
-      description: "Covers the page until fonts and images are ready",
-      type: "boolean",
-      group: "general",
-      initialValue: false,
-    }),
-    defineField({
-      name: "nav",
-      title: "Navigation",
-      type: "array",
-      group: "nav",
-      of: [defineArrayMember({ type: "link" })],
-    }),
     defineField({
       name: "siteIdentity",
       title: "Site identity",

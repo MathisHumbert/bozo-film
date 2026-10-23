@@ -3,6 +3,7 @@ import type { SchemaTypeDefinition } from "sanity";
 // singletons
 import { aboutType } from "./singletons/about";
 import { homeType } from "./singletons/home";
+import { photoType } from "./singletons/photo";
 import { settingsType } from "./singletons/settings";
 
 // documents
@@ -18,6 +19,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
     aboutType,
     homeType,
+    photoType,
     settingsType,
     videoAssetType,
     workType,

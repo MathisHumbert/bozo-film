@@ -100,12 +100,15 @@ const spaced = stegaClean(title) === `${left} ${right}`;
           >
             <span class="sr-only">{duration.label}</span>
             <span aria-hidden="true" class="flex w-full justify-between">
-              <span class="block overflow-clip">
+              <span data-work-hero="minutes" class="block overflow-clip">
                 <span data-work-hero="duration-line" class="block">
                   {duration.minutes}
                 </span>
               </span>
-              <span class="block overflow-clip text-right">
+              <span
+                data-work-hero="seconds"
+                class="block overflow-clip text-right"
+              >
                 <span data-work-hero="duration-line" class="block">
                   {duration.seconds}
                 </span>

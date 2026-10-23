@@ -100,6 +100,7 @@ function entriesFor(data: Llms): Entry[] {
   const candidates: { doc: PageDoc | null; title: string; type: string }[] = [
     { doc: data.home, title: "Home", type: "home" },
     { doc: data.about, title: "About", type: "about" },
+    { doc: data.photo, title: "Photo", type: "photo" },
   ];
 
   return candidates.flatMap(({ doc, title, type }) => {

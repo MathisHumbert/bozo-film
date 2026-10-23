@@ -129,12 +129,6 @@ export type Settings = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  showPreloader?: boolean;
-  nav?: Array<
-    {
-      _key: string;
-    } & Link
-  >;
   siteIdentity?: {
     entityType: "organization" | "person";
     name: string;
@@ -171,6 +165,25 @@ export type Settings = {
       _key: string;
     }>;
   };
+};
+
+export type Photo = {
+  _id: string;
+  _type: "photo";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  images?: Array<{
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+    _key: string;
+  }>;
+  seo?: Seo;
 };
 
 export type WorkReference = {
@@ -412,6 +425,7 @@ export type AllSanitySchemaTypes =
   | SanityImageHotspot
   | Slug
   | Settings
+  | Photo
   | WorkReference
   | Home
   | About
@@ -686,16 +700,47 @@ export type AboutQueryResult = {
 } | null;
 
 // Source: src/lib/sanity/queries.ts
-// Variable: siteSettingsQuery
-// Query: *[_type == "settings"][0]{  showPreloader,  nav[] {  label,  "external": linkType == "external",  "href": select(    linkType == "external" => url,    page->_type == "home" => "/",    null  )},  "workCount": count(*[_type == "work" && defined(slug.current)]),  "about": *[_type == "about"][0]{ contact{ email } },  siteIdentity{    entityType,    name,    alternateName,    jobTitle,    email,    sameAs,    logo{      "url": asset->url,      "width": asset->metadata.dimensions.width,      "height": asset->metadata.dimensions.height    }  },  aiContent{    summary,    sections[]{ title, items }  },  fallbackSEO{    metaTitle,    metaDescription,    ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}  }}
-export type SiteSettingsQueryResult = {
-  showPreloader: boolean | null;
-  nav: Array<{
-    label: string;
-    external: false | true;
-    href: string | "/" | null;
+// Variable: photoQuery
+// Query: *[_type == "photo"][0]{  _updatedAt,  title,  images[defined(asset)] {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,},  seo{  metaTitle,  metaDescription,  noIndex,  ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}}}
+export type PhotoQueryResult = {
+  _updatedAt: string;
+  title: string | null;
+  images: Array<{
+    asset: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+    _key: string;
+    width: number | null;
+    height: number | null;
+    lqip: string | null;
   }> | null;
+  seo: {
+    metaTitle: string | null;
+    metaDescription: string | null;
+    noIndex: boolean | null;
+    ogImage: {
+      asset?: SanityImageAssetReference;
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+      width: number | null;
+      height: number | null;
+      lqip: string | null;
+    } | null;
+  } | null;
+} | null;
+
+// Source: src/lib/sanity/queries.ts
+// Variable: siteSettingsQuery
+// Query: *[_type == "settings"][0]{  "workCount": count(*[_type == "work" && defined(slug.current)]),  "photoCount": count(*[_type == "photo"][0].images[defined(asset)]),  "about": *[_type == "about"][0]{ contact{ email } },  siteIdentity{    entityType,    name,    alternateName,    jobTitle,    email,    sameAs,    logo{      "url": asset->url,      "width": asset->metadata.dimensions.width,      "height": asset->metadata.dimensions.height    }  },  aiContent{    summary,    sections[]{ title, items }  },  fallbackSEO{    metaTitle,    metaDescription,    ogImage {  ...,  "width": asset->metadata.dimensions.width,  "height": asset->metadata.dimensions.height,  "lqip": asset->metadata.lqip,}  }}
+export type SiteSettingsQueryResult = {
   workCount: number;
+  photoCount: number | null;
   about: {
     contact: {
       email: string | null;
@@ -740,7 +785,7 @@ export type SiteSettingsQueryResult = {
 
 // Source: src/lib/sanity/queries.ts
 // Variable: llmsQuery
-// Query: {  "settings": *[_type == "settings"][0]{    siteIdentity{ entityType, name, jobTitle, email, sameAs },    aiContent{ summary, sections[]{ title, items } },    fallbackSEO{ metaTitle, metaDescription }  },  "home": *[_type == "home"][0] {  "type": _type,  _updatedAt,  title,  seo{ metaTitle, metaDescription, noIndex }},  "about": *[_type == "about"][0] {  "type": _type,  _updatedAt,  title,  seo{ metaTitle, metaDescription, noIndex }}}
+// Query: {  "settings": *[_type == "settings"][0]{    siteIdentity{ entityType, name, jobTitle, email, sameAs },    aiContent{ summary, sections[]{ title, items } },    fallbackSEO{ metaTitle, metaDescription }  },  "home": *[_type == "home"][0] {  "type": _type,  _updatedAt,  title,  seo{ metaTitle, metaDescription, noIndex }},  "about": *[_type == "about"][0] {  "type": _type,  _updatedAt,  title,  seo{ metaTitle, metaDescription, noIndex }},  "photo": *[_type == "photo"][0] {  "type": _type,  _updatedAt,  title,  seo{ metaTitle, metaDescription, noIndex }}}
 export type LlmsQueryResult = {
   settings: {
     siteIdentity: {
@@ -782,6 +827,16 @@ export type LlmsQueryResult = {
       noIndex: boolean | null;
     } | null;
   } | null;
+  photo: {
+    type: "photo";
+    _updatedAt: string;
+    title: string | null;
+    seo: {
+      metaTitle: string | null;
+      metaDescription: string | null;
+      noIndex: boolean | null;
+    } | null;
+  } | null;
 };
 
 // Query TypeMap
@@ -792,7 +847,8 @@ declare module "@sanity/client" {
     '*[_type == "work"] | order(orderRank asc, _createdAt desc){\n    _type,\n    title,\n    titleLeft,\n    titleRight,\n    "slug": slug.current,\n    previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    "mainDuration": mainVideo->duration\n  }': AllWorkQueryResult;
     '*[_type == "work" && slug.current == $slug][0]{\n  _updatedAt,\n  title,\n  titleLeft,\n  titleRight,\n  project,\n  excerpt,\n  category,\n  roles,\n  previewVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n  mainVideo-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n  media[]{\n  _type,\n  _type == "image" => {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  _type == "video" => {\n    asset-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    caption,\n    autoplay,\n    loop,\n    controls\n  }\n},\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': WorkBySlugQueryResult;
     '*[_type == "about"][0]{\n  _updatedAt,\n  title,\n  description,\n  services,\n  clients,\n  socialLinks[] {\n  label,\n  "external": linkType == "external",\n  "href": select(\n    linkType == "external" => url,\n    page->_type == "home" => "/",\n    null\n  )\n},\n  contact{ email, phone },\n  images[] {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  reel{\n    textTop,\n    preview-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    main-> {\n  "id": _id,\n  title,\n  altText,\n  storageKey,\n  duration,\n  width,\n  height,\n  aspectRatio,\n  "renditions": renditions[]{ width, storageKey },\n  "poster": thumbnail.asset->url,\n  "posterLqip": thumbnail.asset->metadata.lqip\n},\n    textBottom\n  },\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': AboutQueryResult;
-    '*[_type == "settings"][0]{\n  showPreloader,\n  nav[] {\n  label,\n  "external": linkType == "external",\n  "href": select(\n    linkType == "external" => url,\n    page->_type == "home" => "/",\n    null\n  )\n},\n  "workCount": count(*[_type == "work" && defined(slug.current)]),\n  "about": *[_type == "about"][0]{ contact{ email } },\n  siteIdentity{\n    entityType,\n    name,\n    alternateName,\n    jobTitle,\n    email,\n    sameAs,\n    logo{\n      "url": asset->url,\n      "width": asset->metadata.dimensions.width,\n      "height": asset->metadata.dimensions.height\n    }\n  },\n  aiContent{\n    summary,\n    sections[]{ title, items }\n  },\n  fallbackSEO{\n    metaTitle,\n    metaDescription,\n    ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n  }\n}': SiteSettingsQueryResult;
-    '{\n  "settings": *[_type == "settings"][0]{\n    siteIdentity{ entityType, name, jobTitle, email, sameAs },\n    aiContent{ summary, sections[]{ title, items } },\n    fallbackSEO{ metaTitle, metaDescription }\n  },\n  "home": *[_type == "home"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n},\n  "about": *[_type == "about"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n}\n}': LlmsQueryResult;
+    '*[_type == "photo"][0]{\n  _updatedAt,\n  title,\n  images[defined(asset)] {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n},\n  seo{\n  metaTitle,\n  metaDescription,\n  noIndex,\n  ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n}\n}': PhotoQueryResult;
+    '*[_type == "settings"][0]{\n  "workCount": count(*[_type == "work" && defined(slug.current)]),\n  "photoCount": count(*[_type == "photo"][0].images[defined(asset)]),\n  "about": *[_type == "about"][0]{ contact{ email } },\n  siteIdentity{\n    entityType,\n    name,\n    alternateName,\n    jobTitle,\n    email,\n    sameAs,\n    logo{\n      "url": asset->url,\n      "width": asset->metadata.dimensions.width,\n      "height": asset->metadata.dimensions.height\n    }\n  },\n  aiContent{\n    summary,\n    sections[]{ title, items }\n  },\n  fallbackSEO{\n    metaTitle,\n    metaDescription,\n    ogImage {\n  ...,\n  "width": asset->metadata.dimensions.width,\n  "height": asset->metadata.dimensions.height,\n  "lqip": asset->metadata.lqip,\n}\n  }\n}': SiteSettingsQueryResult;
+    '{\n  "settings": *[_type == "settings"][0]{\n    siteIdentity{ entityType, name, jobTitle, email, sameAs },\n    aiContent{ summary, sections[]{ title, items } },\n    fallbackSEO{ metaTitle, metaDescription }\n  },\n  "home": *[_type == "home"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n},\n  "about": *[_type == "about"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n},\n  "photo": *[_type == "photo"][0] {\n  "type": _type,\n  _updatedAt,\n  title,\n  seo{ metaTitle, metaDescription, noIndex }\n}\n}': LlmsQueryResult;
   }
 }

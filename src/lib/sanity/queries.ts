@@ -111,10 +111,16 @@ export const aboutQuery = defineQuery(`*[_type == "about"][0]{
   ${seoProjection}
 }`);
 
+export const photoQuery = defineQuery(`*[_type == "photo"][0]{
+  _updatedAt,
+  title,
+  images[defined(asset)] ${imageProjection},
+  ${seoProjection}
+}`);
+
 export const siteSettingsQuery = defineQuery(`*[_type == "settings"][0]{
-  showPreloader,
-  nav[] ${linkProjection},
   "workCount": count(*[_type == "work" && defined(slug.current)]),
+  "photoCount": count(*[_type == "photo"][0].images[defined(asset)]),
   "about": *[_type == "about"][0]{ contact{ email } },
   siteIdentity{
     entityType,
@@ -154,5 +160,6 @@ export const llmsQuery = defineQuery(`{
     fallbackSEO{ metaTitle, metaDescription }
   },
   "home": *[_type == "home"][0] ${llmsPageProjection},
-  "about": *[_type == "about"][0] ${llmsPageProjection}
+  "about": *[_type == "about"][0] ${llmsPageProjection},
+  "photo": *[_type == "photo"][0] ${llmsPageProjection}
 }`);

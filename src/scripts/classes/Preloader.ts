@@ -39,12 +39,9 @@ export default class Preloader {
   }
 
   preloadPage(options: PreloaderOptions = {}) {
-    console.log("Starting page preload");
-
     return this.run({ ...PRELOAD_DEFAULTS, ...this.options, ...options }).then(
       () => {
         events.emit("page:loaded");
-        console.log("Page preloaded successfully");
       },
     );
   }
@@ -79,9 +76,15 @@ export default class Preloader {
     return Promise.all(tasks);
   }
 
+  // Not the lazy ones: they only load once in view, and one sitting out of
+  // view (clipped, or further down) would hold the page back for good.
   private loadImages() {
+    const $images = Array.from(document.images).filter(
+      ($image) => $image.loading !== "lazy",
+    );
+
     return new Promise<void>((resolve) => {
-      imagesLoaded(document.body, { background: true }, () => resolve());
+      imagesLoaded($images, () => resolve());
     });
   }
 

@@ -8,7 +8,9 @@ import Layout from "../layouts/layout.astro";
 import Year from "../components/year/year.astro";
 import AboutBio from "../components/about-bio/about-bio.astro";
 import AboutReel from "../components/about-reel/about-reel.astro";
+import AboutGallery from "../components/about-gallery/about-gallery.astro";
 import Underline from "../components/underline.astro";
+import SanityImage from "../components/sanity-image.astro";
 
 const about = await loadQuery(aboutQuery, {}, { cookies: Astro.cookies });
 
@@ -27,85 +29,87 @@ const phone = stegaClean(about?.contact?.phone);
 
   <AboutBio description={about?.description} />
 
-  <section
-    class="px-grid gap-gutter relative grid grid-cols-2 pt-192 md:pt-240"
-  >
-    <div class="sticky top-[calc(var(--grid-margin)*3)] h-fit">
-      <div class="w-col-4 md:w-col-2 aspect-[0.8] bg-black"></div>
-    </div>
+  <section class="px-grid pt-192 md:pt-240">
+    <div class="gap-gutter relative grid grid-cols-2 border">
+      <AboutGallery images={about?.images ?? []} />
 
-    <div class="flex flex-col gap-48 md:gap-96">
-      <div class="md:gap-gutter grid grid-cols-1 gap-48 md:grid-cols-2">
-        <div class="flex flex-col gap-24 md:gap-32">
-          <h2 class="text-title uppercase">Services</h2>
-          <ul class="flex flex-col gap-4 md:gap-8">
-            {
-              about?.services?.map((service) => (
-                <li class="text-h4">{service}</li>
-              ))
-            }
-          </ul>
-        </div>
-
-        <div class="flex flex-col gap-24 md:gap-32">
-          <h2 class="text-title uppercase">Select Clients</h2>
-          <ul class="flex flex-col gap-4 md:gap-8">
-            {about?.clients?.map((client) => <li class="text-h4">{client}</li>)}
-          </ul>
-        </div>
-      </div>
-
-      {
-        about?.socialLinks?.length ? (
+      <div class="flex flex-col gap-48 md:gap-96">
+        <div class="md:gap-gutter grid grid-cols-1 gap-48 md:grid-cols-2">
           <div class="flex flex-col gap-24 md:gap-32">
-            <h2 class="text-title uppercase">Follow me</h2>
-
+            <h2 class="text-title uppercase">Services</h2>
             <ul class="flex flex-col gap-4 md:gap-8">
-              {about.socialLinks.map((link) => (
-                <li class="text-h4">
-                  <a
-                    href={link.href ?? undefined}
-                    target={link.external ? "_blank" : undefined}
-                    rel={link.external ? "noopener noreferrer" : undefined}
-                    data-animation="link"
-                    class="relative pb-[max(1px,0.1rem)]"
-                  >
-                    {link.label}
-                    <Underline />
-                  </a>
-                </li>
-              ))}
+              {
+                about?.services?.map((service) => (
+                  <li class="text-h4">{service}</li>
+                ))
+              }
             </ul>
           </div>
-        ) : null
-      }
 
-      {
-        (email || phone) && (
-          <div class="text-h4 flex flex-col gap-4 md:gap-8">
-            {email && (
-              <a
-                href={`mailto:${email}`}
-                data-animation="link"
-                class="relative w-fit pb-[max(1px,0.1rem)]"
-              >
-                {email}
-                <Underline />
-              </a>
-            )}
-            {phone && (
-              <a
-                href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-                data-animation="link"
-                class="relative w-fit pb-[max(1px,0.1rem)]"
-              >
-                {phone}
-                <Underline />
-              </a>
-            )}
+          <div class="flex flex-col gap-24 md:gap-32">
+            <h2 class="text-title uppercase">Select Clients</h2>
+            <ul class="flex flex-col gap-4 md:gap-8">
+              {
+                about?.clients?.map((client) => (
+                  <li class="text-h4">{client}</li>
+                ))
+              }
+            </ul>
           </div>
-        )
-      }
+        </div>
+
+        {
+          about?.socialLinks?.length ? (
+            <div class="flex flex-col gap-24 md:gap-32">
+              <h2 class="text-title uppercase">Follow me</h2>
+
+              <ul class="flex flex-col gap-4 md:gap-8">
+                {about.socialLinks.map((link) => (
+                  <li class="text-h4">
+                    <a
+                      href={link.href ?? undefined}
+                      target={link.external ? "_blank" : undefined}
+                      rel={link.external ? "noopener noreferrer" : undefined}
+                      data-animation="link"
+                      class="relative pb-[max(1px,0.1rem)]"
+                    >
+                      {link.label}
+                      <Underline />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null
+        }
+
+        {
+          (email || phone) && (
+            <div class="text-h4 flex flex-col gap-4 md:gap-8">
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  data-animation="link"
+                  class="relative w-fit pb-[max(1px,0.1rem)]"
+                >
+                  {email}
+                  <Underline />
+                </a>
+              )}
+              {phone && (
+                <a
+                  href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+                  data-animation="link"
+                  class="relative w-fit pb-[max(1px,0.1rem)]"
+                >
+                  {phone}
+                  <Underline />
+                </a>
+              )}
+            </div>
+          )
+        }
+      </div>
     </div>
   </section>
 
@@ -114,11 +118,15 @@ const phone = stegaClean(about?.contact?.phone);
   >
     <h2 class="sr-only">Showreel</h2>
 
-    <p class="text-h1 whitespace-pre-line">{about?.reel?.textTop}</p>
+    <p class="text-h1 whitespace-pre-line" data-animation="text" data-scroll>
+      {about?.reel?.textTop}
+    </p>
 
     <AboutReel preview={about?.reel?.preview} main={about?.reel?.main} />
 
-    <p class="text-h1 whitespace-pre-line">{about?.reel?.textBottom}</p>
+    <p class="text-h1 whitespace-pre-line" data-animation="text" data-scroll>
+      {about?.reel?.textBottom}
+    </p>
   </section>
 
   <section

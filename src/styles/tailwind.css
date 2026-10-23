@@ -144,9 +144,6 @@
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-  /* The file declares a 1.23em box with the glyphs sitting low in it: they
-  overflow a 1em line, so a SplitText mask shows the line above or below, and
-  inline children measure as a new line. 1em, glyphs centred. */
   ascent-override: 81%;
   descent-override: 19%;
   line-gap-override: 0%;

@@ -1,13 +1,14 @@
 import gsap from "gsap";
+import { mattEasing } from "../utils/easing";
 
 const DURATION = {
-  leave: 0.6,
-  enter: 0.8,
-  delay: 0.2,
+  leave: 0.4,
+  enter: 0.6,
+  delay: 0.1,
 };
 
 const EASE = {
-  swap: "expo.inOut",
+  swap: mattEasing,
 };
 
 export default class Link {

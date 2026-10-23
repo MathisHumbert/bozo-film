@@ -53,6 +53,8 @@
 [data-animation="text"] {
   div div {
     transform: translateY(125%) rotate(var(--rotate, 0deg));
+    margin-bottom: -0.25em;
+    padding-bottom: 0.25em;
 
     @variant not-reduced-motion {
       transition: transform 1.5s var(--ease-expo-out);

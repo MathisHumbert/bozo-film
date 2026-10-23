@@ -1,9 +1,23 @@
 ---
+export const prerender = false;
+
+import { loadQuery } from "../lib/sanity/load-query";
+import { photoQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
+import PhotoGrid from "../components/photo-grid/photo-grid.astro";
+
+const photo = await loadQuery(photoQuery, {}, { cookies: Astro.cookies });
 ---
 
-<Layout background="#FFFFFF" color="#000000">
-  <div class="text-h1 flex h-screen w-full items-center justify-center">
-    PHOTO
-  </div>
+<Layout
+  seo={photo?.seo}
+  page={{ type: "photo" }}
+  updatedAt={photo?._updatedAt}
+  background="#000000"
+  color="#FFFFFF"
+  infiniteScroll
+>
+  <h1 class="sr-only">{photo?.title ?? "Photo"}</h1>
+
+  <PhotoGrid images={photo?.images} />
 </Layout>
