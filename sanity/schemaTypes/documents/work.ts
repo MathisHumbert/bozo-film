@@ -1,6 +1,10 @@
 import { EarthGlobeIcon } from "@sanity/icons/EarthGlobe";
 import { ProjectsIcon } from "@sanity/icons/Projects";
 import { TiersIcon } from "@sanity/icons/Tiers";
+import {
+  orderRankField,
+  orderRankOrdering,
+} from "@sanity/orderable-document-list";
 import { defineArrayMember, defineField, defineType } from "sanity";
 
 export const workType = defineType({
@@ -12,7 +16,9 @@ export const workType = defineType({
     { name: "content", title: "Content", icon: TiersIcon, default: true },
     { name: "seo", title: "SEO", icon: EarthGlobeIcon },
   ],
+  orderings: [orderRankOrdering],
   fields: [
+    orderRankField({ type: "work" }),
     defineField({
       name: "title",
       title: "Title",
@@ -47,6 +53,15 @@ export const workType = defineType({
       type: "slug",
       group: "content",
       options: { source: "title", maxLength: 96 },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "project",
+      title: "Project",
+      description:
+        "The project's name, shown under the Project label on the work's page.",
+      type: "string",
+      group: "content",
       validation: (Rule) => Rule.required(),
     }),
     defineField({

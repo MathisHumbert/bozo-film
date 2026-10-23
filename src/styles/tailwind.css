@@ -5,7 +5,7 @@
   --color-black: rgb(0, 0, 0);
   --color-yellow: rgb(247, 255, 96);
 
-  --font-satoshi: "Satoshi", sans-serif;
+  --font-exposure: "Exposure", sans-serif;
   --font-feature-display-condensed: "Feature Display Condensed", sans-serif;
   --font-sans: var(--font-feature-display-condensed);
 
@@ -83,6 +83,35 @@
   --transition-duration-slow: 0.6s;
   --transition-duration-slower: 0.9s;
   --transition-duration-slowest: 1.2s;
+
+  --animate-grain: grain 0.8s steps(1) infinite;
+
+  @keyframes grain {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    12.5% {
+      transform: translate3d(-37px, 53px, 0);
+    }
+    25% {
+      transform: translate3d(61px, -19px, 0);
+    }
+    37.5% {
+      transform: translate3d(-83px, -71px, 0);
+    }
+    50% {
+      transform: translate3d(29px, 97px, 0);
+    }
+    62.5% {
+      transform: translate3d(-109px, 13px, 0);
+    }
+    75% {
+      transform: translate3d(89px, 67px, 0);
+    }
+    87.5% {
+      transform: translate3d(-23px, -113px, 0);
+    }
+  }
 }
 
 @media (min-width: theme(--breakpoint-md)) {
@@ -94,31 +123,31 @@
 }
 
 @font-face {
-  font-family: "Satoshi";
-  src:
-    url("/fonts/satoshi-medium.woff2") format("woff2"),
-    url("/fonts/satoshi-medium.woff") format("woff");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Feature Display Condensed";
-  src:
-    url("/fonts/feature-display-condensed-regular.woff2") format("woff2"),
-    url("/fonts/feature-display-condensed-regular.woff") format("woff");
+  font-family: "Exposure";
+  src: url("/fonts/exposure-regular.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
+/* @font-face {
+  font-family: "Exposure";
+  src: url("/fonts/exposure-regular-italic.woff2") format("woff2");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+} */
+
 @font-face {
   font-family: "Feature Display Condensed";
-  src:
-    url("/fonts/feature-display-condensed-medium.woff2") format("woff2"),
-    url("/fonts/feature-display-condensed-medium.woff") format("woff");
-  font-weight: 500;
+  src: url("/fonts/feature-display-condensed-regular.woff2") format("woff2");
+  font-weight: normal;
   font-style: normal;
   font-display: swap;
+  /* The file declares a 1.23em box with the glyphs sitting low in it: they
+  overflow a 1em line, so a SplitText mask shows the line above or below, and
+  inline children measure as a new line. 1em, glyphs centred. */
+  ascent-override: 81%;
+  descent-override: 19%;
+  line-gap-override: 0%;
 }

@@ -10,7 +10,7 @@ const { format = "arabic" } = Astro.props;
 const year = new Date().getFullYear();
 ---
 
-<c-year data-format={format}>{format === "roman" ? toRoman(year) : year}</c-year>
+<c-year data-format={format} class="inline-block">{format === "roman" ? toRoman(year) : year}</c-year>
 
 <script>
   import("./year");

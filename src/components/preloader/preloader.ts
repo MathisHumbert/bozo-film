@@ -11,11 +11,14 @@ const CREEP = { value: 90, duration: 2 };
 const FINISH = 0.4;
 
 // The halves parting from the middle, like the home's wide view. The page
-// reveals `reveal` seconds after they start.
-const SPLIT = { duration: 0.8, ease: "expo.out", reveal: 0.1 };
+// sits behind them and reveals as they start.
+const SPLIT = { duration: 0.8, ease: "expo.out" };
 
 // seconds between two faces
 const FLASH = 0.25;
+
+// seconds the last face holds, once the count reads 100, before the split
+const HOLD = 0.4;
 
 // rem between the faces and the %, once it has climbed up to them
 const GAP = 2.4;
@@ -135,9 +138,6 @@ export class Preloader extends HTMLElement {
   private split(duration: number) {
     const $top = this.$panel;
 
-    // The faces cycle through the count's last stretch, and freeze here.
-    this.stopFlash();
-
     if (!$top) return Promise.resolve();
 
     // The page underneath is live from now on.
@@ -181,13 +181,20 @@ export class Preloader extends HTMLElement {
           duration: FINISH * duration,
           ease: EASE,
           onUpdate: this.render,
-          onComplete: async () => {
-            // The page reveals while the halves part, not after.
-            gsap.delayedCall(SPLIT.reveal * duration, resolve);
+          onComplete: () => {
+            // The faces cycle through the count's last stretch, freeze on
+            // 100, and hold a beat before the halves part.
+            this.stopFlash();
 
-            await this.split(SPLIT.duration * duration);
+            gsap.delayedCall(device.reducedMotion ? 0 : HOLD, async () => {
+              // Before the split's first frame: the reveal sets its offset
+              // while the panel still covers the page.
+              resolve();
 
-            this.remove();
+              await this.split(SPLIT.duration * duration);
+
+              this.remove();
+            });
           },
         });
       };

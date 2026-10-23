@@ -9,7 +9,7 @@ const { description } = Astro.props;
 ---
 
 <c-about-bio
-  class="mwd flex flex-col items-center gap-32 pt-178 md:gap-48 md:pt-358"
+  class="px-grid flex flex-col items-center gap-32 pt-178 md:gap-48 md:pt-358"
 >
   <h2 class="text-h4 uppercase">( Bio )</h2>
 
@@ -32,8 +32,7 @@ const { description } = Astro.props;
 
     <p
       data-about-bio="text"
-      style="white-space: pre-line"
-      class="text-h2 w-col-10 md:w-col-8 text-center"
+      class="text-h2 w-col-10 text-center text-[4rem] whitespace-pre-line md:text-[9.6rem]"
     >
       {description}
     </p>

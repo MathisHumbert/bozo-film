@@ -54,7 +54,7 @@ export const homeQuery = defineQuery(`*[_type == "home"][0]{
 }`);
 
 export const allWorkQuery = defineQuery(
-  `*[_type == "work"] | order(_createdAt desc){
+  `*[_type == "work"] | order(orderRank asc, _createdAt desc){
     _type,
     title,
     titleLeft,
@@ -83,6 +83,7 @@ export const workBySlugQuery =
   title,
   titleLeft,
   titleRight,
+  project,
   excerpt,
   category,
   roles,

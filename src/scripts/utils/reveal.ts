@@ -4,7 +4,7 @@ import { device } from "../classes/Device";
 import { responsive } from "../classes/Responsive";
 
 export const REVEAL = {
-  distance: 5,
+  distance: 7.5,
   duration: 1.2,
   ease: "expo.out",
   stagger: 0,

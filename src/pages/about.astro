@@ -110,15 +110,15 @@ const phone = stegaClean(about?.contact?.phone);
   </section>
 
   <section
-    class="text-h1 px-grid flex flex-col items-center gap-48 py-160 text-center md:gap-64 md:py-240"
+    class="px-grid flex flex-col items-center gap-48 py-160 text-center md:gap-64 md:py-240"
   >
     <h2 class="sr-only">Showreel</h2>
 
-    <p style="white-space: pre-line" class="">{about?.reel?.textTop}</p>
+    <p class="text-h1 whitespace-pre-line">{about?.reel?.textTop}</p>
 
     <AboutReel preview={about?.reel?.preview} main={about?.reel?.main} />
 
-    <p style="white-space: pre-line">{about?.reel?.textBottom}</p>
+    <p class="text-h1 whitespace-pre-line">{about?.reel?.textBottom}</p>
   </section>
 
   <section

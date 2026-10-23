@@ -45,6 +45,10 @@ export default defineConfig({
     port: 3000,
   },
 
+  devToolbar: {
+    enabled: false
+  },
+
   adapter: vercel({
     isr: {
       // Read from process.env, not import.meta.env: this runs at build time.

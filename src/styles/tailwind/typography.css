@@ -1,26 +1,31 @@
 @utility text-h1 {
-  font-size: 8rem;
-  line-height: 1;
+  font-family: var(--font-exposure);
+  font-size: 6.4rem;
+  line-height: 1.06;
   letter-spacing: -0.02em;
 
   @variant md {
-    font-size: 19.2rem;
+    font-size: 16.8rem;
+    line-height: 1.02;
   }
 }
 
 @utility text-h2 {
-  font-size: 6.4rem;
+  font-family: var(--font-exposure);
+  font-size: 4.8rem;
   line-height: 1.05;
   letter-spacing: -0.02em;
 
   @variant md {
-    font-size: 12rem;
+    font-size: 9.6rem;
+    line-height: 1.15;
   }
 }
 
 @utility text-h3 {
-  font-size: 4rem;
-  line-height: 1.05;
+  font-family: var(--font-exposure);
+  font-size: 3.6rem;
+  line-height: 1.25;
   letter-spacing: -0.02em;
 
   @variant md {

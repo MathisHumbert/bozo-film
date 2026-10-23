@@ -45,6 +45,11 @@ html.is-ready .site {
   transition: opacity var(--transition-duration-base) var(--ease-sine-out);
 }
 
+/* The preloader covers it: the page is already there when the halves part. */
+html.js c-preloader ~ .site {
+  opacity: 1;
+}
+
 #scroll-wrapper {
   position: fixed;
   overflow-x: clip;
@@ -81,8 +86,6 @@ main {
   height: 100%;
 }
 
-/* swup parallel visits only (see Transition): the incoming page waits over
-   the screen, hidden, while the old one stays where it was scrolled to */
 .is-incoming-container {
   position: fixed;
   top: 0;
@@ -93,6 +96,10 @@ main {
   z-index: 1;
   visibility: hidden;
   opacity: 0;
+}
+
+.is-previous-container {
+  z-index: 0;
 }
 
 a,
