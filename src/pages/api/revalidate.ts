@@ -3,6 +3,7 @@ export const prerender = false;
 import { isValidSignature, SIGNATURE_HEADER_NAME } from "@sanity/webhook";
 import type { APIRoute } from "astro";
 
+import { markdownPathFor } from "../../lib/negotiation";
 import { allPaths, hrefFor, isRoutable } from "../../lib/routes";
 
 interface WebhookDoc {
@@ -14,12 +15,22 @@ const AI_PATHS = ["/llms.txt", "/llms-full.txt"];
 
 const SITE_WIDE_TYPES = ["settings", "video-asset", "work", "about", "photo"];
 
-async function resolvePaths(doc: WebhookDoc): Promise<string[]> {
+// Every page has a Markdown twin at `<path>.md`, cached on its own.
+function withMarkdown(paths: string[]): string[] {
+  return paths.flatMap((path) => [path, markdownPathFor(path)]);
+}
+
+export async function resolvePaths(doc: WebhookDoc): Promise<string[]> {
   const type = doc._type;
   const own = isRoutable(type) ? hrefFor(doc) : null;
 
   if (SITE_WIDE_TYPES.includes(type ?? "")) {
-    return [...new Set([...allPaths(), ...(own ? [own] : []), ...AI_PATHS])];
+    return [
+      ...new Set([
+        ...withMarkdown([...allPaths(), ...(own ? [own] : [])]),
+        ...AI_PATHS,
+      ]),
+    ];
   }
 
   if (!isRoutable(type)) return [];
@@ -27,7 +38,7 @@ async function resolvePaths(doc: WebhookDoc): Promise<string[]> {
   const paths = new Set(AI_PATHS);
 
   if (own) {
-    paths.add(own);
+    for (const path of withMarkdown([own])) paths.add(path);
   }
 
   return [...paths];

@@ -19,7 +19,8 @@
     "check:media": "node scripts/check-media-api.mjs",
     "media:cache-control": "node scripts/set-cache-control.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.2",
@@ -75,6 +76,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "schema-dts": "^2.0.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
   }
 }

@@ -40,6 +40,32 @@ export function hrefFor(doc?: RoutableDocument | null): string | null {
   }
 }
 
+// The inverse of `hrefFor()`, derived from it rather than written by hand: a
+// repeatable's pattern comes from the path it builds for a placeholder slug.
+export function resolvePath(path: string): RoutableDocument | null {
+  const target = path.length > 1 ? path.replace(/\/+$/, "") : path;
+
+  for (const type of ROUTABLE_TYPES) {
+    if (!isRepeatable(type)) {
+      if (hrefFor({ _type: type }) === target) return { _type: type };
+      continue;
+    }
+
+    const template = hrefFor({ _type: type, slug: "\u0000" });
+    if (!template) continue;
+
+    const [prefix, suffix] = template.split("\u0000");
+
+    if (target.startsWith(prefix) && target.endsWith(suffix)) {
+      const slug = target.slice(prefix.length, target.length - suffix.length);
+
+      if (slug && !slug.includes("/")) return { _type: type, slug };
+    }
+  }
+
+  return null;
+}
+
 export function allPaths(slugs: SlugsByType = {}): string[] {
   return ROUTABLE_TYPES.flatMap((type) => {
     if (!isRepeatable(type)) return paths([{ _type: type }]);

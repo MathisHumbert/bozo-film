@@ -399,8 +399,47 @@ groups are read by `json-ld.ts` case-insensitively — `expertise`/`services`/`s
 Do not add a per-page canonical field. It is the most misused field in any CMS and the
 canonical is derivable with certainty from the route.
 
-`seo.noIndex` has three consumers — the `robots` meta, the `llms.txt` filter and the
-sitemap filter. Adding a fourth place that decides visibility means reading all three.
+`seo.noIndex` has four consumers — the `robots` meta, the `llms.txt` filter, the
+sitemap filter and the Markdown twins (a 404). Adding a fifth place that decides visibility means reading all three.
+
+### Markdown content negotiation
+
+Every page also exists as Markdown: `/index.md`, `/about.md`, `/photo.md`,
+`/work/<slug>.md`, rendered by `src/lib/seo/markdown.ts` through
+`src/lib/markdown-endpoint.ts`. The same Markdown is served at the page URL itself
+when the request's `Accept` prefers it (RFC 9110: q-values honoured, Markdown wins
+a tie, `406` when neither is acceptable). Both representations carry
+`Vary: Accept`, and each HTML page links its twin with
+`<link rel="alternate" type="text/markdown">`. A path that is not a page returns
+a Markdown 404 linking `/llms.txt` and the sitemap.
+
+**The negotiation must never run inside the ISR function.** The ISR cache keys on
+the path alone, so a Markdown body rendered there would be served to browsers as
+the page. Hence two halves sharing one definition in `src/lib/negotiation.ts`:
+
+- `markdownNegotiation()` in `astro.config.mjs` adds a route to
+  `.vercel/output/config.json` straight after `handle: filesystem`: page-shaped
+  paths whose `Accept` mentions `text/markdown` go to the uncached `_render`
+  function. The adapter has no option for a header-matched route, hence the
+  post-build edit.
+- `src/middleware.ts` does the real q-value negotiation there, and rewrites to the
+  `.md` route.
+
+`tests/negotiation.test.ts` checks that the route and the middleware agree on
+every path and header. Change `NEGOTIABLE_PATH` or `MARKDOWN_ACCEPT` and that
+test is the guard.
+
+The `.md` routes are ordinary ISR pages, and `resolvePaths()` purges each page's
+twin with it. `resolvePath()` in `routes.ts` (the inverse of `hrefFor()`) maps a
+path back to its document, so singletons need nothing new. **A repeatable needs a
+`<prefix>/[slug].md.ts`** beside its `[slug].astro`, which otherwise takes
+`/work/x.md` with the extension in the slug. It also needs a case in
+`markdownResponse()`.
+
+Check: `curl -sSi -H 'Accept: text/markdown' localhost:3000/` is
+`text/markdown` with `Vary: Accept`; the same with `Accept: text/html` is HTML.
+After a build, route 2 in `.vercel/output/config.json` is the one with `has`.
+`npm test` runs the unit tests.
 
 ### llmsQuery
 
@@ -714,6 +753,8 @@ generated query result types, so stale types silently break the dispatcher.
    `webPageType()` in `src/lib/seo/json-ld.ts` if it deserves more than `WebPage`.
 9. **Presentation** — add a location resolver in `sanity/lib/resolve.ts`.
 10. **Discoverability** — add it to `llmsQuery`, or the page never reaches `/llms.txt`.
+    Add a case to `markdownResponse()` (`src/lib/markdown-endpoint.ts`) for its
+    Markdown twin, plus a `<prefix>/[slug].md.ts` route if it is a repeatable.
     `resolvePaths()` needs nothing unless `Layout` reads the type, in which case add it
     to `SITE_WIDE_TYPES`.
 11. Deploy the schema, run typegen.

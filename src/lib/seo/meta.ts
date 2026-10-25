@@ -51,7 +51,8 @@ export function buildMeta(input: MetaInput): Meta {
   const fallback = site?.fallbackSEO;
   const identity = site?.siteIdentity;
 
-  const title = seo?.metaTitle || fallback?.metaTitle || DEFAULT_TITLE;
+  const title =
+    seo?.metaTitle || fallback?.metaTitle || identity?.name || DEFAULT_TITLE;
   const description =
     seo?.metaDescription || fallback?.metaDescription || undefined;
 

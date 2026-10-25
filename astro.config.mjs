@@ -8,9 +8,13 @@ import sanity from "@sanity/astro";
 
 import tailwindcss from "@tailwindcss/vite";
 
+import { readFile, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+
 import { loadEnv } from "vite";
 
 import { sitemapPages } from "./src/lib/sitemap";
+import { withMarkdownRoute } from "./src/lib/negotiation";
 
 const { PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET } = loadEnv(
   process.env.NODE_ENV ?? "development",
@@ -18,7 +22,8 @@ const { PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET } = loadEnv(
   "",
 );
 
-const SITE_URL = "https://astro-creative-boilerplate.vercel.app";
+// The canonical, the sitemap, robots.txt and llms.txt are all built from this.
+const SITE_URL = "https://bozo-film.vercel.app";
 
 // Insert the current date to access the latest version of the API.
 const SANITY_API_VERSION = "2025-01-28";
@@ -34,6 +39,39 @@ const { customPages, excluded } = await sitemapPages({
   dataset: PUBLIC_SANITY_DATASET,
   apiVersion: SANITY_API_VERSION,
 });
+
+// Markdown content negotiation has to be decided before the ISR cache, which
+// keys on the path alone: a Markdown body rendered by the ISR function would be
+// served to browsers as the page. The adapter has no option for a header-matched
+// route, so this adds one to the Build Output config it has just written. The
+// adapter is always first in the hook order, so its config.json exists by now.
+/** @returns {import("astro").AstroIntegration} */
+function markdownNegotiation() {
+  /** @type {URL} */
+  let root;
+
+  return {
+    name: "markdown-negotiation",
+    hooks: {
+      "astro:config:done": ({ config }) => {
+        root = config.root;
+      },
+      "astro:build:done": async ({ logger }) => {
+        const file = new URL("./.vercel/output/config.json", root);
+
+        if (!existsSync(file)) {
+          logger.warn("No .vercel/output/config.json: Markdown negotiation is off.");
+          return;
+        }
+
+        const config = JSON.parse(await readFile(file, "utf8"));
+
+        await writeFile(file, JSON.stringify(withMarkdownRoute(config), null, "\t"));
+        logger.info("Accept: text/markdown routed past the ISR cache.");
+      },
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -97,6 +135,7 @@ export default defineConfig({
       },
     }),
     react(),
+    markdownNegotiation(),
   ],
 
   vite: {
