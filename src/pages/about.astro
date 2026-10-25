@@ -30,7 +30,7 @@ const phone = stegaClean(about?.contact?.phone);
   <AboutBio description={about?.description} />
 
   <section class="px-grid pt-192 md:pt-240">
-    <div class="gap-gutter relative grid grid-cols-2 border">
+    <div class="gap-gutter relative grid grid-cols-2">
       <AboutGallery images={about?.images ?? []} />
 
       <div class="flex flex-col gap-48 md:gap-96">
@@ -114,7 +114,7 @@ const phone = stegaClean(about?.contact?.phone);
   </section>
 
   <section
-    class="px-grid flex flex-col items-center gap-48 py-160 text-center md:gap-64 md:py-240"
+    class="px-grid flex flex-col items-center gap-32 py-160 text-center md:gap-64 md:py-240"
   >
     <h2 class="sr-only">Showreel</h2>
 

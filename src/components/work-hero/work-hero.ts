@@ -4,6 +4,7 @@ import Scroll from "../../scripts/classes/Scroll";
 import { device } from "../../scripts/classes/Device";
 import { responsive } from "../../scripts/classes/Responsive";
 import { events } from "../../scripts/utils/events";
+import { reveal } from "../../scripts/utils/reveal";
 import { attachSources } from "../../scripts/utils/video";
 
 const IDLE = 3500;
@@ -32,6 +33,8 @@ export class WorkHero extends HTMLElement {
   private $label: HTMLElement | null;
   private $minutes: HTMLElement | null;
   private $seconds: HTMLElement | null;
+  private $durationLines: HTMLElement[];
+  private $toggleLines: HTMLElement[];
 
   private $nav: HTMLElement | null = null;
 
@@ -53,14 +56,18 @@ export class WorkHero extends HTMLElement {
     this.$label = this.querySelector('[data-work-hero="label"]');
     this.$minutes = this.querySelector('[data-work-hero="minutes"]');
     this.$seconds = this.querySelector('[data-work-hero="seconds"]');
+    this.$durationLines = Array.from(
+      this.querySelectorAll('[data-work-hero="duration-line"]'),
+    );
+    this.$toggleLines = Array.from(
+      this.querySelectorAll('[data-work-hero="toggle-line"]'),
+    );
   }
 
   /**
    * Lifecycle
    */
   connectedCallback() {
-    if (!this.$main || !this.$toggle) return;
-
     this.$nav = document.querySelector("[data-nav]");
 
     this.bindEvents();
@@ -95,6 +102,7 @@ export class WorkHero extends HTMLElement {
     events.on("wheel", this.onActivity);
     events.on("update", this.update);
     events.on("resize", this.measure);
+    events.on("page:revealed", this.reveal);
   }
 
   private unbindEvents() {
@@ -109,6 +117,7 @@ export class WorkHero extends HTMLElement {
     events.off("wheel", this.onActivity);
     events.off("update", this.update);
     events.off("resize", this.measure);
+    events.off("page:revealed", this.reveal);
   }
 
   private onToggle = () => {
@@ -158,6 +167,15 @@ export class WorkHero extends HTMLElement {
     gsap.set(this.$mainWrapper, { autoAlpha: 0 });
 
     this.$preview?.play().catch(() => undefined);
+  };
+
+  /**
+   * Animations
+   */
+  private reveal = () => {
+    events.off("page:revealed", this.reveal);
+
+    reveal([this.$title, ...this.$durationLines, ...this.$toggleLines]);
   };
 
   /**

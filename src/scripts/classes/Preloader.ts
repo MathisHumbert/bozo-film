@@ -14,7 +14,11 @@ export interface PreloaderOptions {
   timeout?: number;
 }
 
-await Promise.allSettled([...document.images].map((img) => img.decode()));
+await Promise.allSettled(
+  [...document.images]
+    .filter((img) => img.loading !== "lazy")
+    .map((img) => img.decode()),
+);
 
 const DEFAULT_FONTS = ["Feature Display Condensed", "Exposure"];
 

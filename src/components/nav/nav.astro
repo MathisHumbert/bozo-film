@@ -113,7 +113,7 @@ import Logo from "../../icons/logo.svg";
       aria-label="Menu"
       class="flex shrink-0 flex-col items-center justify-center text-center"
     >
-      <ul class="text-h2 flex flex-col gap-8">
+      <ul class="text-h2 flex flex-col gap-4">
         <li>
           <a href="/" data-modal-reveal
             >Film
@@ -150,7 +150,9 @@ import Logo from "../../icons/logo.svg";
           href={`mailto:${email}`}
           class="text-title relative mx-auto pb-[max(1px,0.1rem)] uppercase"
         >
-          <span data-modal-reveal class="block">{email}</span>
+          <span data-modal-reveal class="block">
+            {email}
+          </span>
           <Underline />
         </a>
       )

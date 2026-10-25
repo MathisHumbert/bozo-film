@@ -76,6 +76,7 @@ export default class Transition {
   private createSwup() {
     const swup = new Swup({
       animateHistoryBrowsing: true,
+      animationSelector: false,
       plugins: [
         new SwupHeadPlugin({
           persistAssets: true,
@@ -184,7 +185,13 @@ export default class Transition {
     _visit: Visit,
     { containers }: HookArguments<"content:insert">,
   ) => {
-    containers.forEach(({ next }) => next.classList.add(INCOMING_CLASS));
+    containers.forEach(({ next, previous }) => {
+      next.classList.add(INCOMING_CLASS);
+
+      if (previous.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement).blur();
+      }
+    });
   };
 
   private onContentReplace = () => {

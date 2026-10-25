@@ -41,6 +41,12 @@ export default defineConfig({
 
   output: "static",
 
+  // A few KiB in all: inlined, the CSS no longer blocks the first paint on
+  // two extra requests.
+  build: {
+    inlineStylesheets: "always",
+  },
+
   server: {
     port: 3000,
   },

@@ -22,8 +22,9 @@ type Line = {
 // space between the illustration and the nearest letter, in line heights
 const GAP = 0.15;
 
-// size of the diamond, relative to the illustration
-const SIZE = 1;
+// size of the diamond, relative to the illustration: wider on mobile, where
+// the lines are short and a small gap barely reads
+const SIZE = device.isMobile ? 1.25 : 1;
 
 // how fast a line catches up with its goal, higher is snappier
 const EASE = 400;

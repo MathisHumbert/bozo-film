@@ -74,6 +74,23 @@ const isDev = import.meta.env.DEV;
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
+    <!-- The Preloader waits on both: fetched with the HTML, not once the CSS
+         has arrived and named them. Keep in step with tailwind.css. -->
+    <link
+      rel="preload"
+      href="/fonts/exposure-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/feature-display-condensed-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
     <Seo meta={meta} />
     <JsonLd graph={graph} />
   </head>
