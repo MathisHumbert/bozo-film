@@ -400,7 +400,7 @@ Do not add a per-page canonical field. It is the most misused field in any CMS a
 canonical is derivable with certainty from the route.
 
 `seo.noIndex` has four consumers — the `robots` meta, the `llms.txt` filter, the
-sitemap filter and the Markdown twins (a 404). Adding a fifth place that decides visibility means reading all three.
+sitemap filter and the Markdown twins (a 404). Adding a fifth place that decides visibility means reading all four.
 
 ### Markdown content negotiation
 
