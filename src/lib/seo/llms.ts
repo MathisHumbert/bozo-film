@@ -28,6 +28,26 @@ export function renderLlmsIndex(data: Llms, origin: string): string {
     out.push(`> ${collapse(summary)}`);
   }
 
+  // Written by an editor: the questions this site answers, and where.
+  const useCases = (ai?.whenToUse ?? []).flatMap((item) => {
+    if (!item.task) return [];
+
+    const href = item.link?.href;
+
+    if (!href) return [`- ${collapse(item.task)}`];
+
+    // An internal href is a path, the link helper prefixes the origin.
+    return item.link?.external
+      ? [
+          `- [${collapse(item.link.label || href)}](${href}): ${collapse(item.task)}`,
+        ]
+      : [link(item.link?.label || href, href, origin, item.task)];
+  });
+
+  if (useCases.length) {
+    out.push(section("When to use this site", useCases));
+  }
+
   const pages = entriesFor(data).map((entry) =>
     link(entry.title, entry.path, origin, entry.description),
   );

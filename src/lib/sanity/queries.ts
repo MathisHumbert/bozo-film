@@ -156,7 +156,11 @@ const llmsPageProjection = `{
 export const llmsQuery = defineQuery(`{
   "settings": *[_type == "settings"][0]{
     siteIdentity{ entityType, name, jobTitle, email, sameAs },
-    aiContent{ summary, sections[]{ title, items } },
+    aiContent{
+      summary,
+      whenToUse[]{ task, link ${linkProjection} },
+      sections[]{ title, items }
+    },
     fallbackSEO{ metaTitle, metaDescription }
   },
   "home": *[_type == "home"][0] ${llmsPageProjection},

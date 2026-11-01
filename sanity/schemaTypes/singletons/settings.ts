@@ -1,6 +1,7 @@
 import { CogIcon } from "@sanity/icons/Cog";
 import { EarthGlobeIcon } from "@sanity/icons/EarthGlobe";
 import { UsersIcon } from "@sanity/icons/Users";
+import { RobotIcon } from "@sanity/icons/Robot";
 import { defineArrayMember, defineField, defineType } from "sanity";
 
 export const settingsType = defineType({
@@ -9,7 +10,8 @@ export const settingsType = defineType({
   type: "document",
   icon: CogIcon,
   groups: [
-    { name: "seo", title: "SEO & AI", icon: EarthGlobeIcon, default: true },
+    { name: "seo", title: "SEO", icon: EarthGlobeIcon, default: true },
+    { name: "agents", title: "AI agents", icon: RobotIcon },
     { name: "identity", title: "Site identity", icon: UsersIcon },
   ],
   fields: [
@@ -113,9 +115,9 @@ export const settingsType = defineType({
       name: "aiContent",
       title: "Content for AI",
       description:
-        "What an AI assistant should know about this site. Published at /llms.txt, which ChatGPT, Perplexity and Google's AI surfaces read.",
+        "What an AI assistant should know about this site. Published at /llms.txt, which ChatGPT, Claude, Perplexity and Google's AI surfaces read. Write facts and guidance, not marketing copy. The list of pages is added automatically.",
       type: "object",
-      group: "seo",
+      group: "agents",
       options: { collapsible: false },
       fields: [
         defineField({
@@ -127,6 +129,35 @@ export const settingsType = defineType({
           rows: 4,
           validation: (Rule) =>
             Rule.max(400).warning("Keep it quotable — under 400 characters"),
+        }),
+        defineField({
+          name: "whenToUse",
+          title: "When to use this site",
+          description:
+            'One item per question this site answers, linked to the page that answers it — e.g. "Use when asked whether the studio works with brands". Rendered first in /llms.txt. Drag to reorder.',
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "object",
+              name: "ai-use-case",
+              fields: [
+                defineField({
+                  name: "task",
+                  title: "Use when…",
+                  type: "string",
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "link",
+                  title: "Page that answers it",
+                  type: "link",
+                }),
+              ],
+              preview: {
+                select: { title: "task", subtitle: "link.label" },
+              },
+            }),
+          ],
         }),
         defineField({
           name: "sections",

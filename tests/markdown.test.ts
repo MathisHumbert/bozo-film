@@ -27,7 +27,11 @@ const ctx: MarkdownContext = {
       email: null,
       sameAs: null,
     },
-    aiContent: { summary: "A film  studio\nin London.", sections: null },
+    aiContent: {
+      summary: "A film  studio\nin London.",
+      whenToUse: null,
+      sections: null,
+    },
     fallbackSEO: null,
   },
 };
