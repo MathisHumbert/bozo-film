@@ -172,10 +172,12 @@ export class WorkHero extends HTMLElement {
   /**
    * Animations
    */
-  private reveal = () => {
+  private reveal = ({ intro }: { intro: boolean }) => {
     events.off("page:revealed", this.reveal);
 
-    reveal([this.$title, ...this.$durationLines, ...this.$toggleLines]);
+    reveal([this.$title, ...this.$durationLines, ...this.$toggleLines], {
+      intro,
+    });
   };
 
   /**

@@ -4,7 +4,8 @@ import { SplitText } from "gsap/SplitText";
 import { device } from "../../scripts/classes/Device";
 import { mattEasing } from "../../scripts/utils/easing";
 import { events, type UpdateData } from "../../scripts/utils/events";
-import { smoothMin, smoothMax } from "../../scripts/utils/math";
+import { smoothMin } from "../../scripts/utils/math";
+import { revealTiming } from "../../scripts/utils/reveal";
 
 type Char = {
   $el: HTMLElement;
@@ -46,6 +47,9 @@ export class AboutBio extends HTMLElement {
   private split: SplitText | null = null;
   private lines: Line[] = [];
   private size = { width: 0, height: 0 };
+
+  // the illustration's place before any scroll, in px from the top
+  private rest = 0;
 
   // added to the illustration's place, in px: above the screen until the
   // page is revealed, then 0
@@ -111,12 +115,13 @@ export class AboutBio extends HTMLElement {
    */
   // Only the drop is tweened: update() opens the lines around wherever the
   // illustration is, so they part as it falls through them.
-  private reveal = () => {
+  private reveal = ({ intro }: { intro: boolean }) => {
     events.off("page:revealed", this.reveal);
 
     gsap.to(this, {
       drop: 0,
       duration: REVEAL.duration,
+      delay: revealTiming(intro).delay,
       ease: REVEAL.ease,
     });
   };
@@ -132,6 +137,7 @@ export class AboutBio extends HTMLElement {
     const chars = self.chars as HTMLElement[];
 
     this.size = { width: illustration.width, height: illustration.height };
+    this.rest = this.offsetTop + (this.$track?.offsetTop ?? 0);
 
     // positions are stored relative to the paragraph, so they hold while
     // the page scrolls and only a new split changes them
@@ -162,13 +168,12 @@ export class AboutBio extends HTMLElement {
     const track = this.$track.getBoundingClientRect();
     const illustration = this.size;
 
-    // what position: sticky does, the centre of the screen clamped to the
-    // track, but with a soft clamp so it eases in and out instead of
-    // catching and dropping the illustration dead
+    // position: sticky at its rest (or the screen centre, if higher), clamped
+    // to the track: hard at the start, soft at the end so it eases out
     const soft = window.innerHeight * SOFT;
-    const screen = window.innerHeight / 2 - track.top;
+    const screen = Math.min(window.innerHeight / 2, this.rest) - track.top;
     const position =
-      smoothMin(smoothMax(screen, 0, soft), track.height, soft) + this.drop;
+      smoothMin(Math.max(screen, 0), track.height, soft) + this.drop;
 
     this.$anchor.style.transform = `translate3d(0, ${position}px, 0)`;
 

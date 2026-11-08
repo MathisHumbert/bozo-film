@@ -7,7 +7,7 @@ import Snap from "lenis/snap";
 import Scroll from "../../scripts/classes/Scroll";
 import { device } from "../../scripts/classes/Device";
 import { mattEasing } from "../../scripts/utils/easing";
-import { reveal } from "../../scripts/utils/reveal";
+import { reveal, revealTiming } from "../../scripts/utils/reveal";
 import {
   events,
   type Bounds,
@@ -31,6 +31,9 @@ type WideItem = {
 
 const SCALE = 1.25;
 
+// The first work's video on load, zooming out to SCALE.
+const INTRO_SCALE = 1.5;
+
 const DURATION = {
   // Scrolls the stack onto a whole video before leaving, and when the user
   // lets go of the scroll.
@@ -49,6 +52,9 @@ const DURATION = {
   underlineAt: 0.2,
   // Share of one work's scroll the duration takes to roll out, or in.
   durationRoll: 0.7,
+  // On load, the intro curve barely moves for its first half, so the
+  // underline waits for the text to be nearly in place.
+  introUnderlineAt: 0.6,
 };
 
 const EASE = {
@@ -209,16 +215,23 @@ export class HomeWide extends HTMLElement {
    * Animations.
    */
 
-  reveal = () => {
+  reveal = ({ intro }: { intro: boolean }) => {
     if (!this.isEnabled) return;
 
-    const { $texts, $durationLines } = this.items[this.current];
+    const { $media, $texts, $durationLines } = this.items[this.current];
+    const timing = revealTiming(intro);
+    const lines = [...$durationLines, ...(this.indexLines[this.current] ?? [])];
 
-    reveal([
-      ...$texts,
-      ...$durationLines,
-      ...(this.indexLines[this.current] ?? []),
-    ]);
+    if (intro) {
+      // The video zooms out to its resting scale, the text rises. From-tweens
+      // set their start at once, under the preloader; only the motion waits.
+      gsap.from($media, { scale: INTRO_SCALE, ...timing });
+      gsap.from($texts, { scale: 0.9, yPercent: 50, ...timing });
+
+      reveal(lines, { intro });
+    } else {
+      reveal([...$texts, ...lines]);
+    }
 
     gsap.fromTo(
       this.getUnderlines(this.current),
@@ -226,7 +239,10 @@ export class HomeWide extends HTMLElement {
       {
         scaleX: 1,
         duration: device.reducedMotion ? 0 : DURATION.linkShow,
-        delay: device.reducedMotion ? 0 : DURATION.underlineAt,
+        delay: device.reducedMotion
+          ? 0
+          : timing.delay +
+            (intro ? DURATION.introUnderlineAt : DURATION.underlineAt),
         ease: EASE.linkShow,
       },
     );

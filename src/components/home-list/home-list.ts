@@ -17,6 +17,7 @@ export type ListItem = {
   slug: string;
   isFeatured: boolean;
   $item: HTMLElement;
+  $heading: HTMLElement | null;
   $media: HTMLElement | null;
   $video: HTMLElement | null;
   $titles: HTMLElement[];
@@ -30,6 +31,8 @@ export type ListItem = {
   height: number;
   videoWidth: number;
   videoHeight: number;
+  // What the open video adds on each side, on top of the closed column gap.
+  videoGap: number;
   videoX: number;
   videoY: number;
   scale: number;
@@ -40,6 +43,8 @@ const DURATION = {
   center: 0.8,
   // Slides a keyboard-focused item to the centre.
   focus: 1,
+  // Settles the nearest work at the centre once the scroll stops.
+  snap: 0.8,
   // The view leaving, and the view arriving.
   fadeOut: 0.4,
   fadeIn: 0.6,
@@ -77,6 +82,7 @@ export class HomeList extends HTMLElement {
   opening: ListItem[] = [];
   lastScroll = 0;
   isFrozen = false;
+  isScrolling = false;
 
   constructor() {
     super();
@@ -88,6 +94,7 @@ export class HomeList extends HTMLElement {
       slug: $item.dataset.slug ?? "",
       isFeatured: $item.hasAttribute("data-featured"),
       $item,
+      $heading: $item.querySelector<HTMLElement>('[data-home-list="heading"]'),
       $media: $item.querySelector<HTMLElement>('[data-home-list="media"]'),
       $video: $item.querySelector<HTMLElement>('[data-home-list="video"]'),
       $titles: Array.from(
@@ -102,6 +109,7 @@ export class HomeList extends HTMLElement {
       height: 0,
       videoWidth: 0,
       videoHeight: 0,
+      videoGap: 0,
       videoX: 0,
       videoY: 0,
       scale: 0,
@@ -205,11 +213,12 @@ export class HomeList extends HTMLElement {
     this.state = "leaving";
 
     // Created before the emit and padded to 1.2s, so it ends before the wide's.
+    // The centred work fades, the others part to the edges: show() in reverse.
     this.tl = gsap.timeline();
     this.tl
       .to(
-        this,
-        { autoAlpha: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
+        [item.$item, this.$gradient],
+        { opacity: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
         0,
       )
       .to(
@@ -218,6 +227,14 @@ export class HomeList extends HTMLElement {
         0,
       )
       .add(() => {}, DURATION.morph * speed);
+
+    this.getEdges(item).forEach(({ entries, y }) => {
+      this.tl?.to(
+        entries.map(({ $heading }) => $heading),
+        { y, duration: DURATION.morph * speed, ease: EASE.morph },
+        0,
+      );
+    });
 
     events.emit("home:leave", {
       view: "wide",
@@ -228,7 +245,11 @@ export class HomeList extends HTMLElement {
     await this.tl;
 
     this.hidden = true;
-    gsap.set(this, { clearProps: "opacity,visibility" });
+    gsap.set([item.$item, this.$gradient], { clearProps: "opacity" });
+    gsap.set(
+      this.items.map(({ $heading }) => $heading),
+      { clearProps: "transform" },
+    );
 
     this.state = "hidden";
     this.alpha.value = 1;
@@ -261,10 +282,6 @@ export class HomeList extends HTMLElement {
     this.alpha.value = 0;
 
     const $arriving = item?.$titles ?? [];
-    const $others = [
-      ...this.items.filter((entry) => entry !== item).map(({ $item }) => $item),
-      this.$gradient,
-    ];
 
     this.tl = gsap.timeline();
 
@@ -291,9 +308,24 @@ export class HomeList extends HTMLElement {
       fadeInAt,
     );
 
-    if ($leaving.length && $arriving.length) {
+    if ($leaving.length && $arriving.length && item) {
       gsap.set(this, { autoAlpha: 1 });
-      gsap.set($others, { opacity: 0 });
+      gsap.set(this.$gradient, { opacity: 0 });
+
+      // The other works close in from both edges and land with the morph.
+      this.getEdges(item).forEach(({ entries, y }) => {
+        this.tl?.fromTo(
+          entries.map(({ $heading }) => $heading),
+          { y },
+          {
+            y: 0,
+            duration: DURATION.morph * speed,
+            ease: EASE.morph,
+            clearProps: "transform",
+          },
+          0,
+        );
+      });
 
       // Each title half starts over the wide's one and slides home.
       $arriving.forEach(($title, index) => {
@@ -311,7 +343,7 @@ export class HomeList extends HTMLElement {
       gsap.set($leaving, { opacity: 0 });
 
       this.tl.to(
-        $others,
+        this.$gradient,
         { opacity: 1, duration: DURATION.fadeIn * speed, ease: EASE.fade },
         fadeInAt,
       );
@@ -326,7 +358,7 @@ export class HomeList extends HTMLElement {
     await this.tl;
 
     gsap.set(this, { clearProps: "opacity,visibility" });
-    gsap.set([...$others, ...$leaving], { clearProps: "opacity" });
+    gsap.set([this.$gradient, ...$leaving], { clearProps: "opacity" });
     gsap.set($arriving, { clearProps: "transform" });
 
     Scroll.resize();
@@ -415,10 +447,13 @@ export class HomeList extends HTMLElement {
       }
       item.rendered = { y: NaN, scale: NaN, extra: NaN };
 
+      // Closed: a column gap between the halves. Open: a row gap each side.
       const $link = item.$item.querySelector("a");
-      const gap = $link
-        ? parseFloat(getComputedStyle($link).columnGap) || 0
-        : 0;
+      const linkStyle = $link ? getComputedStyle($link) : null;
+      const gap = parseFloat(linkStyle?.rowGap ?? "") || 0;
+      const space = parseFloat(linkStyle?.columnGap ?? "") || 0;
+
+      item.videoGap = gap - space;
       const titles = item.$titles.reduce(
         (width, $title) => width + $title.getBoundingClientRect().width,
         0,
@@ -446,9 +481,13 @@ export class HomeList extends HTMLElement {
 
       const itemRect = item.$item.getBoundingClientRect();
       const videoRect = item.$video.getBoundingClientRect();
+      // Minus the heading's slide, in case this runs mid-transition.
+      const slide = item.$heading
+        ? Number(gsap.getProperty(item.$heading, "y"))
+        : 0;
 
       item.videoX = videoRect.left + videoRect.width / 2;
-      item.videoY = videoRect.top + videoRect.height / 2 - itemRect.top;
+      item.videoY = videoRect.top + videoRect.height / 2 - itemRect.top - slide;
     });
 
     const [first] = this.items;
@@ -470,21 +509,49 @@ export class HomeList extends HTMLElement {
     const opening = this.opening;
     opening.length = 0;
 
+    // The two works either side of the centre share the opening by distance.
+    let above: ListItem | null = null;
+    let below: ListItem | null = null;
+
     for (let index = 0; index < this.items.length; index++) {
       const item = this.items[index];
       item.position = this.getPosition(item);
+      item.scale = 0;
 
-      const offset = Math.abs(item.position + item.height / 2 - center) / step;
+      const middle = item.position + item.height / 2;
+      const offset = Math.abs(middle - center);
 
-      item.scale = Math.max(0, 1 - offset);
-      item.extra = item.stacked ? item.scale * item.videoHeight : 0;
-
-      if (item.extra) opening.push(item);
+      if (middle <= center) {
+        if (!above || middle > above.position + above.height / 2) above = item;
+      } else if (!below || middle < below.position + below.height / 2) {
+        below = item;
+      }
 
       if (offset < best) {
         best = offset;
         current = index;
       }
+    }
+
+    if (above && below) {
+      const top = above.position + above.height / 2;
+      const bottom = below.position + below.height / 2;
+
+      above.scale = (bottom - center) / (bottom - top);
+      below.scale = 1 - above.scale;
+    } else {
+      const only = above ?? below;
+
+      if (only) {
+        const offset = Math.abs(only.position + only.height / 2 - center);
+        only.scale = Math.max(0, 1 - offset / step);
+      }
+    }
+
+    for (const item of this.items) {
+      item.extra = item.stacked ? item.scale * item.videoHeight : 0;
+
+      if (item.extra) opening.push(item);
     }
 
     for (const item of this.items) {
@@ -514,7 +581,7 @@ export class HomeList extends HTMLElement {
         }
 
         if (item.$media && !item.stacked) {
-          item.$media.style.width = `${item.scale * item.videoWidth}px`;
+          item.$media.style.width = `${item.scale * (item.videoWidth + item.videoGap * 2)}px`;
         }
 
         rendered.scale = item.scale;
@@ -547,6 +614,37 @@ export class HomeList extends HTMLElement {
     const distance = this.distance + this.shift.value + this.origin;
 
     return mod(item.top - distance + item.height, this.height) - item.height;
+  }
+
+  // The works on screen above and below the hero, each group with the offset
+  // that pushes it just off its edge of the screen. Read after render().
+  getEdges(item: ListItem) {
+    const above: ListItem[] = [];
+    const below: ListItem[] = [];
+
+    this.items.forEach((entry) => {
+      if (entry === item) return;
+
+      const top = entry.position + entry.push;
+
+      if (top + entry.height <= 0 || top >= window.innerHeight) return;
+
+      (entry.position < item.position ? above : below).push(entry);
+    });
+
+    const lowest = Math.max(
+      0,
+      ...above.map((entry) => entry.position + entry.push + entry.height),
+    );
+    const highest = Math.min(
+      window.innerHeight,
+      ...below.map((entry) => entry.position + entry.push),
+    );
+
+    return [
+      { entries: above, y: -lowest },
+      { entries: below, y: window.innerHeight - highest },
+    ].filter(({ entries }) => entries.length);
   }
 
   // From the list position, not the layout: the list is fixed.
@@ -584,6 +682,29 @@ export class HomeList extends HTMLElement {
     }
 
     this.render();
+
+    // Once the scroll stops, the nearest work slides to the centre, so only
+    // one video is ever left open.
+    if (this.isFrozen || this.state !== "visible") {
+      // Not carried over, or a scroll cut short by a leave snaps on return.
+      this.isScrolling = false;
+      return;
+    }
+
+    const isScrolling = Boolean(Scroll.lenis?.isScrolling);
+
+    if (isScrolling && !this.isScrolling) {
+      gsap.killTweensOf(this.shift);
+    }
+
+    if (!isScrolling && this.isScrolling && this.items[this.current]) {
+      this.moveTo(
+        this.items[this.current],
+        device.reducedMotion ? 0 : DURATION.snap,
+      );
+    }
+
+    this.isScrolling = isScrolling;
   };
 }
 

@@ -72,7 +72,7 @@ const indexes = [...works, first].map((_, index) =>
             class="text-h4 pointer-events-none absolute top-1/2 left-1/2 -translate-1/2 whitespace-nowrap"
             style={`z-index: ${works.length + 2}`}
           >
-            <span class="inline-grid">
+            <span class="inline-grid leading-[1.2]">
               {indexes.map((numeral) => (
                 <span
                   data-home-wide="index"
@@ -148,7 +148,7 @@ const indexes = [...works, first].map((_, index) =>
                 data-transition="home-to-work"
                 data-animation="link"
                 href={work.href ?? "#"}
-                class="text-title absolute bottom-20 left-1/2 z-2 -translate-x-1/2 pb-[max(1px,0.1rem)] text-white"
+                class="text-title absolute bottom-[calc(var(--grid-margin)-max(1px,0.1rem))] left-1/2 z-2 -translate-x-1/2 pb-[max(1px,0.1rem)] text-white"
               >
                 <span data-home-wide="link-label" class="block">
                   VIEW PROJECT
@@ -188,7 +188,7 @@ const indexes = [...works, first].map((_, index) =>
             <p
               data-home-wide="clone-text"
               data-animation="link"
-              class="text-title absolute bottom-20 left-1/2 z-2 -translate-x-1/2 pb-[max(1px,0.1rem)] text-white"
+              class="text-title absolute bottom-[calc(var(--grid-margin)-max(1px,0.1rem))] left-1/2 z-2 -translate-x-1/2 pb-[max(1px,0.1rem)] text-white"
             >
               <span data-home-wide="link-label" class="block">
                 VIEW PROJECT

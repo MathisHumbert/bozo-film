@@ -2,6 +2,7 @@ import gsap from "gsap";
 
 import { device } from "../../scripts/classes/Device";
 import { responsive } from "../../scripts/classes/Responsive";
+import { introEasing } from "../../scripts/utils/easing";
 import { events } from "../../scripts/utils/events";
 import { pad } from "../../scripts/utils/math";
 
@@ -11,14 +12,14 @@ const CREEP = { value: 90, duration: 2 };
 const FINISH = 0.4;
 
 // The halves parting from the middle, like the home's wide view. The page
-// sits behind them and reveals as they start.
-const SPLIT = { duration: 0.8, ease: "expo.out" };
+// sits behind them and reveals as they start, on the same curve.
+const SPLIT = { duration: 1.2, ease: introEasing };
 
 // seconds between two faces
 const FLASH = 0.25;
 
 // seconds the last face holds, once the count reads 100, before the split
-const HOLD = 0.4;
+const HOLD = 0.8;
 
 // rem between the faces and the %, once it has climbed up to them
 const GAP = 2.4;
@@ -189,7 +190,7 @@ export class Preloader extends HTMLElement {
               // while the panel still covers the page.
               resolve();
 
-              await this.split(SPLIT.duration * duration);
+              await this.split(device.reducedMotion ? 0 : SPLIT.duration);
 
               this.remove();
             });

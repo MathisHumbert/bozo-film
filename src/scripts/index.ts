@@ -63,10 +63,12 @@ class App {
 
     // optional participant: no element means no wait, and nothing else in the
     // app knows whether a preloader ran
-    await document.querySelector<PreloaderElement>("c-preloader")?.play();
+    const preloader = document.querySelector<PreloaderElement>("c-preloader");
+
+    await preloader?.play();
 
     document.documentElement.classList.add("is-ready");
-    events.emit("page:revealed");
+    events.emit("page:revealed", { intro: Boolean(preloader) });
 
     Scroll.start();
   };

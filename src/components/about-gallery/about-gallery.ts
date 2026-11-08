@@ -1,7 +1,9 @@
-import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 export class AboutGallery extends HTMLElement {
-  private tween: gsap.core.Tween | null = null;
+  private $images: HTMLElement[] = [];
+  private trigger: ScrollTrigger | null = null;
+  private active = 0;
 
   /**
    * Lifecycle
@@ -9,30 +11,37 @@ export class AboutGallery extends HTMLElement {
   connectedCallback() {
     const $grid = this.parentElement;
 
-    if (!$grid) return;
+    this.$images = [
+      ...this.querySelectorAll<HTMLElement>('[data-about-gallery="image"]'),
+    ];
 
-    this.tween = gsap.fromTo(
-      $grid,
-      { "--progress": 0 },
-      {
-        "--progress": 1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: $grid,
-          start: "top top",
-          end: () =>
-            `bottom ${parseFloat(getComputedStyle(this).top) + this.offsetHeight}px`,
-          scrub: true,
-          invalidateOnRefresh: true,
-        },
+    if (!$grid || this.$images.length < 2) return;
+
+    // The scroll picks one image, like a gif. Every image up to it stays shown,
+    // so each fades in over the last with no dip to black.
+    this.trigger = ScrollTrigger.create({
+      trigger: $grid,
+      start: () => `top ${parseFloat(getComputedStyle(this).top)}px`,
+      end: () =>
+        `bottom ${parseFloat(getComputedStyle(this).top) + this.offsetHeight}px`,
+      invalidateOnRefresh: true,
+      onUpdate: ({ progress }) => {
+        const count = this.$images.length;
+        const active = Math.min(Math.floor(progress * count), count - 1);
+
+        if (active === this.active) return;
+
+        this.active = active;
+        this.$images.forEach(($image, index) => {
+          $image.toggleAttribute("data-shown", index <= active);
+        });
       },
-    );
+    });
   }
 
   disconnectedCallback() {
-    this.tween?.scrollTrigger?.kill();
-    this.tween?.kill();
-    this.tween = null;
+    this.trigger?.kill();
+    this.trigger = null;
   }
 }
 

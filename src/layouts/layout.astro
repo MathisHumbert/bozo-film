@@ -12,7 +12,7 @@ import type { SeoFields } from "../lib/sanity/types";
 import Nav from "../components/nav/nav.astro";
 import Noise from "../components/noise.astro";
 import Preloader from "../components/preloader/preloader.astro";
-import Progress from "../components/progress/progress.astro";
+// import Progress from "../components/progress/progress.astro";
 import Grid from "../components/grid/grid.astro";
 import JsonLd from "../components/json-ld.astro";
 import Seo from "../components/seo.astro";
@@ -110,9 +110,9 @@ const isDev = import.meta.env.DEV;
   <body>
     <script src="../scripts/index.ts"></script>
 
-    {!isDev && <Preloader />}
+    {true && <Preloader />}
 
-    <Progress />
+    {/* <Progress /> */}
 
     <Noise />
 

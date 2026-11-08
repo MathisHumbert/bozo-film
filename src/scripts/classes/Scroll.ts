@@ -32,7 +32,7 @@ export default class Scroll {
           : (document.getElementById("scroll-content") ?? undefined),
         lerp: device.reducedMotion ? 1 : 0.125,
         wheelMultiplier: 0.75,
-        touchMultiplier: 0.75,
+        // touchMultiplier: 0.75,
         infinite,
         // Lenis only loops the scroll it drives: a native touch scroll stops
         // at the bottom of the page, so on touch it has to take over too.

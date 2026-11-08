@@ -157,8 +157,10 @@ export class PhotoGrid extends HTMLElement {
   /**
    * Animations
    */
-  reveal = () => {
-    reveal(this.$toggles);
+  reveal = ({ intro }: { intro: boolean }) => {
+    reveal(this.$toggles, { intro });
+
+    this.resetPhase();
 
     if (device.reducedMotion) return;
 
@@ -281,10 +283,12 @@ export class PhotoGrid extends HTMLElement {
         $set,
         period: 0,
         lag: this.getLag(index, count),
-        position: this.distance,
+        position: 0,
         shift: 0,
       };
     });
+
+    this.resetPhase();
 
     this.$grid.replaceChildren(...this.columns.map(({ $window }) => $window));
 
@@ -330,12 +334,24 @@ export class PhotoGrid extends HTMLElement {
     this.render();
   };
 
+  // Columns have different periods: only distance 0 lines up every first
+  // photo with the top padding.
+  resetPhase() {
+    this.distance = 0;
+    this.lastScroll = Scroll.scroll;
+    this.columns.forEach((column) => (column.position = 0));
+    this.render();
+  }
+
   getLag(index: number, count: number) {
     if (device.reducedMotion) return 0;
 
     const middle = (count - 1) / 2;
 
-    return LAG.base + Math.abs(index - middle) * LAG.scale;
+    // Half a step more on the right, so mirrored columns never share a lag.
+    const side = index > middle ? 0.5 : 0;
+
+    return LAG.base + (Math.abs(index - middle) + side) * LAG.scale;
   }
 
   render() {

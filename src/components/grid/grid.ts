@@ -1,12 +1,17 @@
 import { events } from "../../scripts/utils/events";
 
+// Ctrl+G toggles the columns, Ctrl+H the rows.
 class Grid extends HTMLElement {
-  private isVisible: boolean = false;
+  $columns!: HTMLElement;
+  $rows!: HTMLElement;
 
   /**
    * Lifecycle
    */
   connectedCallback() {
+    this.$columns = this.querySelector<HTMLElement>('[data-grid="columns"]')!;
+    this.$rows = this.querySelector<HTMLElement>('[data-grid="rows"]')!;
+
     this.buildColumns();
     this.bindEvents();
   }
@@ -32,9 +37,14 @@ class Grid extends HTMLElement {
    * Methods
    */
   onKeyDown = (e: KeyboardEvent) => {
-    if (e.ctrlKey && e.key === "g") {
-      this.isVisible = !this.isVisible;
-      this.style.display = this.isVisible ? "flex" : "none";
+    if (!e.ctrlKey) return;
+
+    if (e.key === "g") {
+      this.$columns.toggleAttribute("hidden");
+    }
+
+    if (e.key === "h") {
+      this.$rows.toggleAttribute("hidden");
     }
   };
 
@@ -49,12 +59,12 @@ class Grid extends HTMLElement {
       ),
     );
 
-    this.innerHTML = "";
+    this.$columns.innerHTML = "";
 
     for (let i = 0; i < count; i++) {
       const col = document.createElement("div");
       col.className = "grid__item";
-      this.appendChild(col);
+      this.$columns.appendChild(col);
     }
   }
 }

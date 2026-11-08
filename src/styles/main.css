@@ -133,7 +133,7 @@ canvas {
   z-index: var(--z-index-canvas);
 }
 
-.grid__wrapper {
+.grid__columns {
   height: 100%;
   left: 0;
   position: fixed;
@@ -151,4 +151,23 @@ canvas {
   width: 100%;
   height: 100%;
   background: rgba(255, 0, 0, 0.1);
+}
+
+.grid__rows {
+  --grid-baseline: 4rem;
+
+  position: fixed;
+  inset: 0;
+  padding: var(--grid-margin) 0;
+  box-shadow:
+    inset 0 var(--grid-margin) 0 rgba(255, 0, 0, 0.1),
+    inset 0 calc(-1 * var(--grid-margin)) 0 rgba(255, 0, 0, 0.1);
+  background: repeating-linear-gradient(
+      to top,
+      rgba(0, 120, 255, 0.35) 0 1px,
+      transparent 1px var(--grid-baseline)
+    )
+    bottom / 100% 100% content-box;
+  z-index: var(--z-index-grid);
+  pointer-events: none;
 }

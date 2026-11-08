@@ -26,7 +26,7 @@ import Logo from "../../icons/logo.svg";
     <nav class="grid grid-cols-3">
       <ul class="flex gap-24">
         <li class="pointer-events-auto hidden md:block">
-          <a href="/" data-transition="work-to-home"
+          <a href="/" data-transition="work-to-home" class="block"
             ><span data-animation="split-hover">Film</span>
             {
               workCount ? (
@@ -38,7 +38,7 @@ import Logo from "../../icons/logo.svg";
           </a>
         </li>
         <li class="pointer-events-auto hidden md:block">
-          <a href="/photo"
+          <a href="/photo" class="block"
             ><span data-animation="split-hover">Photo</span>
             {
               photoCount ? (
@@ -62,6 +62,7 @@ import Logo from "../../icons/logo.svg";
       <a
         href="/"
         data-transition="work-to-home"
+        data-nav-logo
         class="pointer-events-auto flex justify-center"
       >
         <span class="sr-only">Bozo Logo</span>
@@ -77,7 +78,7 @@ import Logo from "../../icons/logo.svg";
         {
           email && (
             <li>
-              <a href={`mailto:${email}`} class="pointer-events-auto">
+              <a href={`mailto:${email}`} class="pointer-events-auto block">
                 <span data-animation="split-hover">Contact</span>
               </a>
             </li>
@@ -119,7 +120,7 @@ import Logo from "../../icons/logo.svg";
             >Film
             {
               workCount ? (
-                <span class="relative top-[-1.9em] mx-[0.4em] text-[0.25em] leading-none">
+                <span class="text-title font-feature-display-condensed relative top-[-2.4em] mx-4">
                   {workCount}
                 </span>
               ) : null
@@ -131,7 +132,7 @@ import Logo from "../../icons/logo.svg";
             >Photo
             {
               photoCount ? (
-                <span class="relative top-[-1.9em] mx-[0.4em] text-[0.25em] leading-none">
+                <span class="text-title font-feature-display-condensed relative top-[-2.4em] mx-4">
                   {photoCount}
                 </span>
               ) : null

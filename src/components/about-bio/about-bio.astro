@@ -9,34 +9,32 @@ const { description } = Astro.props;
 ---
 
 <c-about-bio
-  class="px-grid flex flex-col items-center gap-32 pt-178 md:gap-48 md:pt-358"
+  class="px-grid relative flex flex-col items-center gap-32 pt-[calc(17.8rem+10rem+4.8rem)] md:gap-48 md:pt-[calc(35.8rem+16rem+6.4rem)]"
 >
+  <div
+    aria-hidden="true"
+    data-about-bio="track"
+    class="pointer-events-none absolute inset-x-0 top-[calc(17.8rem+5rem)] -bottom-120 md:top-[calc(35.8rem+8rem)]"
+  >
+    <div
+      data-about-bio="anchor"
+      class="absolute inset-x-0 top-0 flex h-0 items-center justify-center will-change-transform"
+    >
+      <Illustration
+        data-about-bio="illustration"
+        class="size-100 md:size-160"
+      />
+    </div>
+  </div>
+
   <h2 data-animation="text" data-scroll class="text-h4 uppercase">( Bio )</h2>
 
-  <div class="relative">
-    <div
-      aria-hidden="true"
-      data-about-bio="track"
-      class="pointer-events-none absolute inset-x-0 top-120 -bottom-120"
-    >
-      <div
-        data-about-bio="anchor"
-        class="absolute inset-x-0 top-0 flex h-0 items-center justify-center will-change-transform"
-      >
-        <Illustration
-          data-about-bio="illustration"
-          class="size-100 md:size-160"
-        />
-      </div>
-    </div>
-
-    <p
-      data-about-bio="text"
-      class="text-h2 w-col-10 text-center text-[4rem] whitespace-pre-line md:text-[9.6rem]"
-    >
-      {description}
-    </p>
-  </div>
+  <p
+    data-about-bio="text"
+    class="text-h2 w-col-10 text-center text-[4rem] whitespace-pre-line md:text-[9.6rem]"
+  >
+    {description}
+  </p>
 </c-about-bio>
 
 <script>

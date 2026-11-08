@@ -75,11 +75,7 @@ function widthFor(media?: { width?: number | null; height?: number | null }) {
           <h3 class="text-h3">{work.project}</h3>
         </div>
 
-        {
-          work.excerpt && (
-            <p class="text-body first-letter:text-initial">{work.excerpt}</p>
-          )
-        }
+        {work.excerpt && <p class="text-body">{work.excerpt}</p>}
 
         {
           work.category && work.category.length > 0 && (

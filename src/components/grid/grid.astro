@@ -2,7 +2,10 @@
 
 ---
 
-<c-grid class="grid__wrapper" style="display:none"></c-grid>
+<c-grid>
+  <div data-grid="columns" class="grid__columns" hidden></div>
+  <div data-grid="rows" class="grid__rows" hidden></div>
+</c-grid>
 
 <script>
   import("./grid");

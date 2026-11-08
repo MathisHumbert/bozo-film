@@ -109,8 +109,8 @@ export class HomeFooter extends HTMLElement {
   /**
    * Animations.
    */
-  reveal = () => {
-    reveal(this.$items);
+  reveal = ({ intro }: { intro: boolean }) => {
+    reveal(this.$items, { intro });
   };
 
   show(tl: gsap.core.Timeline, position: number) {

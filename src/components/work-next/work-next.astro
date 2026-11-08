@@ -29,65 +29,77 @@ const spaced = stegaClean(title) === `${left} ${right}`;
 <!-- The video waits zoomed in: WorkToWork zooms it out to the next hero's
 scale before handing the <video> over. A transform, not Tailwind's scale-*,
 which is the separate `scale` property GSAP's scale would multiply. -->
-<c-work-next class="relative block h-svh w-full overflow-clip">
-  <SanityVideo
-    asset={previewVideo}
-    autoplay
-    loop
-    wrapperClass="cover [transform:scale(1.2)]"
-    class="h-full w-full object-cover"
-  />
-
-  <div class="cover pointer-events-none bg-black/20"></div>
-
-  {
-    duration && (
-      <time
-        data-work-next="duration"
-        datetime={duration.iso}
-        class="text-title px-grid pointer-events-none absolute top-1/2 right-0 left-0 flex -translate-y-1/2 justify-center"
-      >
-        <span class="sr-only">{duration.label}</span>
-        <span aria-hidden="true" class="flex w-full justify-between">
-          <span>{duration.minutes}</span>
-          <span class="text-right">{duration.seconds}</span>
-        </span>
-      </time>
-    )
-  }
-
-  <a
-    href={hrefFor({ _type: "work", slug })}
-    data-transition="work-to-work"
-    data-work-next="ui"
-    class="text-h4 absolute top-1/2 left-1/2 -translate-1/2 uppercase"
+<c-work-next class="relative">
+  <div
+    class="relative block h-svh w-full [clip-path:polygon(0_0,_100%_0,_100%_100%,_0_100%)]"
   >
-    <span class="block overflow-clip">
-      <span data-work-next="line" class="block whitespace-nowrap">
-        ( <span data-animation="split-hover">Next Project</span> )
-      </span>
-    </span>
-  </a>
+    <div class="relative top-[-100svh] h-[200svh] w-full">
+      <div class="sticky top-0 h-svh">
+        <SanityVideo
+          asset={previewVideo}
+          autoplay
+          loop
+          wrapperClass="cover [transform:scale(1.2)]"
+          class="h-full w-full object-cover"
+        />
 
-  <p
-    data-work-next="title"
-    class="text-h2 px-grid absolute bottom-48 left-1/2 w-full -translate-x-1/2 text-center md:bottom-58"
-  >
-    {
-      split ? (
-        <>
-          <span class="sr-only">{title}</span>
-          <span aria-hidden="true">
-            <span class="inline-block whitespace-nowrap">{titleLeft}</span>
-            {spaced && " "}
-            <span class="inline-block whitespace-nowrap">{titleRight}</span>
+        <div class="cover pointer-events-none bg-black/20"></div>
+
+        {
+          duration && (
+            <time
+              data-work-next="duration"
+              datetime={duration.iso}
+              class="text-title px-grid pointer-events-none absolute top-1/2 right-0 left-0 flex -translate-y-1/2 justify-center"
+            >
+              <span class="sr-only">{duration.label}</span>
+              <span aria-hidden="true" class="flex w-full justify-between">
+                <span>{duration.minutes}</span>
+                <span class="text-right">{duration.seconds}</span>
+              </span>
+            </time>
+          )
+        }
+
+        <a
+          href={hrefFor({ _type: "work", slug })}
+          data-transition="work-to-work"
+          data-work-next="ui"
+          class="text-h4 absolute top-1/2 left-1/2 -translate-1/2 uppercase"
+        >
+          <span class="block overflow-clip">
+            <span data-work-next="line" class="block whitespace-nowrap">
+              ( <span data-animation="split-hover">Next Project</span> )
+            </span>
           </span>
-        </>
-      ) : (
-        title
-      )
-    }
-  </p>
+        </a>
+
+        <p
+          data-work-next="title"
+          class="text-h2 px-grid absolute bottom-48 left-1/2 w-full -translate-x-1/2 text-center md:bottom-58"
+        >
+          {
+            split ? (
+              <>
+                <span class="sr-only">{title}</span>
+                <span aria-hidden="true">
+                  <span class="inline-block whitespace-nowrap">
+                    {titleLeft}
+                  </span>
+                  {spaced && " "}
+                  <span class="inline-block whitespace-nowrap">
+                    {titleRight}
+                  </span>
+                </span>
+              </>
+            ) : (
+              title
+            )
+          }
+        </p>
+      </div>
+    </div>
+  </div>
 </c-work-next>
 
 <script>

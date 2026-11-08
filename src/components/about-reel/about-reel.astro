@@ -3,54 +3,86 @@ import type { VideoAsset } from "../../lib/sanity/types";
 import SanityVideo from "../sanity-video.astro";
 
 interface Props {
+  textTop?: string | null;
+  textBottom?: string | null;
   preview?: VideoAsset | null;
   main?: VideoAsset | null;
 }
 
-const { preview, main } = Astro.props;
+const { textTop, textBottom, preview, main } = Astro.props;
 ---
 
-<c-about-reel class="md:w-col-4 relative block aspect-video w-full">
-  <div data-about-reel="frame" class="absolute inset-0 overflow-clip">
-    <div data-about-reel="preview" aria-hidden="true" class="cover">
-      <SanityVideo
-        asset={preview}
-        autoplay
-        loop
-        wrapperClass="cover"
-        class="h-full w-full object-cover"
-      />
-    </div>
+<c-about-reel
+  class="flex flex-col items-center gap-32 text-center md:gap-64"
+  data-scroll
+  data-scroll-position="middle,end"
+  data-scroll-offset="30%,0"
+  data-scroll-call="about-reel:inview"
+>
+  <p
+    class="text-h1 whitespace-pre-line"
+    data-about-reel="line"
+    data-animation="text"
+    data-scroll
+  >
+    {textTop}
+  </p>
 
-    {
-      main && (
-        <div
-          id="about-reel-main"
-          data-about-reel="main"
-          class="cover invisible opacity-0"
-        >
+  <div data-about-reel="holder" class="md:w-col-4 relative aspect-video w-full">
+    <div data-about-reel="frame" class="absolute inset-0 overflow-clip">
+      <div data-about-reel="media" class="cover">
+        <div data-about-reel="preview" aria-hidden="true" class="cover">
           <SanityVideo
-            asset={main}
+            asset={preview}
+            autoplay
+            loop
             wrapperClass="cover"
             class="h-full w-full object-cover"
           />
         </div>
-      )
-    }
 
-    <button
-      type="button"
-      data-about-reel="toggle"
-      aria-controls="about-reel-main"
-      class="text-h4 absolute inset-0 flex items-center justify-center text-white uppercase"
-    >
-      ({" "}
-      <span data-about-reel="label" data-animation="split-hover">
-        Play Reel
-      </span>{" "}
-      )
-    </button>
+        {
+          main && (
+            <div
+              id="about-reel-main"
+              data-about-reel="main"
+              class="cover invisible opacity-0"
+            >
+              <SanityVideo
+                asset={main}
+                wrapperClass="cover"
+                class="h-full w-full object-cover"
+              />
+            </div>
+          )
+        }
+      </div>
+
+      <button
+        type="button"
+        data-about-reel="toggle"
+        aria-controls="about-reel-main"
+        class="text-h4 absolute inset-0 flex items-center justify-center text-white uppercase"
+      >
+        <span data-about-reel="center">
+          ({" "}
+          <span data-about-reel="label" data-animation="split-hover">
+            Play Reel
+          </span>{" "}
+          )
+        </span>
+      </button>
+    </div>
   </div>
+
+  <p
+    class="text-h1 whitespace-pre-line"
+    data-about-reel="line"
+    data-animation="text"
+    data-scroll
+  >
+    {textBottom}
+  </p>
 </c-about-reel>
 
 <script>

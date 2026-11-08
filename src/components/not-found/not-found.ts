@@ -77,7 +77,12 @@ export class NotFound extends HTMLElement {
 
       const scale = Math.exp((t * this.count - (this.count - 1)) * this.ratio);
 
+      // fades in over the last step before it becomes the main mouth, so the
+      // one waiting behind ( ERROR ) is invisible at rest
+      const opacity = Math.min(1, Math.max(0, t * this.count - (this.count - 2)));
+
       $mouth.style.scale = String(scale);
+      $mouth.style.opacity = String(opacity);
       $mouth.style.zIndex = String(Math.floor((1 - t) * this.count));
     });
   }

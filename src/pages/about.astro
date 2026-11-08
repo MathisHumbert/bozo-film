@@ -10,7 +10,6 @@ import AboutBio from "../components/about-bio/about-bio.astro";
 import AboutReel from "../components/about-reel/about-reel.astro";
 import AboutGallery from "../components/about-gallery/about-gallery.astro";
 import Underline from "../components/underline.astro";
-import SanityImage from "../components/sanity-image.astro";
 
 const about = await loadQuery(aboutQuery, {}, { cookies: Astro.cookies });
 
@@ -29,7 +28,7 @@ const phone = stegaClean(about?.contact?.phone);
 
   <AboutBio description={about?.description} />
 
-  <section class="px-grid pt-192 md:pt-240">
+  <section class="px-grid pt-292 md:pt-400">
     <div class="gap-gutter relative grid grid-cols-2">
       <AboutGallery images={about?.images ?? []} />
 
@@ -113,20 +112,15 @@ const phone = stegaClean(about?.contact?.phone);
     </div>
   </section>
 
-  <section
-    class="px-grid flex flex-col items-center gap-32 py-160 text-center md:gap-64 md:py-240"
-  >
+  <section class="px-grid py-160 md:py-240">
     <h2 class="sr-only">Showreel</h2>
 
-    <p class="text-h1 whitespace-pre-line" data-animation="text" data-scroll>
-      {about?.reel?.textTop}
-    </p>
-
-    <AboutReel preview={about?.reel?.preview} main={about?.reel?.main} />
-
-    <p class="text-h1 whitespace-pre-line" data-animation="text" data-scroll>
-      {about?.reel?.textBottom}
-    </p>
+    <AboutReel
+      textTop={about?.reel?.textTop}
+      textBottom={about?.reel?.textBottom}
+      preview={about?.reel?.preview}
+      main={about?.reel?.main}
+    />
   </section>
 
   <section

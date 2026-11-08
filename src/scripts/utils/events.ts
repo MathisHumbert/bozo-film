@@ -54,7 +54,7 @@ export type HomeLeave = {
 type AppEvents = {
   loaded: void;
   "page:loaded": void;
-  "page:revealed": void;
+  "page:revealed": { intro: boolean };
   "transition:start": { from: string; to: string; type: TransitionType };
   "transition:end": void;
   resize: ResizeData;
