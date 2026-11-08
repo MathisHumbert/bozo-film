@@ -7,15 +7,17 @@ import { events, type UpdateData } from "../../scripts/utils/events";
 import { smoothMin } from "../../scripts/utils/math";
 import { revealTiming } from "../../scripts/utils/reveal";
 
-type Char = {
+// What a line moves: a whole word when it sits on one side of the centre,
+// its letters only when it straddles it. -1 goes left, 1 goes right.
+type Target = {
   $el: HTMLElement;
-  x: number;
+  side: -1 | 1;
 };
 
 type Line = {
   top: number;
   height: number;
-  chars: Char[];
+  targets: Target[];
   current: number;
   applied: number;
 };
@@ -46,6 +48,11 @@ export class AboutBio extends HTMLElement {
 
   private split: SplitText | null = null;
   private lines: Line[] = [];
+
+  // update() reads the layout every frame, so it only runs while the track,
+  // the whole span the illustration travels, is on screen
+  private observer: IntersectionObserver | null = null;
+  private isVisible = false;
   private size = { width: 0, height: 0 };
 
   // the illustration's place before any scroll, in px from the top
@@ -84,11 +91,19 @@ export class AboutBio extends HTMLElement {
       this.drop = -window.innerHeight * REVEAL.from;
     }
 
+    this.observer = new IntersectionObserver(([entry]) => {
+      this.isVisible = entry.isIntersecting;
+    });
+    this.observer.observe(this.$track);
+
     this.bindEvents();
   }
 
   disconnectedCallback() {
     this.unbindEvents();
+
+    this.observer?.disconnect();
+    this.observer = null;
 
     gsap.killTweensOf(this);
 
@@ -134,26 +149,47 @@ export class AboutBio extends HTMLElement {
 
     const origin = this.$text.getBoundingClientRect();
     const illustration = this.$illustration.getBoundingClientRect();
-    const chars = self.chars as HTMLElement[];
+    const words = self.words as HTMLElement[];
+    const track = this.$track?.getBoundingClientRect();
 
     this.size = { width: illustration.width, height: illustration.height };
     this.rest = this.offsetTop + (this.$track?.offsetTop ?? 0);
+
+    // the centre the lines part around never moves sideways, so which side
+    // each letter is on is settled here, once per split
+    const centerX = track ? track.left + track.width / 2 - origin.left : 0;
+
+    const sideOf = ($el: HTMLElement): -1 | 1 => {
+      const box = $el.getBoundingClientRect();
+
+      return box.left + box.width / 2 - origin.left < centerX ? -1 : 1;
+    };
 
     // positions are stored relative to the paragraph, so they hold while
     // the page scrolls and only a new split changes them
     this.lines = (self.lines as HTMLElement[]).map(($line) => {
       const rect = $line.getBoundingClientRect();
+      const targets: Target[] = [];
+
+      words
+        .filter(($word) => $line.contains($word))
+        .forEach(($word) => {
+          const chars = Array.from($word.children) as HTMLElement[];
+          const sides = chars.map(sideOf);
+
+          if (sides.every((side) => side === sides[0])) {
+            targets.push({ $el: $word, side: sides[0] ?? sideOf($word) });
+          } else {
+            chars.forEach(($char, index) => {
+              targets.push({ $el: $char, side: sides[index] });
+            });
+          }
+        });
 
       return {
         top: rect.top - origin.top,
         height: rect.height,
-        chars: chars
-          .filter(($char) => $line.contains($char))
-          .map(($char) => {
-            const box = $char.getBoundingClientRect();
-
-            return { $el: $char, x: box.left + box.width / 2 - origin.left };
-          }),
+        targets,
         current: 0,
         applied: 0,
       };
@@ -163,6 +199,8 @@ export class AboutBio extends HTMLElement {
   update = ({ deltaTime }: UpdateData) => {
     if (!this.$text || !this.$track || !this.$anchor || !this.lines.length)
       return;
+
+    if (!this.isVisible) return;
 
     const origin = this.$text.getBoundingClientRect();
     const track = this.$track.getBoundingClientRect();
@@ -177,7 +215,6 @@ export class AboutBio extends HTMLElement {
 
     this.$anchor.style.transform = `translate3d(0, ${position}px, 0)`;
 
-    const centerX = track.left + track.width / 2 - origin.left;
     const centerY = track.top + position - origin.top;
 
     const ease = 1 - Math.exp(-deltaTime * EASE);
@@ -201,10 +238,8 @@ export class AboutBio extends HTMLElement {
 
       line.applied = line.current;
 
-      line.chars.forEach((char) => {
-        const offset = char.x < centerX ? -line.current : line.current;
-
-        char.$el.style.translate = `${offset}px 0`;
+      line.targets.forEach(({ $el, side }) => {
+        $el.style.translate = `${side * line.current}px 0`;
       });
     });
   };

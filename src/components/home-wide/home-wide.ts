@@ -611,10 +611,7 @@ export class HomeWide extends HTMLElement {
 
     if (this.snapLenis !== lenis) {
       this.snap?.destroy();
-      // On touch, Lenis glides on release (syncTouch) and a debounced
-      // mandatory snap then cuts in, possibly backwards: two motions. "lock"
-      // reads the swipe's direction on touchend and goes one work that way,
-      // straight away, replacing the glide with a single settle.
+
       this.snap = new Snap(lenis, {
         type: device.isTouch ? "lock" : "mandatory",
         duration: device.reducedMotion ? 0 : DURATION.settle,

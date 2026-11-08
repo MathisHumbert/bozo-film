@@ -2,6 +2,7 @@ import { Camera, Renderer, Transform, type OGLRenderingContext } from "ogl";
 
 import Home from "./Home";
 
+import { device } from "../classes/Device";
 import { responsive } from "../classes/Responsive";
 import { events, type TransitionType } from "../utils/events";
 
@@ -15,6 +16,7 @@ export default class Canvas {
 
   pathname: string | null = null;
   home: Home | null = null;
+  isCleared = false;
 
   constructor() {
     this.createRenderer();
@@ -30,7 +32,7 @@ export default class Canvas {
   createRenderer() {
     this.renderer = new Renderer({
       alpha: true,
-      dpr: Math.min(window.devicePixelRatio, 2),
+      dpr: this.getDpr(),
     });
     this.gl = this.renderer.gl;
     this.renderer.setSize(responsive.screen.width, responsive.screen.height);
@@ -98,8 +100,14 @@ export default class Canvas {
     this.home = null;
   };
 
+  // Full-screen video shows no difference past 1.5 on a phone, and the
+  // fragment cost drops by almost half against 2.
+  getDpr() {
+    return Math.min(window.devicePixelRatio, device.isMobile ? 1.5 : 2);
+  }
+
   onResize = () => {
-    this.renderer.dpr = Math.min(window.devicePixelRatio, 2);
+    this.renderer.dpr = this.getDpr();
     this.renderer.setSize(responsive.screen.width, responsive.screen.height);
     this.camera.perspective({
       aspect: responsive.screen.width / responsive.screen.height,
@@ -125,6 +133,13 @@ export default class Canvas {
   update = () => {
     this.home?.update();
 
+    // Off the home the scene is empty: one last render clears the canvas,
+    // then nothing is drawn until a mesh comes back.
+    const isEmpty = !this.scene.children.length;
+
+    if (isEmpty && this.isCleared) return;
+
     this.renderer.render({ scene: this.scene, camera: this.camera });
+    this.isCleared = isEmpty;
   };
 }
