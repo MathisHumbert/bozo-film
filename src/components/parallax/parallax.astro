@@ -1,0 +1,25 @@
+---
+// Close to the Codrops WebGL parallax, with no frozen edge. The child is
+// `-top-[30%] h-[160%]`; --progress runs 0 → 1 while any of the frame is
+// visible, and the child spends its whole margin over it: ±30 / 160 = ±18.75%.
+interface Props {
+  ratio: number;
+  class?: string;
+}
+
+const { ratio, class: className } = Astro.props;
+---
+
+<div
+  class:list={[
+    "relative overflow-hidden",
+    "*:translate-y-[calc((var(--progress,0.5)_-_0.5)*37.5%)] motion-reduce:*:translate-none",
+    className,
+  ]}
+  style={`aspect-ratio: ${ratio}`}
+  data-scroll
+  data-scroll-css-progress
+  data-scroll-ignore-fold
+>
+  <slot />
+</div>

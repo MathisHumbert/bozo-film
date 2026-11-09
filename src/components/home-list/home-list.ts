@@ -54,6 +54,9 @@ const DURATION = {
   seal: 0.4,
 };
 
+// On touch, below this speed (px per frame) the fling's tail counts as stopped.
+const CRAWL_VELOCITY = 1;
+
 const EASE = {
   center: "expo.out",
   fade: "power2.out",
@@ -673,8 +676,17 @@ export class HomeList extends HTMLElement {
 
     this.lastScroll = scroll;
 
+    // Ignored, so the centring starts without a pause and nothing drifts it.
+    const lenis = Scroll.lenis;
+    const isCrawling =
+      device.isTouch &&
+      this.state === "visible" &&
+      Boolean(lenis?.isScrolling) &&
+      !lenis?.isTouching &&
+      Math.abs(Scroll.velocity) < CRAWL_VELOCITY;
+
     // Half the scroll, across the infinite scroll's loop.
-    if (!this.isFrozen) {
+    if (!this.isFrozen && !isCrawling) {
       if (limit > 0 && delta > limit / 2) delta -= limit;
       if (limit > 0 && delta < -limit / 2) delta += limit;
 
@@ -691,7 +703,7 @@ export class HomeList extends HTMLElement {
       return;
     }
 
-    const isScrolling = Boolean(Scroll.lenis?.isScrolling);
+    const isScrolling = Boolean(lenis?.isScrolling) && !isCrawling;
 
     if (isScrolling && !this.isScrolling) {
       gsap.killTweensOf(this.shift);

@@ -1,5 +1,6 @@
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LocomotiveScroll from "locomotive-scroll";
+import type { VirtualScrollData } from "lenis";
 import gsap from "gsap";
 
 import { events } from "../utils/events";
@@ -8,12 +9,31 @@ import { device } from "./Device";
 
 const isDev = import.meta.env.MODE === "development";
 
+// Replaces syncTouch's fling, which brakes on release: this one starts at the
+// finger's speed and fades like a native one.
+const FLING = {
+  // fade time constant, in s (iOS ~0.5)
+  decay: 0.4,
+  // speed measured over the last moves, in ms
+  window: 100,
+  // held still this long before lifting, nothing is thrown, in ms
+  rest: 60,
+};
+
 export default class Scroll {
   private static loco: LocomotiveScroll | null = null;
   static isActive = false;
 
+  private static moves: { time: number; delta: number }[] = [];
+
+  // Lets a page pick where a fling stops (the home's stack).
+  static landing: ((target: number, from: number) => number) | null = null;
+
   static init() {
     const infinite = Boolean(document.querySelector("[data-scroll-infinite]"));
+    // Lenis only loops the scroll it drives: a native touch scroll stops at
+    // the bottom of the page, so on touch it has to take over too.
+    const syncTouch = infinite && !isDev;
 
     this.loco = new LocomotiveScroll({
       autoStart: false,
@@ -34,9 +54,8 @@ export default class Scroll {
         wheelMultiplier: 0.75,
         // touchMultiplier: 0.75,
         infinite,
-        // Lenis only loops the scroll it drives: a native touch scroll stops
-        // at the bottom of the page, so on touch it has to take over too.
-        syncTouch: infinite && !isDev,
+        syncTouch,
+        virtualScroll: syncTouch ? this.onVirtualScroll : undefined,
       },
     });
 
@@ -47,6 +66,45 @@ export default class Scroll {
       events.emit("lenis", e),
     );
   }
+
+  private static onVirtualScroll = ({ deltaY, event }: VirtualScrollData) => {
+    const lenis = this.lenis;
+    const now = event.timeStamp;
+
+    if (!lenis || !event.type.startsWith("touch")) return true;
+
+    if (event.type === "touchstart") {
+      this.moves = [];
+    } else if (event.type === "touchmove") {
+      this.moves.push({ time: now, delta: deltaY });
+      this.moves = this.moves.filter(({ time }) => now - time <= FLING.window);
+    } else if (event.type === "touchend") {
+      // The first move only marks the start of the span.
+      const [first, ...rest] = this.moves;
+      const last = rest.at(-1);
+      const isThrown = last && now - last.time < FLING.rest;
+      const velocity = isThrown
+        ? rest.reduce((sum, { delta }) => sum + delta, 0) /
+          Math.max(last.time - first.time, 8)
+        : 0;
+
+      const from = lenis.targetScroll;
+
+      this.moves = [];
+
+      // Runs after Lenis starts its own fling, and overrides it.
+      queueMicrotask(() => {
+        const target = from + velocity * 1000 * FLING.decay;
+
+        lenis.scrollTo(this.landing?.(target, from) ?? target, {
+          lerp: 1 / (60 * FLING.decay),
+          programmatic: false,
+        });
+      });
+    }
+
+    return true;
+  };
 
   static start() {
     this.isActive = true;

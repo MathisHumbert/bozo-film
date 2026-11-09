@@ -7,6 +7,7 @@ import Snap from "lenis/snap";
 import Scroll from "../../scripts/classes/Scroll";
 import { device } from "../../scripts/classes/Device";
 import { mattEasing } from "../../scripts/utils/easing";
+import { mod } from "../../scripts/utils/math";
 import { reveal, revealTiming } from "../../scripts/utils/reveal";
 import {
   events,
@@ -137,10 +138,18 @@ export class HomeWide extends HTMLElement {
     this.createStack();
     this.setCurrent(0);
     this.bindEvents();
+
+    if (device.isTouch) {
+      Scroll.landing = this.land;
+    }
   }
 
   disconnectedCallback() {
     this.unbindEvents();
+
+    if (Scroll.landing === this.land) {
+      Scroll.landing = null;
+    }
 
     this.stackTl?.scrollTrigger?.kill();
     this.stackTl?.kill();
@@ -604,19 +613,43 @@ export class HomeWide extends HTMLElement {
     });
   }
 
+  // On touch, the fling itself lands on the nearest work, in one motion.
+  land = (target: number, from: number) => {
+    if (this.state !== "visible") return target;
+
+    // The snaps live in the infinite scroll's first lap.
+    const limit = Scroll.limit;
+    const at = limit > 0 ? mod(target, limit) : target;
+    const start = at - (target - from);
+    const direction = Math.sign(target - from);
+
+    // A throw never turns back, so even a short flick moves on.
+    const snaps = [...this.items, null]
+      .map((_, index) => this.getScroll(index))
+      .filter((value) => (value - start) * direction >= 0);
+
+    if (!snaps.length) return target;
+
+    const nearest = snaps.reduce((best, value) =>
+      Math.abs(value - at) < Math.abs(best - at) ? value : best,
+    );
+
+    return target + nearest - at;
+  };
+
   createSnap() {
     const lenis = Scroll.lenis;
 
-    if (!lenis) return;
+    if (!lenis || device.isTouch) return;
 
     if (this.snapLenis !== lenis) {
       this.snap?.destroy();
 
       this.snap = new Snap(lenis, {
-        type: device.isTouch ? "lock" : "mandatory",
+        type: "mandatory",
         duration: device.reducedMotion ? 0 : DURATION.settle,
         easing: EASE.settle,
-        debounce: device.isTouch ? 0 : 200,
+        debounce: 200,
       });
       this.snapLenis = lenis;
       this.removeSnaps = [];

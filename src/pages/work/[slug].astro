@@ -6,6 +6,7 @@ import { allWorkQuery, workBySlugQuery } from "../../lib/sanity/queries";
 import Layout from "../../layouts/layout.astro";
 import SanityVideo from "../../components/sanity-video.astro";
 import SanityImage from "../../components/sanity-image.astro";
+import Parallax from "../../components/parallax/parallax.astro";
 import WorkHero from "../../components/work-hero/work-hero.astro";
 import WorkNext from "../../components/work-next/work-next.astro";
 
@@ -28,6 +29,10 @@ const next =
   currentIndex !== -1 && allWork.length > 1
     ? allWork[(currentIndex + 1) % allWork.length]
     : null;
+
+// The room <Parallax> slides it in: keep in step with its percentages.
+const PARALLAX =
+  "absolute inset-x-0 -top-[30%] h-[160%] w-full object-cover will-change-transform";
 
 function widthFor(media?: { width?: number | null; height?: number | null }) {
   const ratio = (media?.width ?? 16) / (media?.height ?? 9);
@@ -112,18 +117,34 @@ function widthFor(media?: { width?: number | null; height?: number | null }) {
 
           {work.media?.map((item) =>
             item._type === "image" ? (
-              <SanityImage
-                image={item}
-                class:list={["h-auto", widthFor(item)]}
-              />
-            ) : (
+              <Parallax
+                ratio={(item.width ?? 16) / (item.height ?? 9)}
+                class={widthFor(item)}
+              >
+                <SanityImage image={item} class={PARALLAX} />
+              </Parallax>
+            ) : item.controls ? (
+              // The frame would crop the control bar.
               <SanityVideo
                 asset={item.asset}
                 autoplay={item.autoplay}
                 loop={item.loop}
-                controls={item.controls}
+                controls
                 class:list={["h-auto", widthFor(item.asset)]}
               />
+            ) : (
+              <Parallax
+                ratio={item.asset?.aspectRatio ?? 16 / 9}
+                class={widthFor(item.asset)}
+              >
+                <SanityVideo
+                  asset={item.asset}
+                  autoplay={item.autoplay}
+                  loop={item.loop}
+                  wrapperClass={PARALLAX}
+                  class="h-full w-full object-cover"
+                />
+              </Parallax>
             ),
           )}
         </section>
