@@ -6,6 +6,8 @@ import SwupScriptsPlugin from "@swup/scripts-plugin";
 import { gsap } from "gsap";
 
 import Scroll from "../classes/Scroll";
+import { device } from "../classes/Device";
+import { introEasing } from "../utils/easing";
 import { events, type TransitionType } from "../utils/events";
 import type { Modal } from "../../components/modal/modal";
 
@@ -16,6 +18,14 @@ import WorkToHome from "./WorkToHome";
 const isDev = import.meta.env.MODE === "development";
 
 const INCOMING_CLASS = "is-incoming-container";
+
+// The default transition's halves. They part on the preloader's split (1.2s,
+// introEasing), so every page arrives the way the first one did.
+const CURTAIN = {
+  close: 0.8,
+  open: 1.2,
+  ease: introEasing,
+};
 
 export type Containers = { previous: HTMLElement; next: HTMLElement };
 
@@ -53,6 +63,14 @@ export default class Transition {
   private pendingType: TransitionType = "default";
   private type: TransitionType = "default";
 
+  private $curtain = document.querySelector<HTMLElement>("[data-curtain]");
+  private $curtainTop = document.querySelector<HTMLElement>(
+    '[data-curtain="top"]',
+  );
+  private $curtainBottom = document.querySelector<HTMLElement>(
+    '[data-curtain="bottom"]',
+  );
+
   constructor({
     onContentReplaced,
     onLoadPage,
@@ -69,6 +87,11 @@ export default class Transition {
     };
 
     this.swup = this.createSwup();
+
+    // Off screen in JS, not with classes: GSAP would read a CSS translate as
+    // pixels and tween yPercent on top of it.
+    gsap.set(this.$curtainTop, { yPercent: -100 });
+    gsap.set(this.$curtainBottom, { yPercent: 100 });
 
     document.addEventListener("click", this.onClick, true);
   }
@@ -210,7 +233,9 @@ export default class Transition {
       Scroll.init();
       Scroll.start();
 
-      events.emit("page:revealed", { intro: false });
+      // As after the preloader: the reveals set their offset while the
+      // curtain still covers the page, and play out on its curve.
+      events.emit("page:revealed", { intro: true });
 
       await this.animateInDefault();
 
@@ -259,32 +284,31 @@ export default class Transition {
     events.emit("transition:end");
   };
 
+  // The halves meet in the middle.
   animateOutDefault() {
-    return new Promise((resolve) => {
-      gsap.to(".content", {
-        opacity: 0,
-        duration: 0.6,
-        ease: "expo.out",
-        onComplete: resolve,
-      });
-    });
+    const speed = device.reducedMotion ? 0 : 1;
+
+    gsap.set(this.$curtain, { visibility: "visible" });
+
+    return gsap
+      .timeline({
+        defaults: { duration: CURTAIN.close * speed, ease: CURTAIN.ease },
+      })
+      .to(this.$curtainTop, { yPercent: 0 }, 0)
+      .to(this.$curtainBottom, { yPercent: 0 }, 0);
   }
 
-  animateInDefault() {
-    return new Promise((resolve) => {
-      gsap.to(document.documentElement, {
-        background: document.documentElement.dataset.background,
-        color: document.documentElement.dataset.color,
-        duration: 0.6,
-        ease: "sine.out",
-      });
+  // They part from the middle, like the preloader's.
+  async animateInDefault() {
+    const speed = device.reducedMotion ? 0 : 1;
 
-      gsap.to(".content", {
-        opacity: 1,
-        duration: 0.6,
-        ease: "expo.out",
-        onComplete: resolve,
-      });
-    });
+    await gsap
+      .timeline({
+        defaults: { duration: CURTAIN.open * speed, ease: CURTAIN.ease },
+      })
+      .to(this.$curtainTop, { yPercent: -100 }, 0)
+      .to(this.$curtainBottom, { yPercent: 100 }, 0);
+
+    gsap.set(this.$curtain, { visibility: "hidden" });
   }
 }

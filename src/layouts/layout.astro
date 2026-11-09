@@ -114,6 +114,25 @@ const isDev = import.meta.env.DEV;
 
     {/* <Progress /> */}
 
+    <!-- The default page transition: two halves meeting in the middle, then
+         parting like the preloader's. Driven by transitions/index.ts. -->
+    <div
+      aria-hidden="true"
+      data-curtain
+      class="z-curtain pointer-events-none invisible fixed inset-0"
+    >
+      <div
+        data-curtain="top"
+        class="pointer-events-auto absolute inset-x-0 top-0 h-1/2 bg-black"
+      >
+      </div>
+      <div
+        data-curtain="bottom"
+        class="pointer-events-auto absolute inset-x-0 bottom-0 h-1/2 bg-black"
+      >
+      </div>
+    </div>
+
     <Noise />
 
     <div class="site">

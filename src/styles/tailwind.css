@@ -34,6 +34,7 @@
   --z-index-navigation: 4;
   --z-index-menu: 5;
   --z-index-preloader: 6;
+  --z-index-curtain: 6;
   --z-index-grid: 7;
   --z-index-progress: 8;
   --z-index-noise: 9;
