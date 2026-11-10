@@ -9,6 +9,10 @@
   // a date past 2025-04-01 it also fills `process.env` from vars and secrets,
   // which is how `serverEnv()` reads the configuration at request time.
   "compatibility_flags": ["nodejs_compat"],
+  // The variables live in the dashboard (Settings → Variables and Secrets), not
+  // here: without this, every `wrangler deploy` would wipe the plain-text ones.
+  // Secrets are never touched by a deploy either way.
+  "keep_vars": true,
   // The Workers Cache in front of the Worker. The adapter turns it on when
   // `cache.provider` is set in astro.config.mjs; stated here so it is visible.
   "cache": {
