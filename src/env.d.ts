@@ -6,7 +6,6 @@ interface ImportMetaEnv {
   readonly PUBLIC_SANITY_DATASET: string;
   readonly SANITY_API_READ_TOKEN?: string;
   readonly SANITY_REVALIDATE_SECRET?: string;
-  readonly VERCEL_BYPASS_TOKEN?: string;
 
   readonly STORAGE_PROVIDER?: "s3" | "r2";
   readonly STORAGE_BUCKET: string;

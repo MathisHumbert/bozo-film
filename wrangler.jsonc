@@ -1,0 +1,20 @@
+// `main` and `assets` are left out on purpose: the adapter fills both in the
+// config it writes to dist/server/wrangler.json, which is what `wrangler deploy`
+// actually reads (through .wrangler/deploy/config.json).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bozo-film",
+  "compatibility_date": "2026-11-01",
+  // nodejs_compat: the AWS SDK and the Sanity client need Node built-ins. With
+  // a date past 2025-04-01 it also fills `process.env` from vars and secrets,
+  // which is how `serverEnv()` reads the configuration at request time.
+  "compatibility_flags": ["nodejs_compat"],
+  // The Workers Cache in front of the Worker. The adapter turns it on when
+  // `cache.provider` is set in astro.config.mjs; stated here so it is visible.
+  "cache": {
+    "enabled": true
+  },
+  "observability": {
+    "enabled": true
+  }
+}

@@ -90,6 +90,50 @@ describe("middleware", () => {
     expect(response.headers.get("vary")).toBe("Accept-Encoding, Accept");
   });
 
+  describe("Workers Cache", () => {
+    function cachedContext(path: string, draft = false) {
+      const cache = { enabled: true, set: vi.fn() };
+      const cookies = { has: () => draft, get: () => undefined };
+
+      return { ...context(path), cache, cookies };
+    }
+
+    it("keeps a published page, tagged without its trailing slash", async () => {
+      const ctx = cachedContext("/work/aurora/");
+      const { response } = await run(ctx as never);
+
+      expect(ctx.cache.set).toHaveBeenCalledWith({
+        maxAge: expect.any(Number),
+        tags: ["page:/work/aurora"],
+      });
+      expect(response.headers.get("vary")).toBe("Accept, Cookie");
+    });
+
+    it("never stores a draft response", async () => {
+      const ctx = cachedContext("/", true);
+      await run(ctx as never);
+
+      expect(ctx.cache.set).toHaveBeenCalledWith(false);
+    });
+
+    it("never stores a 404", async () => {
+      const ctx = cachedContext("/work/nope/");
+      await run(
+        ctx as never,
+        vi.fn(async () => new Response(null, { status: 404 })),
+      );
+
+      expect(ctx.cache.set).toHaveBeenCalledWith(false);
+    });
+
+    it("leaves the API routes to the adapter's no-store", async () => {
+      const ctx = cachedContext("/api/revalidate");
+      await run(ctx as never);
+
+      expect(ctx.cache.set).not.toHaveBeenCalled();
+    });
+  });
+
   it("leaves non-page routes alone", async () => {
     for (const path of [
       "/llms.txt",

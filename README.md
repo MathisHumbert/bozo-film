@@ -1,7 +1,7 @@
 # Astro Creative Boilerplate
 
 A stripped starting point: Astro 7, Sanity v6, Tailwind v4, GSAP and Locomotive Scroll,
-with the SEO, structured data, `llms.txt`, ISR and video-library plumbing already wired.
+with the SEO, structured data, `llms.txt`, edge cache and video-library plumbing already wired.
 
 No demo sections. `home` and `settings` are the only page documents; `video` and `wysiwyg`
 are the only page builder blocks. Everything else is infrastructure, ready to build on.
@@ -48,7 +48,7 @@ cp .env.example .env
 
 Only two values are required to boot: `PUBLIC_SANITY_PROJECT_ID` and
 `SANITY_API_READ_TOKEN`. Everything else is grouped by feature in the file, and the
-video library and ISR sections can stay empty for now.
+video library and cache sections can stay empty for now.
 
 **5. Install, push the schema, run**
 
@@ -64,7 +64,7 @@ so. Open `/admin`, add blocks to the Home document, and they render through the 
 builder.
 
 When you get to the optional pieces: [video library](#video-library) also needs a bucket
-and a CDN, and [ISR revalidation](#isr-revalidation) needs a webhook. Both have their own
+and a CDN, and [cache revalidation](#cache-revalidation) needs a webhook. Both have their own
 section.
 
 ## Commands
@@ -74,8 +74,9 @@ section.
 | `npm run dev`              | Site on `localhost:3000`, Studio on `/admin`                                  |
 | `npm run dev:sanity`       | Standalone Studio on `localhost:3333`                                         |
 | `npm run dev:all`          | Both at once                                                                  |
-| `npm run build`            | Production build to `.vercel/output`                                          |
-| `npx vercel dev`           | Run the build locally — `astro preview` does not work with the Vercel adapter |
+| `npm run build`            | Production build to `dist/` (Worker in `dist/server`, assets in `dist/client`) |
+| `npm run preview`          | Build, then run the Worker locally in workerd                                 |
+| `npm run deploy`           | Build, then `wrangler deploy` to Cloudflare                                   |
 | `npm run typegen`          | Extract the schema and regenerate `sanity/sanity.types.ts`                    |
 | `npx sanity schema deploy` | Publish the schema (needed for Presentation and MCP)                          |
 | `npm run deploy:sanity`    | Deploy the Studio to `<host>.sanity.studio`                                   |
@@ -123,10 +124,10 @@ src/
 │   └── video-library/  storage client, auth guard, object keys, CDN URLs
 ├── pages/
 │   ├── robots.txt.ts   prerendered, AI crawlers allowed
-│   ├── llms.txt.ts     the AI index, revalidated by ISR
+│   ├── llms.txt.ts     the AI index, purged on publish
 │   ├── llms-full.txt.ts every page as plain text
 │   ├── api/media/      presigned uploads, deletion, listing
-│   └── api/revalidate  the ISR purge webhook
+│   └── api/revalidate  the cache purge webhook
 └── scripts/            app runtime: Scroll, Preloader, Transition, Device
 ```
 
@@ -162,41 +163,52 @@ just loses the breadcrumb and the page-specific node.
 `switch` is deliberate: TypeScript narrows each case, so every component is checked
 against its real props and a missing case is visible.
 
-## Deploying to Vercel
+## Deploying to Cloudflare
 
-### 1. Import the repo
+The site runs as a Cloudflare **Worker** — not Pages, which the Astro adapter no longer
+supports. A project created under _Workers & Pages → Pages_ will not work.
 
-Vercel detects Astro on its own. The adapter outputs `.vercel/output`, so leave the
-build command and output directory alone.
+### 1. Create the Worker
+
+Either from your machine — `npx wrangler login`, then `npm run deploy` — or from the
+dashboard: _Workers & Pages → Create → Import a repository_, with
+
+- **Build command** — `npm run build`
+- **Deploy command** — `npx wrangler deploy`
+
+The Worker's name comes from `wrangler.jsonc`. `.nvmrc` pins Node 24: Astro 7.4 needs
+22.23.4 or later to build.
 
 ### 2. Environment variables
 
-Add every variable from `.env` to **all three environments** (Production, Preview,
-Development), with production values:
+Cloudflare keeps the **build's** variables apart from the **Worker's**, and the split
+matters:
 
-| Variable                                            | Notes                                                                  |
-| :-------------------------------------------------- | :--------------------------------------------------------------------- |
-| `PUBLIC_SANITY_PROJECT_ID`, `PUBLIC_SANITY_DATASET` |                                                                        |
-| `SANITY_API_READ_TOKEN`                             | Viewer token — draft mode and Visual Editing                           |
-| `PUBLIC_SITE_URL`                                   | the production origin, e.g. `https://example.com`                      |
-| `SANITY_REVALIDATE_SECRET`                          | same value as the Sanity webhook's secret                              |
-| `VERCEL_BYPASS_TOKEN`                               | **must be available at build time** — it is read in `astro.config.mjs` |
-| `STORAGE_*`, `R2_ACCOUNT_ID`                        | bucket credentials, never prefixed `PUBLIC_`                           |
-| `PUBLIC_CDN_URL`                                    | where the videos are served from                                       |
-| `STUDIO_ORIGINS`                                    | only if a Studio is served outside `/admin`                            |
+| Variable                                            | Where             | Notes                                             |
+| :-------------------------------------------------- | :---------------- | :------------------------------------------------ |
+| `PUBLIC_SANITY_PROJECT_ID`, `PUBLIC_SANITY_DATASET` | build             | inlined, and read by `astro.config.mjs`           |
+| `PUBLIC_SITE_URL`, `PUBLIC_CDN_URL`                 | build **and** Worker | inlined in the bundle; the media API reads them too |
+| `SANITY_API_READ_TOKEN`                             | Worker, secret    | Viewer token — draft mode and Visual Editing      |
+| `SANITY_REVALIDATE_SECRET`                          | Worker, secret    | same value as the Sanity webhook's secret         |
+| `STORAGE_*`, `R2_ACCOUNT_ID`                        | Worker, secret    | bucket credentials, never prefixed `PUBLIC_`      |
+| `STUDIO_ORIGINS`                                    | Worker            | only if a Studio is served outside `/admin`       |
 
-`VERCEL_BYPASS_TOKEN` is the one that fails silently: it is used by the adapter while
-building, so a variable scoped to runtime only leaves ISR without a purge key.
+Build variables: the Worker's _Settings → Build → Variables and secrets_ (or your shell,
+for `npm run deploy`). Worker variables: _Settings → Variables and secrets_, or
+`npx wrangler secret put SANITY_API_READ_TOKEN`. A secret given only to the build is
+missing at request time — the server reads them through `serverEnv()`, not from the
+bundle.
 
 ### 3. Set the site URL
 
-`astro.config.mjs` carries `site`. Point it at the production domain before the first
-deploy — the sitemap and canonical URLs are built from it.
+`astro.config.mjs` carries `site`. Point it at the production domain (or the
+`*.workers.dev` URL) before the first deploy — the sitemap and canonical URLs are built
+from it.
 
 ### 4. Wire the revalidation webhook
 
 Once the domain resolves, create the Sanity webhook described in
-[ISR revalidation](#isr-revalidation). Publish a document and check the webhook's
+[cache revalidation](#cache-revalidation). Publish a document and check the webhook's
 **Attempts** tab for a 200.
 
 ### 5. Allow the origins
@@ -208,9 +220,9 @@ Once the domain resolves, create the Sanity webhook described in
 
 ### What runs where
 
-Pages and the two `llms.txt` endpoints are cached by ISR; `/api/*` runs on every request;
-`robots.txt` and the Studio are static files. Getting that split wrong is silent, so the
-rules are spelled out in [AGENTS.md](AGENTS.md#isr-revalidation).
+Pages and the two `llms.txt` endpoints are kept by Cloudflare's Workers Cache; `/api/*`
+runs on every request; `robots.txt` and the Studio are static assets. Getting that split
+wrong is silent, so the rules are spelled out in [AGENTS.md](AGENTS.md#page-cache).
 
 ## Running the Studio
 
@@ -251,28 +263,25 @@ STUDIO_ORIGINS="https://<host>.sanity.studio"
 A Studio outside `/admin` calls `/api/media/*` cross-origin, which is what that variable
 permits; the bucket needs the same origins in its own CORS rules. **Staying at `/admin`
 avoids all of it** — same-origin needs no CORS and the session token is already there. A
-subdomain pointing at the same Vercel deployment gives a client their own URL while
+subdomain routed to the same Worker gives a client their own URL while
 staying same-origin.
 
 Why the env plumbing works the way it does is in
 [AGENTS.md](AGENTS.md#running-the-studio).
 
-## ISR revalidation
+## Cache revalidation
 
-Pages are rendered on demand and served from Vercel's ISR cache until a signed Sanity
+Pages are rendered on demand and kept by Cloudflare's Workers Cache until a signed Sanity
 webhook purges them. Publishing in the Studio updates the site without a rebuild.
 
 ### Setting it up
 
-Two variables, both in `.env` **and** in all three Vercel environments:
+One secret, in `.env` and on the Worker:
 
 ```sh
 SANITY_REVALIDATE_SECRET=   # openssl rand -hex 32
-VERCEL_BYPASS_TOKEN=        # openssl rand -hex 32
+npx wrangler secret put SANITY_REVALIDATE_SECRET
 ```
-
-`VERCEL_BYPASS_TOKEN` is read **at build time**, so a runtime-only variable leaves ISR with
-no purge key.
 
 Then Sanity Manage → API → **Webhooks** → Create webhook:
 
@@ -288,12 +297,12 @@ reads only `_type` and `slug`.
 ### Checking it
 
 Publish a change, then confirm the webhook shows a `200` in its delivery log and the page
-reflects it without a redeploy. Locally the endpoint returns `500` — `VERCEL_BYPASS_TOKEN`
-lives in `process.env`, which Vite does not populate in dev, and there is no ISR cache to
-purge anyway.
+reflects it without a redeploy. Locally there is nothing to purge: `astro dev` caches
+nothing, and the local workerd of `npm run preview` has no purge API (the endpoint
+answers `502` there).
 
-Which paths each document type purges, and the prerender rules that make this work at all,
-are in [AGENTS.md](AGENTS.md#isr-revalidation).
+Which paths each document type purges, and the rules that make this work at all, are in
+[AGENTS.md](AGENTS.md#page-cache).
 
 ## SEO, structured data and llms.txt
 

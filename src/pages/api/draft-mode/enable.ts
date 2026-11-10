@@ -7,13 +7,14 @@ import {
   enableDraftModeCookies,
   redirect,
 } from "../../../lib/sanity/draft-mode";
+import { serverEnv } from "../../../lib/env";
 import { sanityConfigured } from "../../../lib/sanity/load-query";
 
 // Presentation calls this with a short-lived secret it has just written to the
 // dataset. Reading it back needs a token, which is what proves the visitor came
 // from a logged-in Studio rather than from a guessed URL.
 export const GET: APIRoute = async ({ request }) => {
-  const token = import.meta.env.SANITY_API_READ_TOKEN;
+  const token = serverEnv("SANITY_API_READ_TOKEN");
 
   if (!sanityConfigured || !token) {
     return new Response("Draft mode needs SANITY_API_READ_TOKEN.", {

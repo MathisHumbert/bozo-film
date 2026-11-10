@@ -2,19 +2,16 @@
 import { defineConfig } from "astro/config";
 
 import react from "@astrojs/react";
-import vercel from "@astrojs/vercel";
+import cloudflare from "@astrojs/cloudflare";
+import { cacheCloudflare } from "@astrojs/cloudflare/cache";
 import sitemap from "@astrojs/sitemap";
 import sanity from "@sanity/astro";
 
 import tailwindcss from "@tailwindcss/vite";
 
-import { readFile, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
-
 import { loadEnv } from "vite";
 
 import { sitemapPages } from "./src/lib/sitemap";
-import { withMarkdownRoute } from "./src/lib/negotiation";
 
 const { PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET } = loadEnv(
   process.env.NODE_ENV ?? "development",
@@ -40,39 +37,6 @@ const { customPages, excluded } = await sitemapPages({
   apiVersion: SANITY_API_VERSION,
 });
 
-// Markdown content negotiation has to be decided before the ISR cache, which
-// keys on the path alone: a Markdown body rendered by the ISR function would be
-// served to browsers as the page. The adapter has no option for a header-matched
-// route, so this adds one to the Build Output config it has just written. The
-// adapter is always first in the hook order, so its config.json exists by now.
-/** @returns {import("astro").AstroIntegration} */
-function markdownNegotiation() {
-  /** @type {URL} */
-  let root;
-
-  return {
-    name: "markdown-negotiation",
-    hooks: {
-      "astro:config:done": ({ config }) => {
-        root = config.root;
-      },
-      "astro:build:done": async ({ logger }) => {
-        const file = new URL("./.vercel/output/config.json", root);
-
-        if (!existsSync(file)) {
-          logger.warn("No .vercel/output/config.json: Markdown negotiation is off.");
-          return;
-        }
-
-        const config = JSON.parse(await readFile(file, "utf8"));
-
-        await writeFile(file, JSON.stringify(withMarkdownRoute(config), null, "\t"));
-        logger.info("Accept: text/markdown routed past the ISR cache.");
-      },
-    },
-  };
-}
-
 // https://astro.build/config
 export default defineConfig({
   site: SITE_URL,
@@ -93,24 +57,25 @@ export default defineConfig({
     enabled: false
   },
 
-  adapter: vercel({
-    isr: {
-      // Read from process.env, not import.meta.env: this runs at build time.
-      bypassToken: process.env.VERCEL_BYPASS_TOKEN,
-      // An excluded route runs on every request. Without this the endpoints
-      // would be cached like a page and never execute.
-      exclude: [
-        "/api/revalidate",
-        "/api/draft-mode/enable",
-        "/api/draft-mode/disable",
-        "/api/media/sign-upload",
-        "/api/media/sign-renditions",
-        "/api/media/delete",
-        "/api/media/list",
-        "/api/media/config",
-      ],
-    },
-  }),
+  // A Cloudflare Worker. Images come from Sanity's CDN, so Astro's image
+  // service has nothing to do: passthrough skips the IMAGES binding. Left out
+  // under Vitest, which reuses this config (vitest.config.ts) and would
+  // otherwise run the tests inside workerd.
+  adapter: process.env.VITEST
+    ? undefined
+    : cloudflare({
+        imageService: "passthrough",
+      }),
+
+  // Nothing here uses Astro sessions: no KV namespace to provision.
+  session: false,
+
+  // Cloudflare's Workers Cache sits in front of the Worker. `src/middleware.ts`
+  // decides what it keeps (every published page, until the Sanity webhook purges
+  // it through `/api/revalidate`); anything else is sent `no-store` by the adapter.
+  cache: {
+    provider: cacheCloudflare(),
+  },
 
   integrations: [
     sitemap({
@@ -135,7 +100,6 @@ export default defineConfig({
       },
     }),
     react(),
-    markdownNegotiation(),
   ],
 
   vite: {

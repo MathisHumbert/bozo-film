@@ -1,18 +1,15 @@
-// Markdown content negotiation (RFC 9110 §12.5.1). Imports nothing, on purpose:
-// `astro.config.mjs` reads it at build time to write the Vercel route, and the
-// middleware reads it at request time, so the two can never disagree about which
-// requests are negotiated. If they did, a Markdown body could reach the ISR
-// function and be cached as the HTML page.
+// Markdown content negotiation (RFC 9110 §12.5.1), run by `src/middleware.ts`.
+// Both representations answer `Vary: Accept`, which the Workers Cache honours,
+// so a Markdown body is never served to a browser from the cache.
 
 export type Representation = "html" | "markdown";
 
 // Page paths only: no file extension, nothing internal. `/llms.txt`, `/about.md`,
 // `/_astro/*`, `/api/*` and the Studio are served as they are.
 export const NEGOTIABLE_PATH =
-  /^\/(?!(?:api|admin|_astro|_image|_server-islands|_isr|_render|_vercel)(?:\/|$))[^.]*$/;
+  /^\/(?!(?:api|admin|_astro|_image|_server-islands)(?:\/|$))[^.]*$/;
 
-// The cheap test, shared with the Vercel route. Only these requests leave the
-// ISR cache; full q-value parsing then happens in `negotiate()`.
+// The cheap test; full q-value parsing then happens in `negotiate()`.
 export const MARKDOWN_ACCEPT = /text\/markdown/i;
 
 export function isNegotiable(pathname: string): boolean {
@@ -91,60 +88,3 @@ export function pagePathFor(param?: string | null): string {
 export const VARY = "Accept";
 
 export const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
-
-// ——— Vercel routing ———
-
-interface VercelRoute {
-  src?: string;
-  dest?: string;
-  handle?: string;
-  has?: { type: string; key: string; value?: string }[];
-  [key: string]: unknown;
-}
-
-interface VercelConfig {
-  routes?: VercelRoute[];
-  [key: string]: unknown;
-}
-
-// Header values are matched as a regex. Spelled out as character classes rather
-// than an inline `(?i)` flag, whose support the routing layer does not document.
-function caseInsensitive(value: string): string {
-  return value.replace(/[a-z]/gi, (char) =>
-    char.toLowerCase() === char.toUpperCase()
-      ? char
-      : `[${char.toLowerCase()}${char.toUpperCase()}]`,
-  );
-}
-
-export const MARKDOWN_ROUTE: VercelRoute = {
-  src: NEGOTIABLE_PATH.source.replace(/\\\//g, "/"),
-  has: [
-    {
-      type: "header",
-      key: "accept",
-      value: `.*${caseInsensitive("text/markdown")}.*`,
-    },
-  ],
-  // `_render` is the uncached function. The middleware negotiates there.
-  dest: "_render",
-};
-
-// Inserted straight after `handle: filesystem`, so above every page route and
-// therefore above the ISR cache. Idempotent.
-export function withMarkdownRoute(config: VercelConfig): VercelConfig {
-  const routes = (config.routes ?? []).filter(
-    (route) => route.dest !== MARKDOWN_ROUTE.dest || !route.has,
-  );
-  const filesystem = routes.findIndex((route) => route.handle === "filesystem");
-
-  if (filesystem === -1) {
-    throw new Error(
-      "No `handle: filesystem` in .vercel/output/config.json: the Markdown route has nowhere to go.",
-    );
-  }
-
-  routes.splice(filesystem + 1, 0, MARKDOWN_ROUTE);
-
-  return { ...config, routes };
-}

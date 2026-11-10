@@ -6,7 +6,7 @@ import type {
 } from "@sanity/client";
 import { perspectiveCookieName } from "@sanity/preview-url-secret/constants";
 
-const token = import.meta.env.SANITY_API_READ_TOKEN;
+import { serverEnv } from "../env";
 
 export const sanityConfigured = Boolean(
   import.meta.env.PUBLIC_SANITY_PROJECT_ID,
@@ -65,6 +65,8 @@ export async function loadQuery<const Q extends string>(
       stega: false,
     });
   }
+
+  const token = serverEnv("SANITY_API_READ_TOKEN");
 
   if (!token) {
     throw new Error(

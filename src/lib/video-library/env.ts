@@ -1,19 +1,8 @@
 /**
- * Environment access for the video library.
- *
- * process.env comes first on purpose: Astro inlines `import.meta.env` at build
- * time, so a value changed after the build would be ignored in production.
- * `import.meta.env` is the fallback that makes `astro dev` work, where the .env
- * file is loaded there and not into the process.
+ * Environment access for the video library. Read at request time: see
+ * `serverEnv()` for why.
  */
-function read(key: string): string | undefined {
-  const fromProcess =
-    typeof process !== "undefined" ? process.env?.[key] : undefined;
-
-  const value = fromProcess ?? (import.meta as any).env?.[key];
-
-  return value === "" ? undefined : value;
-}
+import { serverEnv as read } from "../env";
 
 export function requireEnv(key: string): string {
   const value = read(key);

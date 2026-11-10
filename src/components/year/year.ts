@@ -5,7 +5,7 @@ export class Year extends HTMLElement {
    * Lifecycle
    */
   connectedCallback() {
-    // The page is served from the ISR cache, so the year rendered on the
+    // The page is served from the edge cache, so the year rendered on the
     // server can be stale: refresh it on the client.
     const year = new Date().getFullYear();
 

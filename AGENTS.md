@@ -67,18 +67,28 @@ Manage the background server with `astro dev stop`, `astro dev status`, and `ast
 
 ## Deploying
 
-Vercel, `output: "static"` with ISR. Two rules:
+A Cloudflare **Worker** (`@astrojs/cloudflare`), not Pages — the adapter no longer
+supports Pages. `output: "static"`, every page on demand, cached by the Workers Cache
+(see _Page cache_ below). Three rules:
 
-- **Every API route needs `export const prerender = false` AND an entry in
-  `isr.exclude`** (`astro.config.mjs`). Miss the second and it is cached like a page.
-- **`VERCEL_BYPASS_TOKEN` must exist at build time** — `astro.config.mjs` reads it from
-  `process.env` while building, so a runtime-only variable leaves ISR with no purge key.
+- **Variables live in two places.** `PUBLIC_*` are inlined into the bundle, and
+  `astro.config.mjs` reads `PUBLIC_SANITY_*` while building, so they go in the **build**
+  variables. Everything else is read at request time through `serverEnv()`
+  (`src/lib/env.ts`) and goes in the **Worker's** variables and secrets
+  (`npx wrangler secret put <KEY>`). Never read a secret with `import.meta.env.X`: it
+  would be inlined at build, where Cloudflare does not have it.
+- **`nodejs_compat` and a compatibility date past 2025-04-01** stay in `wrangler.jsonc`.
+  The AWS SDK needs the first; `serverEnv()` needs both, since that is what fills
+  `process.env` from the Worker's variables.
+- **Node ≥ 22.23.4 to build** (Astro 7.4). `.nvmrc` pins 24 for Cloudflare's builder.
 
-`astro preview` does not work with this adapter; use `npx vercel dev`.
+`npm run preview` builds and runs the Worker locally in workerd; `npm run deploy` builds
+and runs `wrangler deploy`. `main` and `assets` are not in `wrangler.jsonc` on purpose:
+the adapter writes them into `dist/server/wrangler.json`, which is what deploy reads.
 
-Every variable in `.env` goes into all three Vercel environments. Origins have to be
-allowed in three places: Sanity (Manage → API → CORS), the bucket's CORS rules, and
-`STUDIO_ORIGINS` if a Studio is served outside `/admin`. Full walkthrough in the README.
+Origins have to be allowed in three places: Sanity (Manage → API → CORS), the bucket's
+CORS rules, and `STUDIO_ORIGINS` if a Studio is served outside `/admin`. Full
+walkthrough in the README.
 
 ## Running the Studio
 
@@ -121,10 +131,12 @@ overlay.
   cookies set. A guessed URL gets a 401.
 - **`/api/draft-mode/disable`** — expires them. The _Exit draft mode_ link outside the
   Studio points here.
-- **Two cookies, not one.** `__prerender_bypass = VERCEL_BYPASS_TOKEN` is what makes
-  Vercel skip the ISR cache for that browser; without it the editor gets the cached
-  published page. Both are `SameSite=None; Secure`, plus `Partitioned` when framed
-  (Safari), and the disable route clears both variants — hence hand-written headers in
+- **The cache cannot skip a request by cookie**, so every cached page answers
+  `Vary: Cookie` (`src/middleware.ts`). The editor's cookie makes their request a
+  different cache key from a visitor's, it misses, and the draft response is sent
+  `no-store`. Drop that `Vary` and editors get the cached published page.
+- The cookie is `SameSite=None; Secure`, plus `Partitioned` when framed (Safari), and
+  the disable route clears both variants — hence hand-written headers in
   `src/lib/sanity/draft-mode.ts` rather than `Astro.cookies`.
 - **Every `loadQuery` call in a page passes `{ cookies: Astro.cookies }`.** Forget it and
   that query stays published in draft mode. The llms endpoints deliberately do not.
@@ -132,30 +144,46 @@ overlay.
 Check: `curl -s localhost:3000/` must contain no stega characters and no
 `visual-editing-toggle` island.
 
-## ISR revalidation
+## Page cache
 
-`output: "static"` on the Vercel adapter, with pages served from the ISR cache and
-purged by a signed Sanity webhook hitting `/api/revalidate`.
+Cloudflare's **Workers Cache** sits in front of the Worker: a hit is served without
+running it. Astro drives it through its route cache (`cache.provider: cacheCloudflare()`
+in `astro.config.mjs`), and `src/middleware.ts` decides, per response, what it keeps:
 
-Three rules are easy to break:
+- a `200` on any path outside `/api/` — pages, their `.md` twins, the llms files — is
+  stored for a year (`PAGE_CACHE_SECONDS`, `src/lib/page-cache.ts`) and tagged
+  `pageTag(path)`, the path without its trailing slash, so one purge reaches `/about`
+  and `/about/`;
+- a draft-mode response or any other status gets `cache.set(false)`, i.e. `no-store`;
+- `/api/*` declares nothing, which the adapter turns into `no-store`.
 
-- **Every API route needs `export const prerender = false` AND an entry in
-  `isr.exclude`** (`astro.config.mjs`). Miss the second and the route is cached like a
-  page and never executes.
-- **Every _page_ route needs `export const prerender = false` and NO `isr.exclude`
-  entry.** A prerendered page is written to `.vercel/output/static` and served by
-  `handle: filesystem`, which sits above every function — so it can never be purged, and
-  the webhook's HEAD request hits a static file and does nothing. An `isr.exclude` entry
-  would be the opposite mistake: it makes the route run on every request, uncached.
-- **`useCdn` stays `false`**, in the Sanity integration _and_ in `loadQuery`. This is the
-  one that only bites once pages render on demand: the webhook purges the ISR cache, the
-  page re-renders immediately, and `apicdn` can still be serving the pre-publish
-  document — so the visitor gets stale content, now cached until the next purge.
+The cache keys on the path plus every header named in `Vary`. That is the whole trick
+behind both the Markdown negotiation (`Vary: Accept`) and draft mode (`Vary: Cookie`).
 
-After a build, no page should be left on disk:
+A signed Sanity webhook hitting `/api/revalidate` purges by those tags, once, globally.
+The year is only a ceiling: the Worker version is part of the cache key, so every deploy
+starts cold anyway.
+
+Rules that are easy to break:
+
+- **Every page route needs `export const prerender = false`.** A prerendered page becomes
+  a static asset, served before the Worker runs — it can never be purged.
+- **A new cacheable path must be tagged with `pageTag()`**, which the middleware does for
+  anything outside `/api/`. Purging uses the same function; do not tag by hand.
+- **`useCdn` stays `false`**, in the Sanity integration _and_ in `loadQuery`: the webhook
+  purges, the page re-renders immediately, and `apicdn` can still be serving the
+  pre-publish document — so the visitor gets stale content, now cached until the next
+  purge.
+
+Nothing is cached in `astro dev` (`cache.enabled` is false), and the local workerd of
+`npm run preview` sends the headers but has no `cache.purge`: `/api/revalidate` answers
+502 there. Check the headers instead:
 
 ```bash
-find .vercel/output/static -name '*.html'   # only admin/index.html
+curl -sI localhost:3000/ | grep -iE 'vary|cache'
+# vary: Accept, Cookie · cache-tag: page:/,… · cloudflare-cdn-cache-control: public, max-age=31536000
+curl -sI -H 'Cookie: sanity-preview-perspective=drafts' localhost:3000/ | grep -i cdn-cache
+# no-store
 ```
 
 Because every page is on-demand, `@astrojs/sitemap` still discovers the static routes
@@ -196,10 +224,8 @@ routable document type needs no change there:
 Every branch also purges `AI_PATHS`. A new document type only needs a `SITE_WIDE_TYPES`
 entry if `Layout` reads it.
 
-Env vars: `SANITY_REVALIDATE_SECRET` (must match the webhook's secret) and
-`VERCEL_BYPASS_TOKEN` (read from `process.env` at build time, so it has to exist in the
-Vercel build environment). Full setup, including the webhook filter and projection, is
-in the README.
+Env var: `SANITY_REVALIDATE_SECRET`, a Worker secret that must match the webhook's.
+Full setup, including the webhook filter and projection, is in the README.
 
 ## Video library
 
@@ -374,18 +400,16 @@ for invisible characters — a non-zero count means a chokepoint was missed.
 | `llms.txt.ts`      | `false`               | must reflect published content without a rebuild |
 | `llms-full.txt.ts` | `false`               | same                                             |
 
-A prerendered route is written to `.vercel/output/static` and served by `handle:
-filesystem`, which sits above every function — so it can never be revalidated, and an
-`isr.exclude` entry for it would be inert. Neither llms route goes in `isr.exclude`:
-excluding a route makes it run on every request, which is the opposite of what these
-want. Both paths are already in `AI_PATHS` in `src/pages/api/revalidate.ts`.
+A prerendered route is written to `dist/client` and served as a static asset, before the
+Worker runs — so it can never be revalidated. The llms routes are rendered by the Worker
+and kept by the Workers Cache like any page; both paths are already in `AI_PATHS` in
+`src/pages/api/revalidate.ts`.
 
 Check after a build:
 
 ```bash
-ls .vercel/output/static/robots.txt      # exists
-ls .vercel/output/static/llms.txt        # must NOT exist
-grep -n 'llms' .vercel/output/config.json  # dest: "/_isr?…"
+ls dist/client/robots.txt      # exists
+ls dist/client/llms.txt        # must NOT exist
 ```
 
 ### The schema side is generic on purpose
@@ -413,23 +437,13 @@ a tie, `406` when neither is acceptable). Both representations carry
 `<link rel="alternate" type="text/markdown">`. A path that is not a page returns
 a Markdown 404 linking `/llms.txt` and the sitemap.
 
-**The negotiation must never run inside the ISR function.** The ISR cache keys on
-the path alone, so a Markdown body rendered there would be served to browsers as
-the page. Hence two halves sharing one definition in `src/lib/negotiation.ts`:
+`src/middleware.ts` does the q-value negotiation (`src/lib/negotiation.ts`) and
+rewrites to the `.md` route. **`Vary: Accept` is what keeps the two apart in the
+cache**: the Workers Cache honours `Vary`, so each `Accept` value gets its own entry
+and a Markdown body is never served to a browser. Remove it and the first client to
+fill an entry decides what everyone gets. `tests/middleware.test.ts` guards it.
 
-- `markdownNegotiation()` in `astro.config.mjs` adds a route to
-  `.vercel/output/config.json` straight after `handle: filesystem`: page-shaped
-  paths whose `Accept` mentions `text/markdown` go to the uncached `_render`
-  function. The adapter has no option for a header-matched route, hence the
-  post-build edit.
-- `src/middleware.ts` does the real q-value negotiation there, and rewrites to the
-  `.md` route.
-
-`tests/negotiation.test.ts` checks that the route and the middleware agree on
-every path and header. Change `NEGOTIABLE_PATH` or `MARKDOWN_ACCEPT` and that
-test is the guard.
-
-The `.md` routes are ordinary ISR pages, and `resolvePaths()` purges each page's
+The `.md` routes are ordinary cached pages, and `resolvePaths()` purges each page's
 twin with it. `resolvePath()` in `routes.ts` (the inverse of `hrefFor()`) maps a
 path back to its document, so singletons need nothing new. **A repeatable needs a
 `<prefix>/[slug].md.ts`** beside its `[slug].astro`, which otherwise takes
@@ -438,7 +452,6 @@ path back to its document, so singletons need nothing new. **A repeatable needs 
 
 Check: `curl -sSi -H 'Accept: text/markdown' localhost:3000/` is
 `text/markdown` with `Vary: Accept`; the same with `Accept: text/html` is HTML.
-After a build, route 2 in `.vercel/output/config.json` is the one with `has`.
 `npm test` runs the unit tests.
 
 ### llmsQuery
@@ -468,7 +481,7 @@ the short version for a human; this is the ordered procedure.
 5. `npm install && npx sanity schema deploy && npm run typegen`.
 
 Only those two variables are needed to boot. The video library needs a bucket, a CDN and
-its own CORS rules; ISR needs `VERCEL_BYPASS_TOKEN` **at build time** plus a webhook.
+its own CORS rules; the cache purge needs `SANITY_REVALIDATE_SECRET` plus a webhook.
 
 ### Then
 

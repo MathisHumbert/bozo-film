@@ -1,7 +1,9 @@
 import { perspectiveCookieName } from "@sanity/preview-url-secret/constants";
 
-const BYPASS_COOKIE = "__prerender_bypass";
-
+// One cookie. The Workers Cache cannot be told to skip a request by cookie, so
+// the pages answer `Vary: Cookie` (src/middleware.ts): a browser carrying this
+// one never shares a cache entry with a visitor, and its draft responses are
+// never stored.
 function cookie(
   name: string,
   value: string,
@@ -29,20 +31,14 @@ export function enableDraftModeCookies(
   request: Request,
   perspective: string,
 ): string[] {
-  const partitioned = isFramed(request);
-  const bypassToken = process.env.VERCEL_BYPASS_TOKEN;
-
-  return [
-    cookie(perspectiveCookieName, perspective, partitioned),
-    ...(bypassToken ? [cookie(BYPASS_COOKIE, bypassToken, partitioned)] : []),
-  ];
+  return [cookie(perspectiveCookieName, perspective, isFramed(request))];
 }
 
 export function disableDraftModeCookies(): string[] {
-  return [perspectiveCookieName, BYPASS_COOKIE].flatMap((name) => [
-    cookie(name, "", false, 0),
-    cookie(name, "", true, 0),
-  ]);
+  return [
+    cookie(perspectiveCookieName, "", false, 0),
+    cookie(perspectiveCookieName, "", true, 0),
+  ];
 }
 
 export function redirect(location: string, cookies: string[]): Response {

@@ -213,7 +213,7 @@ It exports:
 | `absoluteUrl`, `normalizePath` | origin and trailing-slash handling |
 
 Paths carry a trailing slash on everything but the root. That is not cosmetic: it has to
-match what `@astrojs/sitemap` emits, what the canonical claims, and what the ISR cache is
+match what `@astrojs/sitemap` emits, what the canonical claims, and what the page cache is
 keyed on. A purge for `/about` will not hit a page cached as `/about/`.
 
 Because everything derives from this file, adding a document type needs no change in the
@@ -231,31 +231,30 @@ literal.
 
 ## Rendering modes and caching
 
-`output: "static"` with the Vercel adapter, but almost nothing is actually static. Three
+`output: "static"` on a Cloudflare Worker, but almost nothing is actually static. Three
 tiers, and mixing them up fails silently:
 
-|                                    | `prerender` | `isr.exclude` | Served as                                           |
-| :--------------------------------- | :---------- | :------------ | :-------------------------------------------------- |
-| pages, `llms.txt`, `llms-full.txt` | `false`     | no            | rendered once, then from the ISR cache until purged |
-| `/api/*`                           | `false`     | **yes**       | a function, on every request                        |
-| `robots.txt`, `/admin`             | default     | —             | a file on disk                                      |
+|                                    | `prerender` | Served as                                                |
+| :--------------------------------- | :---------- | :------------------------------------------------------- |
+| pages, `llms.txt`, `llms-full.txt` | `false`     | rendered once, then from the Workers Cache until purged  |
+| `/api/*`                           | `false`     | the Worker, on every request (`no-store`)                |
+| `robots.txt`, `/admin`             | default     | a static asset from `dist/client`                        |
 
-The mechanism behind the rule: a prerendered route is written to
-`.vercel/output/static` and served by `handle: filesystem`, which sits **above every
-function** in the routing table. So a prerendered page can never be revalidated, and an
-`isr.exclude` entry for it would be inert. Conversely, excluding a page makes it run
-uncached on every request — the opposite of what you want.
+The mechanism behind the rule: a prerendered route is written to `dist/client` and served
+as a static asset, **before the Worker runs**. So a prerendered page can never be
+revalidated. Which rendered responses the cache keeps is decided per response in
+`src/middleware.ts` — every `200` outside `/api/`, unless the visitor is in draft mode.
 
 After a build, only `admin/index.html` should be left on disk:
 
 ```sh
-find .vercel/output/static -name '*.html'
+find dist/client -name '*.html'
 ```
 
 **What happens on publish.** Sanity fires a signed webhook at `/api/revalidate`. The route
-verifies the signature, maps `_type` to a list of paths, and sends a `HEAD` to each with the
-bypass token, which makes Vercel regenerate and re-cache them. `resolvePaths()` derives
-those paths from the route map:
+verifies the signature, maps `_type` to a list of paths, and purges their cache tags in one
+global call; the next visitor re-renders each page. `resolvePaths()` derives those paths
+from the route map:
 
 - a **site-wide** type (`settings`, `video-asset`) purges everything, because `Layout`
   wraps every page and a video can be referenced from any of them;
@@ -543,7 +542,7 @@ Honest list, as of the last pass:
 - **R2 has never been exercised.** The code path exists and the SDK settings are right, but
   only S3 has actually run.
 - **The `OPTIONS` preflight on `/api/media/*`** is shadowed by Vite in dev, so that path is
-  unverified until `vercel dev` or a deploy.
+  unverified until `npm run preview` or a deploy.
 - **No usage check before deleting a video.** Safe, because the reference is strong, but the
   editor gets a raw 409 instead of "used on 2 pages", and a multi-delete fails as a whole
   when one asset is referenced.
@@ -551,5 +550,6 @@ Honest list, as of the last pass:
   asset. `npm run check:storage` finds them; nothing cleans them.
 - **Bucket CORS may still be `*`** on a project set up quickly. Restrict it to the Studio
   origins.
-- **`/api/revalidate` returns 500 locally** — it reads `VERCEL_BYPASS_TOKEN` from
-  `process.env`, which Vite does not populate in dev. Expected, not a bug.
+- **The purge has not run against a real Workers Cache yet.** The local workerd has no
+  `cache.purge`, so `/api/revalidate` answers 502 under `npm run preview`. Check the
+  webhook's delivery log after the first deploy.

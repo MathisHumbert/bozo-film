@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  MARKDOWN_ROUTE,
   isNegotiable,
   markdownPathFor,
   mentionsMarkdown,
   negotiate,
   pagePathFor,
-  withMarkdownRoute,
 } from "../src/lib/negotiation";
 
 describe("negotiate", () => {
@@ -49,7 +47,6 @@ describe("isNegotiable", () => {
     "/_astro/a.css",
     "/_image",
     "/_server-islands/x",
-    "/_vercel/insights",
     "/llms.txt",
     "/about.md",
     "/logo.svg",
@@ -77,76 +74,15 @@ describe("markdown paths", () => {
   ])("param %s → %s", (param, page) => expect(pagePathFor(param)).toBe(page));
 });
 
-// The Vercel route and the middleware must agree, or a Markdown request could
-// reach the ISR function and be cached under the HTML URL.
-describe("MARKDOWN_ROUTE", () => {
-  const src = new RegExp(MARKDOWN_ROUTE.src!);
-  const header = new RegExp(`^${MARKDOWN_ROUTE.has![0].value}$`);
-
+describe("mentionsMarkdown", () => {
   it.each([
-    "/",
-    "/about/",
-    "/work/aurora",
-    "/api/media/list",
-    "/admin",
-    "/llms.txt",
-    "/_astro/x.js",
-    "/apiary",
-  ])("routes %s exactly when the middleware negotiates it", (path) => {
-    expect(src.test(path)).toBe(isNegotiable(path));
-  });
-
-  it.each([
-    "text/markdown",
-    "Text/Markdown;q=0.5",
-    "text/html, text/markdown",
-    "text/html",
-    "*/*",
-    "application/json",
-  ])("matches %s exactly when the middleware sees Markdown", (accept) => {
-    expect(header.test(accept)).toBe(mentionsMarkdown(accept));
-  });
-
-  it("goes to the uncached function", () => {
-    expect(MARKDOWN_ROUTE.dest).toBe("_render");
-    expect(MARKDOWN_ROUTE.has![0].key).toBe("accept");
-  });
-});
-
-describe("withMarkdownRoute", () => {
-  const config = {
-    version: 3,
-    routes: [
-      { src: "^/_astro(?:/(.*))$", headers: {}, continue: true },
-      { handle: "filesystem" },
-      { src: "^/api/revalidate$", dest: "_render" },
-      { src: "^(/)$", dest: "/_isr?x_astro_path=$1" },
-    ],
-  };
-
-  it("inserts the route straight after the filesystem, above every page", () => {
-    const routes = withMarkdownRoute(config).routes!;
-
-    expect(routes[1]).toEqual({ handle: "filesystem" });
-    expect(routes[2]).toBe(MARKDOWN_ROUTE);
-    expect(routes.at(-1)!.dest).toContain("/_isr");
-  });
-
-  it("is idempotent", () => {
-    const twice = withMarkdownRoute(withMarkdownRoute(config));
-
-    expect(twice.routes!.filter((r) => r === MARKDOWN_ROUTE)).toHaveLength(1);
-    expect(twice.routes).toHaveLength(config.routes.length + 1);
-  });
-
-  it("keeps the other routes and fields", () => {
-    const out = withMarkdownRoute(config);
-
-    expect(out.version).toBe(3);
-    expect(out.routes).toEqual(expect.arrayContaining(config.routes));
-  });
-
-  it("throws without a filesystem handle", () => {
-    expect(() => withMarkdownRoute({ routes: [] })).toThrow(/filesystem/);
-  });
+    ["text/markdown", true],
+    ["Text/Markdown;q=0.5", true],
+    ["text/html, text/markdown", true],
+    ["text/html", false],
+    ["*/*", false],
+    [null, false],
+  ])("%s → %s", (accept, expected) =>
+    expect(mentionsMarkdown(accept)).toBe(expected),
+  );
 });

@@ -3,7 +3,9 @@ export const prerender = false;
 import { isValidSignature, SIGNATURE_HEADER_NAME } from "@sanity/webhook";
 import type { APIRoute } from "astro";
 
+import { serverEnv } from "../../lib/env";
 import { markdownPathFor } from "../../lib/negotiation";
+import { pageTag } from "../../lib/page-cache";
 import { allPaths, hrefFor, isRoutable } from "../../lib/routes";
 
 interface WebhookDoc {
@@ -44,11 +46,10 @@ export async function resolvePaths(doc: WebhookDoc): Promise<string[]> {
   return [...paths];
 }
 
-export const POST: APIRoute = async ({ request }) => {
-  const secret = import.meta.env.SANITY_REVALIDATE_SECRET;
-  const bypassToken = process.env.VERCEL_BYPASS_TOKEN;
+export const POST: APIRoute = async ({ request, cache }) => {
+  const secret = serverEnv("SANITY_REVALIDATE_SECRET");
 
-  if (!secret || !bypassToken) {
+  if (!secret) {
     return new Response(
       JSON.stringify({ message: "Missing server configuration" }),
       { status: 500 },
@@ -87,21 +88,22 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  const origin = new URL(request.url).origin;
-
-  const results = await Promise.allSettled(
-    paths.map((path) =>
-      fetch(`${origin}${path}`, {
-        method: "HEAD",
-        headers: { "x-prerender-revalidate": bypassToken },
+  // One purge for every path: the middleware tagged each page with
+  // `pageTag()` as the Workers Cache stored it. Global, and a no-op in dev.
+  try {
+    await cache.invalidate({ tags: [...new Set(paths.map(pageTag))] });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        revalidated: false,
+        message: error instanceof Error ? error.message : "Purge failed",
       }),
-    ),
-  );
-
-  const revalidated = paths.filter((_, i) => results[i].status === "fulfilled");
+      { status: 502, headers: { "content-type": "application/json" } },
+    );
+  }
 
   return new Response(
-    JSON.stringify({ revalidated: true, type: doc._type, paths: revalidated }),
+    JSON.stringify({ revalidated: true, type: doc._type, paths }),
     { status: 200, headers: { "content-type": "application/json" } },
   );
 };
