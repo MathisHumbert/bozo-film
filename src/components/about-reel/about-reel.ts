@@ -45,7 +45,6 @@ export class AboutReel extends HTMLElement {
   private $toggle: HTMLButtonElement | null;
   private $label: HTMLElement | null;
   private $center: HTMLElement | null;
-  private $lines: NodeListOf<HTMLElement>;
 
   private $nav: HTMLElement | null = null;
 
@@ -71,7 +70,6 @@ export class AboutReel extends HTMLElement {
     this.$toggle = this.querySelector('[data-about-reel="toggle"]');
     this.$label = this.querySelector('[data-about-reel="label"]');
     this.$center = this.querySelector('[data-about-reel="center"]');
-    this.$lines = this.querySelectorAll('[data-about-reel="line"]');
   }
 
   /**
@@ -154,10 +152,6 @@ export class AboutReel extends HTMLElement {
   };
 
   private onResize = () => {
-    if (this.isCollapsed) {
-      this.pinLines();
-    }
-
     // Open, the media box follows the window.
     if (this.isPlaying && !this.tl?.isActive()) {
       this.setOpenLayout();
@@ -176,56 +170,41 @@ export class AboutReel extends HTMLElement {
 
   /**
    * Intro
+   *
+   * Only the media scales, inside the clipped frame: a transform, so the
+   * text around it never moves. The label fades in once there is picture
+   * behind it — opacity only, so the button stays reachable by keyboard.
    */
-
-  // Thumbnail scaled to 0, lines pulled over its centre, until the section
-  // reaches the middle of the screen. Transforms only, so nothing below moves.
   private collapse() {
-    if (device.reducedMotion || !this.$holder || !this.$frame) return;
+    if (device.reducedMotion || !this.$media) return;
 
     this.isCollapsed = true;
 
-    gsap.set(this.$frame, { scale: 0 });
-    this.pinLines();
-
-    // Line heights change once the fonts swap in.
-    document.fonts.ready.then(() => {
-      if (this.isCollapsed) this.pinLines();
-    });
+    gsap.set(this.$media, { scale: 0 });
+    gsap.set(this.$center, { opacity: 0 });
   }
 
-  private pinLines() {
-    if (!this.$holder) return;
-
-    gsap.set(this.$lines, { clearProps: "transform" });
-
-    const holder = this.$holder.getBoundingClientRect();
-    const centre = holder.top + holder.height / 2;
-
-    // All reads before any write, so the layout is computed once.
-    const offsets = [...this.$lines].map(($line) => {
-      const rect = $line.getBoundingClientRect();
-      return rect.top < centre ? centre - rect.bottom : centre - rect.top;
-    });
-
-    this.$lines.forEach(($line, index) => gsap.set($line, { y: offsets[index] }));
-  }
-
-  // Lines and scale share one timeline, so the gaps grow in step.
   private expand() {
-    if (!this.isCollapsed || !this.$frame) return;
+    if (!this.isCollapsed || !this.$media) return;
 
     this.isCollapsed = false;
 
     const tl = gsap.timeline({
-      defaults: { duration: DURATION.intro, ease: EASE.intro },
       onComplete: () => {
-        gsap.set(this.$lines, { clearProps: "transform" });
-        gsap.set(this.$frame, { clearProps: "transform" });
+        gsap.set(this.$media, { clearProps: "transform" });
+        gsap.set(this.$center, { clearProps: "opacity" });
       },
     });
 
-    tl.to(this.$lines, { y: 0 }, 0).to(this.$frame, { scale: 1 }, 0);
+    tl.to(
+      this.$media,
+      { scale: 1, duration: DURATION.intro, ease: EASE.intro },
+      0,
+    ).to(
+      this.$center,
+      { opacity: 1, duration: DURATION.fade, ease: EASE.fade },
+      DURATION.intro - DURATION.fade,
+    );
 
     this.intro = tl;
   }
@@ -306,8 +285,7 @@ export class AboutReel extends HTMLElement {
   private play() {
     if (!this.$frame || !this.$main) return;
 
-    // Before or mid-intro (the button is reachable by keyboard while scaled
-    // to 0): finish it so the thumbnail is measured unscaled.
+    // Before or mid-intro: finish it, render() owns the media's transform.
     this.expand();
     this.intro?.progress(1);
 

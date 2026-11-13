@@ -26,7 +26,9 @@ interface Column {
   period: number;
   lag: number;
   position: number;
-  shift: number;
+  // 0 at rest, 1 parted: the set above the seam off the top of the screen,
+  // its copies below the seam off the bottom.
+  part: number;
 }
 
 export class PhotoGrid extends HTMLElement {
@@ -86,7 +88,7 @@ export class PhotoGrid extends HTMLElement {
           period: 0,
           lag: this.getLag(index, $windows.length),
           position: this.distance,
-          shift: 0,
+          part: 0,
         };
       });
     }
@@ -169,36 +171,20 @@ export class PhotoGrid extends HTMLElement {
     this.isRevealing = true;
 
     const tl = gsap.timeline({
+      onUpdate: () => this.render(),
       onComplete: () => (this.isRevealing = false),
     });
 
-    this.columns.forEach(({ $column }, index) => {
-      const $visible = Array.from(
-        $column.querySelectorAll<HTMLElement>('[data-photo-grid="item"]'),
-      ).filter(($item) => {
-        const rect = $item.getBoundingClientRect();
-
-        return rect.bottom > 0 && rect.top < window.innerHeight;
-      });
-
-      if (!$visible.length) return;
-
-      const top = Math.max(
-        0,
-        Math.min(...$visible.map(($item) => $item.getBoundingClientRect().top)),
-      );
-
-      tl.from(
-        $visible,
-        {
-          y: window.innerHeight - top,
-          duration: REVEAL.duration,
-          ease: REVEAL.ease,
-          clearProps: "transform",
-        },
+    this.columns.forEach((column, index) => {
+      tl.fromTo(
+        column,
+        { part: 1 },
+        { part: 0, duration: REVEAL.duration, ease: REVEAL.ease },
         Math.abs(index - middle) * REVEAL.stagger,
       );
     });
+
+    this.render();
   };
 
   switch(count: number) {
@@ -217,7 +203,7 @@ export class PhotoGrid extends HTMLElement {
       onComplete: () => {
         this.layout(count);
 
-        this.columns.forEach((column) => (column.shift = window.innerHeight));
+        this.columns.forEach((column) => (column.part = 1));
         this.render();
 
         this.isSwitching = false;
@@ -230,7 +216,7 @@ export class PhotoGrid extends HTMLElement {
       tl.to(
         column,
         {
-          shift: -window.innerHeight,
+          part: 1,
           duration: SWITCH.duration,
           ease: SWITCH.ease,
         },
@@ -284,7 +270,7 @@ export class PhotoGrid extends HTMLElement {
         period: 0,
         lag: this.getLag(index, count),
         position: 0,
-        shift: 0,
+        part: 0,
       };
     });
 
@@ -355,14 +341,23 @@ export class PhotoGrid extends HTMLElement {
   }
 
   render() {
-    this.columns.forEach(({ $window, $column, period, position, shift }) => {
-      $window.style.transform = `translate3d(0, ${shift}px, 0)`;
-
+    this.columns.forEach(({ $column, period, position, part }) => {
       if (!period) return;
 
-      const y = mod(this.offset - position, period) - period - this.offset;
+      // On screen, where the set ends and its first copy begins. Always a
+      // gap between two photos, so parting there never cuts one in half.
+      const seam = mod(this.offset - position, period);
 
-      $column.style.transform = `translate3d(0, ${y}px, 0)`;
+      $column.style.transform = `translate3d(0, ${seam - period - this.offset}px, 0)`;
+
+      const [$set, ...$copies] = Array.from($column.children) as HTMLElement[];
+      const above = -part * seam;
+      const below = part * Math.max(0, window.innerHeight - seam);
+
+      $set.style.transform = part ? `translate3d(0, ${above}px, 0)` : "";
+      $copies.forEach(($copy) => {
+        $copy.style.transform = part ? `translate3d(0, ${below}px, 0)` : "";
+      });
     });
   }
 
@@ -388,8 +383,8 @@ export class PhotoGrid extends HTMLElement {
     this.distance += delta;
 
     const isSettled = this.columns.every(
-      ({ position, shift }) =>
-        Math.abs(this.distance - position) < 0.01 && Math.abs(shift) < 0.01,
+      ({ position, part }) =>
+        Math.abs(this.distance - position) < 0.01 && part < 0.0001,
     );
 
     if (!delta && isSettled) return;
@@ -397,7 +392,7 @@ export class PhotoGrid extends HTMLElement {
     this.columns.forEach((column) => {
       if (!column.lag) {
         column.position = this.distance;
-        column.shift = 0;
+        column.part = 0;
         return;
       }
 
@@ -405,7 +400,12 @@ export class PhotoGrid extends HTMLElement {
       const land = 1 - Math.exp((-deltaTime * SWITCH.catchUp) / column.lag);
 
       column.position += (this.distance - column.position) * ease;
-      column.shift -= column.shift * land;
+
+      // The reveal tweens part itself.
+      if (!this.isRevealing) {
+        column.part -= column.part * land;
+        if (column.part < 0.0001) column.part = 0;
+      }
     });
 
     this.render();

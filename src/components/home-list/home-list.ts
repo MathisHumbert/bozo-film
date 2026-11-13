@@ -55,6 +55,9 @@ const DURATION = {
   morph: 1.2,
   // Closes the gap between the halves, ahead of the morph.
   seal: 0.4,
+  // The other works close in this far behind the morph, so they trail the
+  // thumbnail as it scales down instead of running over it.
+  edgesAt: 0.2,
 };
 
 // On touch, below this speed (px per frame) the fling's tail counts as stopped.
@@ -219,21 +222,13 @@ export class HomeList extends HTMLElement {
 
     this.state = "leaving";
 
-    // Created before the emit and padded to 1.2s, so it ends before the wide's.
-    // The centred work fades, the others part to the edges: show() in reverse.
+    // show() in reverse: the others part to the edges a beat ahead of the
+    // morph, so the thumbnail scales up behind them instead of running into
+    // them. The centred work fades as the wide takes it over. Padded to the
+    // morph, so it ends before the wide's.
+    const morphAt = DURATION.edgesAt * speed;
+
     this.tl = gsap.timeline();
-    this.tl
-      .to(
-        [item.$item, this.$gradient],
-        { opacity: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
-        0,
-      )
-      .to(
-        this.alpha,
-        { value: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
-        0,
-      )
-      .add(() => {}, DURATION.morph * speed);
 
     this.getEdges(item).forEach(({ entries, y }) => {
       this.tl?.to(
@@ -243,11 +238,28 @@ export class HomeList extends HTMLElement {
       );
     });
 
-    events.emit("home:leave", {
-      view: "wide",
-      from: bounds && { slug: item.slug, bounds, split: 0, order: 0 },
-      titles: item.$titles,
-    });
+    this.tl
+      .to(
+        [item.$item, this.$gradient],
+        { opacity: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
+        morphAt,
+      )
+      .to(
+        this.alpha,
+        { value: 0, duration: DURATION.fadeOut * speed, ease: EASE.fade },
+        morphAt,
+      )
+      .call(
+        () =>
+          events.emit("home:leave", {
+            view: "wide",
+            from: bounds && { slug: item.slug, bounds, split: 0, order: 0 },
+            titles: item.$titles,
+          }),
+        [],
+        morphAt,
+      )
+      .add(() => {}, DURATION.morph * speed);
 
     await this.tl;
 
@@ -319,7 +331,7 @@ export class HomeList extends HTMLElement {
       gsap.set(this, { autoAlpha: 1 });
       gsap.set(this.$gradient, { opacity: 0 });
 
-      // The other works close in from both edges and land with the morph.
+      // The other works close in from both edges, a beat behind the morph.
       this.getEdges(item).forEach(({ entries, y }) => {
         this.tl?.fromTo(
           entries.map(({ $heading }) => $heading),
@@ -330,7 +342,7 @@ export class HomeList extends HTMLElement {
             ease: EASE.morph,
             clearProps: "transform",
           },
-          0,
+          DURATION.edgesAt * speed,
         );
       });
 

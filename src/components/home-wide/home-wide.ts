@@ -32,9 +32,6 @@ type WideItem = {
 
 const SCALE = 1.25;
 
-// The first work's video on load, zooming out to SCALE.
-const INTRO_SCALE = 1.5;
-
 const DURATION = {
   // Scrolls the stack onto a whole video before leaving, and when the user
   // lets go of the scroll.
@@ -232,9 +229,10 @@ export class HomeWide extends HTMLElement {
     const lines = [...$durationLines, ...(this.indexLines[this.current] ?? [])];
 
     if (intro) {
-      // The video zooms out to its resting scale, the text rises. From-tweens
-      // set their start at once, under the preloader; only the motion waits.
-      gsap.from($media, { scale: INTRO_SCALE, ...timing });
+      // The video grows to its resting scale and the text rises, as the next
+      // work does when scrolling. From-tweens set their start at once, under
+      // the preloader; only the motion waits.
+      gsap.from($media, { scale: 1, ...timing });
       gsap.from($texts, { scale: 0.9, yPercent: 50, ...timing });
 
       reveal(lines, { intro });
