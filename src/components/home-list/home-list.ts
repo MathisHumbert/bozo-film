@@ -33,6 +33,9 @@ export type ListItem = {
   videoHeight: number;
   // What the open video adds on each side, on top of the closed column gap.
   videoGap: number;
+  // Stacked: the space above and below the open video. Cancelled while it is
+  // closed, so the two lines keep the list's leading.
+  rowGap: number;
   videoX: number;
   videoY: number;
   scale: number;
@@ -113,6 +116,7 @@ export class HomeList extends HTMLElement {
       videoWidth: 0,
       videoHeight: 0,
       videoGap: 0,
+      rowGap: 0,
       videoX: 0,
       videoY: 0,
       scale: 0,
@@ -365,7 +369,7 @@ export class HomeList extends HTMLElement {
     gsap.set($arriving, { clearProps: "transform" });
 
     Scroll.resize();
-    Scroll.scrollTo(0, { immediate: true, force: true });
+    Scroll.toTop();
     this.isFrozen = false;
     this.lastScroll = Scroll.scroll;
     ScrollTrigger.refresh();
@@ -390,7 +394,7 @@ export class HomeList extends HTMLElement {
 
   arrive() {
     Scroll.resize();
-    Scroll.scrollTo(0, { immediate: true, force: true });
+    Scroll.toTop();
     this.lastScroll = Scroll.scroll;
     this.isFrozen = false;
     ScrollTrigger.refresh();
@@ -447,6 +451,7 @@ export class HomeList extends HTMLElement {
       if (item.$media) {
         item.$media.style.width = "";
         item.$media.style.height = "";
+        item.$media.style.marginBlock = "";
       }
       item.rendered = { y: NaN, scale: NaN, extra: NaN };
 
@@ -467,6 +472,13 @@ export class HomeList extends HTMLElement {
 
       item.stacked = titles + video + gap * 2 > available;
       item.$item.toggleAttribute("data-stacked", item.stacked);
+
+      // The row gap either side of the closed media is taken back by its
+      // margins, and given back by render() as the video opens.
+      item.rowGap = item.stacked ? gap : 0;
+      if (item.$media) {
+        item.$media.style.marginBlock = item.stacked ? `${-gap}px` : "";
+      }
     });
 
     this.height = this.$list?.getBoundingClientRect().height ?? 0;
@@ -552,7 +564,9 @@ export class HomeList extends HTMLElement {
     }
 
     for (const item of this.items) {
-      item.extra = item.stacked ? item.scale * item.videoHeight : 0;
+      item.extra = item.stacked
+        ? item.scale * (item.videoHeight + item.rowGap * 2)
+        : 0;
 
       if (item.extra) opening.push(item);
     }

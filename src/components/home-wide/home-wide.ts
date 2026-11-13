@@ -425,7 +425,11 @@ export class HomeWide extends HTMLElement {
     gsap.set(this, { autoAlpha: 0 });
 
     Scroll.resize();
+    // Measured from the top, where the wrapper and Lenis agree: the stack's
+    // start is read against the scroll.
+    Scroll.toTop();
     ScrollTrigger.refresh();
+
     Scroll.scrollTo(this.getScroll(index), { immediate: true, force: true });
     ScrollTrigger.update();
 

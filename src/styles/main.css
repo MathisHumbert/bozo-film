@@ -58,6 +58,9 @@ html.js c-preloader ~ .site {
   height: 100svh;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  /* Lenis owns the position: the browser must not shift it when the home's
+     views appear or vanish above one another. */
+  overflow-anchor: none;
 }
 
 html.is-ready #scroll-wrapper {

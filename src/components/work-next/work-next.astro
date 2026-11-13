@@ -26,12 +26,12 @@ const split = Boolean(left && right);
 const spaced = stegaClean(title) === `${left} ${right}`;
 ---
 
-<!-- The video waits zoomed in: WorkToWork zooms it out to the next hero's
-scale before handing the <video> over. A transform, not Tailwind's scale-*,
-which is the separate `scale` property GSAP's scale would multiply. -->
 <c-work-next class="relative">
   <div
     class="relative block h-svh w-full [clip-path:polygon(0_0,_100%_0,_100%_100%,_0_100%)]"
+    data-scroll
+    data-scroll-css-progress
+    data-scroll-position="start,start"
   >
     <div class="relative top-[-100svh] h-[200svh] w-full">
       <div class="sticky top-0 h-svh">
@@ -39,7 +39,7 @@ which is the separate `scale` property GSAP's scale would multiply. -->
           asset={previewVideo}
           autoplay
           loop
-          wrapperClass="cover [transform:scale(1.2)]"
+          wrapperClass="cover [transform:scale(calc(1_+_var(--progress,1)_*_0.2))]"
           class="h-full w-full object-cover"
         />
 

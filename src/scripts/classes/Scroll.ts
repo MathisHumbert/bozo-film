@@ -140,6 +140,18 @@ export default class Scroll {
     this.loco?.scrollTo(target, options);
   }
 
+  // Back to the top, for the wrapper and for Lenis alike. scrollTo(0) alone
+  // is skipped when Lenis already counts itself at 0 (infinite wraps limit
+  // to 0), and the wrapper can still be elsewhere: anything measured against
+  // the scroll would then be a whole wrap off.
+  static toTop() {
+    const wrapper = this.lenis?.rootElement;
+
+    if (wrapper) wrapper.scrollTop = 0;
+
+    this.scrollTo(0, { immediate: true, force: true });
+  }
+
   static get lenis() {
     return this.loco?.lenisInstance ?? null;
   }
