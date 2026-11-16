@@ -36,15 +36,6 @@ type UpdateOptions = {
   hero: Hero | null;
 };
 
-const DURATION = {
-  // The videos appearing, and leaving with the page.
-  fade: 0.6,
-};
-
-const EASE = {
-  fade: "expo.out",
-};
-
 export default class Media {
   item: ListItem;
   element: HTMLElement;
@@ -148,14 +139,6 @@ export default class Media {
    */
   show() {
     return gsap.set(this.material.uniforms.uAlpha, { value: 1 });
-  }
-
-  hide() {
-    return gsap.to(this.material.uniforms.uAlpha, {
-      value: 0,
-      duration: DURATION.fade,
-      ease: EASE.fade,
-    });
   }
 
   /**
@@ -331,8 +314,6 @@ export default class Media {
    * Destroy.
    */
   destroy() {
-    gsap.killTweensOf(this.material.uniforms.uAlpha);
-
     this.video.pause();
     this.video.removeAttribute("src");
     this.video.load();

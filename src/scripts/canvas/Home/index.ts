@@ -42,10 +42,6 @@ export default class Home {
     this.medias.forEach((media) => media.show());
   }
 
-  hide(_: { from: string; to: string }) {
-    return Promise.all(this.medias.map((media) => media.hide()));
-  }
-
   release(slug: string) {
     const media = this.medias.find(({ item }) => item.slug === slug);
 

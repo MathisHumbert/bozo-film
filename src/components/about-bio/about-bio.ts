@@ -62,6 +62,16 @@ export class AboutBio extends HTMLElement {
   // page is revealed, then 0
   private drop = 0;
 
+  // On touch the browser scrolls natively, on its own thread: a transform
+  // set from update() lands a frame behind it and the illustration shakes.
+  // There the anchor is position: sticky instead, which moves with the
+  // scroll itself, and update() only reads where it is. The cost is a hard
+  // stop at the end of the track rather than the SOFT ease out.
+  private sticky = device.isTouch;
+
+  // the drop last written to the anchor's transform, in sticky mode
+  private appliedDrop = 0;
+
   constructor() {
     super();
 
@@ -155,6 +165,13 @@ export class AboutBio extends HTMLElement {
     this.size = { width: illustration.width, height: illustration.height };
     this.rest = this.offsetTop + (this.$track?.offsetTop ?? 0);
 
+    // the same rule update() follows on desktop: the screen centre, or its
+    // rest if that is higher. svh, because #scroll-wrapper is 100svh tall.
+    if (this.sticky && this.$anchor) {
+      this.$anchor.style.position = "sticky";
+      this.$anchor.style.top = `min(50svh, ${this.rest}px)`;
+    }
+
     // the centre the lines part around never moves sideways, so which side
     // each letter is on is settled here, once per split
     const centerX = track ? track.left + track.width / 2 - origin.left : 0;
@@ -206,16 +223,35 @@ export class AboutBio extends HTMLElement {
     const track = this.$track.getBoundingClientRect();
     const illustration = this.size;
 
-    // position: sticky at its rest (or the screen centre, if higher), clamped
-    // to the track: hard at the start, soft at the end so it eases out
-    const soft = window.innerHeight * SOFT;
-    const screen = Math.min(window.innerHeight / 2, this.rest) - track.top;
-    const position =
-      smoothMin(Math.max(screen, 0), track.height, soft) + this.drop;
+    let centerY = 0;
 
-    this.$anchor.style.transform = `translate3d(0, ${position}px, 0)`;
+    if (this.sticky) {
+      // read before writing: a read after the write would force a layout
+      // every frame. The rect still holds the last drop, so swap it.
+      const top =
+        this.$anchor.getBoundingClientRect().top -
+        this.appliedDrop +
+        this.drop;
 
-    const centerY = track.top + position - origin.top;
+      if (this.drop !== this.appliedDrop) {
+        this.$anchor.style.transform = `translate3d(0, ${this.drop}px, 0)`;
+        this.appliedDrop = this.drop;
+      }
+
+      centerY = top - origin.top;
+    } else {
+      // position: sticky at its rest (or the screen centre, if higher),
+      // clamped to the track: hard at the start, soft at the end so it eases
+      // out
+      const soft = window.innerHeight * SOFT;
+      const screen = Math.min(window.innerHeight / 2, this.rest) - track.top;
+      const position =
+        smoothMin(Math.max(screen, 0), track.height, soft) + this.drop;
+
+      this.$anchor.style.transform = `translate3d(0, ${position}px, 0)`;
+
+      centerY = track.top + position - origin.top;
+    }
 
     const ease = 1 - Math.exp(-deltaTime * EASE);
 

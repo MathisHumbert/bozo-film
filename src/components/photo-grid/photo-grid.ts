@@ -23,12 +23,17 @@ interface Column {
   $window: HTMLElement;
   $column: HTMLElement;
   $set: HTMLElement;
+  // Every photo in the column, set and copies, with its top in the column.
+  $items: HTMLElement[];
+  tops: number[];
   period: number;
   lag: number;
   position: number;
-  // 0 at rest, 1 parted: the set above the seam off the top of the screen,
-  // its copies below the seam off the bottom.
+  // 0 at rest, 1 parted: the photos above the split off the top of the
+  // screen, those below it off the bottom.
   part: number;
+  // Index in $items of the first photo below the split, -1 at rest.
+  split: number;
 }
 
 export class PhotoGrid extends HTMLElement {
@@ -85,10 +90,13 @@ export class PhotoGrid extends HTMLElement {
           $window,
           $column,
           $set: $column.querySelector<HTMLElement>('[data-photo-grid="set"]')!,
+          $items: [],
+          tops: [],
           period: 0,
           lag: this.getLag(index, $windows.length),
           position: this.distance,
           part: 0,
+          split: -1,
         };
       });
     }
@@ -267,10 +275,13 @@ export class PhotoGrid extends HTMLElement {
         $window,
         $column,
         $set,
+        $items: [],
+        tops: [],
         period: 0,
         lag: this.getLag(index, count),
         position: 0,
         part: 0,
+        split: -1,
       };
     });
 
@@ -298,6 +309,11 @@ export class PhotoGrid extends HTMLElement {
     this.columns.forEach((column) => {
       const { $column, $set } = column;
 
+      // Clean before cloning, or the copies inherit a parted transform.
+      $column
+        .querySelectorAll<HTMLElement>('[data-photo-grid="item"]')
+        .forEach(($item) => ($item.style.transform = ""));
+
       column.period = $set.offsetHeight;
 
       const copies = column.period
@@ -315,6 +331,14 @@ export class PhotoGrid extends HTMLElement {
         $copy.querySelectorAll("img").forEach(($img) => ($img.alt = ""));
         $column.append($copy);
       }
+
+      column.$items = Array.from(
+        $column.querySelectorAll<HTMLElement>('[data-photo-grid="item"]'),
+      );
+      column.tops = column.$items.map(
+        ($item) => $item.offsetTop - $column.offsetTop,
+      );
+      column.split = -1;
     });
 
     this.render();
@@ -341,22 +365,52 @@ export class PhotoGrid extends HTMLElement {
   }
 
   render() {
-    this.columns.forEach(({ $column, period, position, part }) => {
+    const middle = window.innerHeight / 2;
+
+    this.columns.forEach((column) => {
+      const { $column, $items, tops, period, position, part } = column;
+
       if (!period) return;
 
-      // On screen, where the set ends and its first copy begins. Always a
-      // gap between two photos, so parting there never cuts one in half.
+      // On screen, where the set ends and its first copy begins.
       const seam = mod(this.offset - position, period);
+      const shift = seam - period - this.offset;
 
-      $column.style.transform = `translate3d(0, ${seam - period - this.offset}px, 0)`;
+      $column.style.transform = `translate3d(0, ${shift}px, 0)`;
 
-      const [$set, ...$copies] = Array.from($column.children) as HTMLElement[];
-      const above = -part * seam;
-      const below = part * Math.max(0, window.innerHeight - seam);
+      if (!part) {
+        if (column.split !== -1) {
+          $items.forEach(($item) => ($item.style.transform = ""));
+          column.split = -1;
+        }
+        return;
+      }
 
-      $set.style.transform = part ? `translate3d(0, ${above}px, 0)` : "";
-      $copies.forEach(($copy) => {
-        $copy.style.transform = part ? `translate3d(0, ${below}px, 0)` : "";
+      // Part at the gap between two photos nearest the middle of the screen,
+      // so the halves open from the centre without cutting a photo in two.
+      // Chosen once per transition: a scroll mid-way never makes it jump.
+      if (column.split === -1) {
+        let nearest = Infinity;
+
+        tops.forEach((top, index) => {
+          const distance = Math.abs(top + shift - middle);
+
+          if (distance < nearest) {
+            nearest = distance;
+            column.split = index;
+          }
+        });
+      }
+
+      const splitTop = tops[column.split];
+      const split = splitTop + shift;
+      const above = -part * Math.max(0, split);
+      const below = part * Math.max(0, window.innerHeight - split);
+
+      $items.forEach(($item, index) => {
+        const y = tops[index] < splitTop ? above : below;
+
+        $item.style.transform = `translate3d(0, ${y}px, 0)`;
       });
     });
   }

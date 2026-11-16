@@ -115,11 +115,13 @@ const isDev = import.meta.env.DEV;
     {/* <Progress /> */}
 
     <!-- The default page transition: two halves meeting in the middle, then
-         parting like the preloader's. Driven by transitions/index.ts. -->
+         parting like the preloader's. Driven by transitions/index.ts, which
+         makes it a popover over an open menu: the size, margin, padding,
+         border, background and overflow undo the popover's UA styles. -->
     <div
       aria-hidden="true"
       data-curtain
-      class="z-curtain pointer-events-none invisible fixed inset-0"
+      class="z-curtain pointer-events-none invisible fixed inset-0 m-0 size-full max-h-none max-w-none overflow-visible border-0 bg-transparent p-0"
     >
       <div
         data-curtain="top"

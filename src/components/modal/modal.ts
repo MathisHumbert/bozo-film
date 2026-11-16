@@ -125,14 +125,9 @@ export class Modal extends HTMLElement {
   onClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement | null;
 
+    // Links are left to the page transition: it closes the modal itself,
+    // under the curtain, so a visit animates once.
     if (target?.closest("[data-modal-close]")) {
-      this.close();
-      return;
-    }
-
-    const $link = target?.closest<HTMLAnchorElement>("a[href]");
-
-    if ($link && $link.origin === window.location.origin) {
       this.close();
     }
   };
@@ -224,9 +219,13 @@ export class Modal extends HTMLElement {
       );
   }
 
-  close() {
-    if (this.closing) return this.closing;
+  // `immediate` skips the parting: the page transition's curtain already
+  // covers the panel, so the visitor never sees it go.
+  close({ immediate = false } = {}) {
+    if (this.closing && !immediate) return this.closing;
     if (!this.$dialog || !this.isOpen) return Promise.resolve();
+
+    const speed = immediate || device.reducedMotion ? 0 : 1;
 
     this.timeline?.kill();
     this.unsplit();
@@ -234,13 +233,13 @@ export class Modal extends HTMLElement {
     const $top = this.$scroll!;
     const $bottom = this.split();
 
-    this.closing = new Promise<void>((resolve) => {
+    this.closing ??= new Promise<void>((resolve) => {
       this.resolveClosing = resolve;
     });
 
     this.timeline = gsap.timeline({
       defaults: {
-        duration: device.reducedMotion ? 0 : DURATION.close,
+        duration: DURATION.close * speed,
         ease: EASE.close,
       },
       onComplete: () => {
@@ -260,7 +259,7 @@ export class Modal extends HTMLElement {
         {
           scaleX: 0,
           transformOrigin: "left",
-          duration: device.reducedMotion ? 0 : DURATION.underlineOut,
+          duration: DURATION.underlineOut * speed,
         },
         0,
       );

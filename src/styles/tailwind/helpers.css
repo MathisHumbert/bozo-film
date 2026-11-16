@@ -60,7 +60,8 @@
 /* The animated link underline (underline.astro explains the numbers). */
 @utility underline-line {
   --line: 1px;
-  bottom: calc(max(1px, 0.1rem) - 0.06em + (1lh - 1em) / 2 - var(--line));
+  --offset: 0.3em;
+  bottom: calc((1lh - 1em) / 2 + 0.19em - var(--offset) - var(--line));
 
   @media (min-resolution: 2dppx) {
     --line: 0.5px;

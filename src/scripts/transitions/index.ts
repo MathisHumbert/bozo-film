@@ -33,8 +33,8 @@ function getModals() {
   return Array.from(document.querySelectorAll<Modal>("c-modal"));
 }
 
-function closeModals() {
-  return Promise.all(getModals().map((modal) => modal.close()));
+function closeModals(options?: { immediate?: boolean }) {
+  return Promise.all(getModals().map((modal) => modal.close(options)));
 }
 
 type PageTransition = {
@@ -122,6 +122,11 @@ export default class Transition {
     swup.hooks.on("content:remove", this.onContentRemove);
     swup.hooks.on("visit:abort", this.onVisitAbort);
 
+    // No visit, so no curtain: a link to the page already shown just closes
+    // the menu it was clicked in.
+    swup.hooks.on("link:self", () => closeModals());
+    swup.hooks.on("link:anchor", () => closeModals());
+
     return swup;
   }
 
@@ -186,8 +191,6 @@ export default class Transition {
     } else {
       visit.scroll.reset = false;
     }
-
-    await closeModals();
   };
 
   private onAnimationOutStart = async (visit: Visit) => {
@@ -284,18 +287,36 @@ export default class Transition {
     events.emit("transition:end");
   };
 
-  // The halves meet in the middle.
-  animateOutDefault() {
+  // The halves meet in the middle. Over an open menu they close on the menu
+  // itself, which then goes without its own animation: one close, one open,
+  // wherever the visit starts. A dialog sits in the top layer, so the curtain
+  // joins it there as a popover, shown after it and therefore above it.
+  async animateOutDefault() {
     const speed = device.reducedMotion ? 0 : 1;
+    const overModal = getModals().some((modal) => modal.isOpen);
+
+    if (overModal && this.$curtain) {
+      this.$curtain.popover = "manual";
+      this.$curtain.showPopover();
+    }
 
     gsap.set(this.$curtain, { visibility: "visible" });
 
-    return gsap
+    await gsap
       .timeline({
         defaults: { duration: CURTAIN.close * speed, ease: CURTAIN.ease },
       })
       .to(this.$curtainTop, { yPercent: 0 }, 0)
       .to(this.$curtainBottom, { yPercent: 0 }, 0);
+
+    // closing the menu resumes the page behind it: stop it again, it stays
+    // frozen under the curtain until the new page replaces it
+    if (overModal) {
+      await closeModals({ immediate: true });
+      Scroll.stop();
+    }
+
+    events.emit("transition:covered");
   }
 
   // They part from the middle, like the preloader's.
@@ -310,5 +331,10 @@ export default class Transition {
       .to(this.$curtainBottom, { yPercent: 100 }, 0);
 
     gsap.set(this.$curtain, { visibility: "hidden" });
+
+    if (this.$curtain?.popover) {
+      this.$curtain.hidePopover();
+      this.$curtain.removeAttribute("popover");
+    }
   }
 }

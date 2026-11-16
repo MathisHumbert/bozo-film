@@ -4,9 +4,7 @@ import Home from "./Home";
 
 import { device } from "../classes/Device";
 import { responsive } from "../classes/Responsive";
-import { events, type TransitionType } from "../utils/events";
-
-type TransitionStart = { from: string; to: string; type: TransitionType };
+import { events } from "../utils/events";
 
 export default class Canvas {
   renderer!: Renderer;
@@ -70,18 +68,6 @@ export default class Canvas {
     }
   }
 
-  hide = async ({ from, to, type }: TransitionStart) => {
-    if (type === "home-to-work") return;
-
-    if (from === "/" && this.home) {
-      const home = this.home;
-      this.home = null;
-
-      await home.hide({ from, to });
-      home.destroy();
-    }
-  };
-
   release(slug: string) {
     return this.home?.release(slug) ?? null;
   }
@@ -93,6 +79,13 @@ export default class Canvas {
   /**
    * Events.
    */
+  // Leaving the home on the default transition, the videos stay on screen
+  // until the curtain has closed over them, then go at once.
+  onCovered = () => {
+    this.home?.destroy();
+    this.home = null;
+  };
+
   onTransitionEnd = () => {
     if (this.pathname === "/" || !this.home) return;
 
@@ -123,7 +116,7 @@ export default class Canvas {
   addEventListeners() {
     events.on("resize", this.onResize);
     events.on("end-update", this.update);
-    events.on("transition:start", this.hide);
+    events.on("transition:covered", this.onCovered);
     events.on("transition:end", this.onTransitionEnd);
   }
 

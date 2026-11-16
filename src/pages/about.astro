@@ -29,7 +29,7 @@ const phone = stegaClean(about?.contact?.phone);
   <AboutBio description={about?.description} />
 
   <section
-    class="px-grid pt-[calc(19.2rem+12rem+5rem)] md:pt-[calc(24rem+12rem+8rem)]"
+    class="px-grid pt-[calc(9.6rem+12rem+5rem)] md:pt-[calc(24rem+12rem+8rem)]"
   >
     <div class="gap-gutter relative grid grid-cols-2">
       <AboutGallery images={about?.images ?? []} />
@@ -72,7 +72,7 @@ const phone = stegaClean(about?.contact?.phone);
                       target={link.external ? "_blank" : undefined}
                       rel={link.external ? "noopener noreferrer" : undefined}
                       data-animation="link"
-                      class="relative pb-[max(1px,0.1rem)]"
+                      class="relative block w-fit pb-[max(1px,0.1rem)]"
                     >
                       {link.label}
                       <Underline />

@@ -56,6 +56,8 @@ type AppEvents = {
   "page:loaded": void;
   "page:revealed": { intro: boolean };
   "transition:start": { from: string; to: string; type: TransitionType };
+  // The default transition's curtain has closed: the old page is hidden.
+  "transition:covered": void;
   "transition:end": void;
   resize: ResizeData;
   "start-update": FrameData;
