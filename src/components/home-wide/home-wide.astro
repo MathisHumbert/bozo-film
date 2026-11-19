@@ -4,13 +4,13 @@ import { stegaClean } from "@sanity/client/stega";
 import Underline from "../underline.astro";
 import { hrefFor } from "../../lib/routes";
 import { formatDuration } from "../../lib/video-library/duration";
-import type { HomeQueryResult } from "../../../sanity/sanity.types";
+import type { AllWorkQueryResult } from "../../../sanity/sanity.types";
 
 type Props = {
-  selectedWorks?: NonNullable<HomeQueryResult>["featuredWork"] | null;
+  works?: AllWorkQueryResult | null;
 };
 
-const works = (Astro.props.selectedWorks ?? []).map((work) => {
+const works = (Astro.props.works ?? []).map((work) => {
   const title = stegaClean(work.title);
   const left = stegaClean(work.titleLeft);
   const right = stegaClean(work.titleRight);

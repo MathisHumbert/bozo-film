@@ -41,15 +41,6 @@ const linkProjection = `{
 export const homeQuery = defineQuery(`*[_type == "home"][0]{
   _updatedAt,
   title,
-  featuredWork[]->{
-    _type,
-    title,
-    titleLeft,
-    titleRight,
-    "slug": slug.current,
-    previewVideo-> ${videoAssetProjection},
-    "mainDuration": mainVideo->duration
-  },
   ${seoProjection}
 }`);
 

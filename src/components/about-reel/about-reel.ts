@@ -1,28 +1,23 @@
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import Scroll from "../../scripts/classes/Scroll";
 import { device } from "../../scripts/classes/Device";
 import { mattEasing } from "../../scripts/utils/easing";
 import { attachSources } from "../../scripts/utils/video";
 
-const INVIEW_EVENT = "about-reel:inview";
+// The thumbnail's scale as it enters the viewport. It reaches 1 once
+// centred, pushing the two texts apart as it grows.
+const REST_SCALE = 0.8;
 
 const DURATION = {
   expand: 1.2,
   fade: 0.6,
-  intro: 1.2,
 };
 
 const EASE = {
   expand: mattEasing,
   fade: "power2.out",
-  intro: mattEasing,
-};
-
-type ScrollCallDetail = {
-  target: HTMLElement;
-  way: "enter" | "leave";
-  from: string;
 };
 
 // Where the thumbnail sits, as transforms of a fullscreen frame.
@@ -45,6 +40,8 @@ export class AboutReel extends HTMLElement {
   private $toggle: HTMLButtonElement | null;
   private $label: HTMLElement | null;
   private $center: HTMLElement | null;
+  private $textTop: HTMLElement | null;
+  private $textBottom: HTMLElement | null;
 
   private $nav: HTMLElement | null = null;
 
@@ -56,8 +53,9 @@ export class AboutReel extends HTMLElement {
   private open = { progress: 0 };
   private geometry: Geometry | null = null;
 
-  private isCollapsed = false;
-  private intro: gsap.core.Timeline | null = null;
+  // The scroll-driven scale of the thumbnail, REST_SCALE → 1.
+  private rest = 1;
+  private trigger: ScrollTrigger | null = null;
 
   constructor() {
     super();
@@ -70,6 +68,8 @@ export class AboutReel extends HTMLElement {
     this.$toggle = this.querySelector('[data-about-reel="toggle"]');
     this.$label = this.querySelector('[data-about-reel="label"]');
     this.$center = this.querySelector('[data-about-reel="center"]');
+    this.$textTop = this.querySelector('[data-about-reel="text-top"]');
+    this.$textBottom = this.querySelector('[data-about-reel="text-bottom"]');
   }
 
   /**
@@ -81,14 +81,15 @@ export class AboutReel extends HTMLElement {
     this.$nav = document.querySelector("[data-nav]");
 
     this.bindEvents();
-    this.collapse();
+    this.createScale();
   }
 
   disconnectedCallback() {
     this.unbindEvents();
 
     this.tl?.kill();
-    this.intro?.kill();
+    this.trigger?.kill();
+    this.trigger = null;
 
     if (this.isPlaying) {
       Scroll.resume();
@@ -109,7 +110,6 @@ export class AboutReel extends HTMLElement {
 
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("resize", this.onResize);
-    window.addEventListener(INVIEW_EVENT, this.onInview);
   }
 
   private unbindEvents() {
@@ -118,16 +118,7 @@ export class AboutReel extends HTMLElement {
 
     window.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("resize", this.onResize);
-    window.removeEventListener(INVIEW_EVENT, this.onInview);
   }
-
-  private onInview = (event: Event) => {
-    const { target, way } = (event as CustomEvent<ScrollCallDetail>).detail;
-
-    if (target !== this || way !== "enter") return;
-
-    this.expand();
-  };
 
   private onToggle = () => {
     if (this.isPlaying) {
@@ -169,44 +160,46 @@ export class AboutReel extends HTMLElement {
   }
 
   /**
-   * Intro
+   * Scroll scale
    *
-   * Only the media scales, inside the clipped frame: a transform, so the
-   * text around it never moves. The label fades in once there is picture
-   * behind it — opacity only, so the button stays reachable by keyboard.
+   * The thumbnail is always there, a little smaller, and grows to full size
+   * as it reaches the centre of the viewport. The texts are pulled in by the
+   * same amount, so the thumbnail seems to push them apart. Transforms only:
+   * nothing reflows while scrolling.
    */
-  private collapse() {
-    if (device.reducedMotion || !this.$media) return;
+  private createScale() {
+    if (device.reducedMotion || !this.$holder) return;
 
-    this.isCollapsed = true;
-
-    gsap.set(this.$media, { scale: 0 });
-    gsap.set(this.$center, { opacity: 0 });
-  }
-
-  private expand() {
-    if (!this.isCollapsed || !this.$media) return;
-
-    this.isCollapsed = false;
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        gsap.set(this.$media, { clearProps: "transform" });
-        gsap.set(this.$center, { clearProps: "opacity" });
+    this.trigger = ScrollTrigger.create({
+      trigger: this.$holder,
+      start: "top bottom",
+      end: "center center",
+      onUpdate: ({ progress }) => {
+        this.rest = gsap.utils.interpolate(REST_SCALE, 1, progress);
+        this.renderRest();
+      },
+      onRefresh: ({ progress }) => {
+        this.rest = gsap.utils.interpolate(REST_SCALE, 1, progress);
+        this.renderRest();
       },
     });
+  }
 
-    tl.to(
-      this.$media,
-      { scale: 1, duration: DURATION.intro, ease: EASE.intro },
-      0,
-    ).to(
-      this.$center,
-      { opacity: 1, duration: DURATION.fade, ease: EASE.fade },
-      DURATION.intro - DURATION.fade,
-    );
+  private renderRest() {
+    // Open, the frame is fixed and must not sit in a transformed ancestor.
+    if (this.geometry || !this.$holder) return;
 
-    this.intro = tl;
+    const offset = (this.$holder.offsetHeight * (1 - this.rest)) / 2;
+
+    this.$holder.style.transform = `scale(${this.rest})`;
+
+    if (this.$textTop) {
+      this.$textTop.style.transform = `translate3d(0, ${offset}px, 0)`;
+    }
+
+    if (this.$textBottom) {
+      this.$textBottom.style.transform = `translate3d(0, ${-offset}px, 0)`;
+    }
   }
 
   /**
@@ -218,7 +211,12 @@ export class AboutReel extends HTMLElement {
   private measure(): Geometry | null {
     if (!this.$holder) return null;
 
+    // The holder is untransformed here: apply the scroll scale by hand,
+    // around its centre, to land on the thumbnail as it is seen.
     const rect = this.$holder.getBoundingClientRect();
+    const thumbWidth = rect.width * this.rest;
+    const thumbHeight = rect.height * this.rest;
+
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const ratio = rect.width / rect.height;
@@ -229,16 +227,18 @@ export class AboutReel extends HTMLElement {
     return {
       x: rect.left + rect.width / 2 - viewportWidth / 2,
       y: rect.top + rect.height / 2 - viewportHeight / 2,
-      scaleX: rect.width / viewportWidth,
-      scaleY: rect.height / viewportHeight,
+      scaleX: thumbWidth / viewportWidth,
+      scaleY: thumbHeight / viewportHeight,
       width,
       height,
-      scale: rect.width / width,
+      scale: thumbWidth / width,
     };
   }
 
   // Set once per open / close, not per frame.
   private setOpenLayout() {
+    this.$holder?.style.removeProperty("transform");
+
     this.geometry = this.measure();
 
     if (!this.geometry) return;
@@ -280,14 +280,12 @@ export class AboutReel extends HTMLElement {
     gsap.set(this.$frame, { clearProps: "position,zIndex,transform" });
     gsap.set(this.$media, { clearProps: "width,height,left,top,transform" });
     gsap.set(this.$center, { clearProps: "transform" });
+
+    this.renderRest();
   }
 
   private play() {
     if (!this.$frame || !this.$main) return;
-
-    // Before or mid-intro: finish it, render() owns the media's transform.
-    this.expand();
-    this.intro?.progress(1);
 
     const speed = device.reducedMotion ? 0 : 1;
 

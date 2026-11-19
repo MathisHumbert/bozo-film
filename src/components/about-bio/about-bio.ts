@@ -203,6 +203,13 @@ export class AboutBio extends HTMLElement {
           }
         });
 
+      // each target on its own layer: the glyphs overflow their boxes, and
+      // iOS Safari repaints only the box as it moves, leaving trails of ink
+      // behind. A layer is moved by the compositor, with no repaint at all.
+      targets.forEach(({ $el }) => {
+        $el.style.willChange = "transform";
+      });
+
       return {
         top: rect.top - origin.top,
         height: rect.height,
@@ -275,7 +282,7 @@ export class AboutBio extends HTMLElement {
       line.applied = line.current;
 
       line.targets.forEach(({ $el, side }) => {
-        $el.style.translate = `${side * line.current}px 0`;
+        $el.style.transform = `translate3d(${side * line.current}px, 0, 0)`;
       });
     });
   };

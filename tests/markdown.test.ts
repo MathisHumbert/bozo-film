@@ -45,7 +45,6 @@ const work = {
 describe("renderHomeMarkdown", () => {
   const home = {
     title: "Bozo Film",
-    featuredWork: [work],
     seo: null,
   } as unknown as HomeQueryResult;
 
@@ -66,7 +65,6 @@ describe("renderHomeMarkdown", () => {
     expect(md).toContain(
       "- [Rose Williams](https://bozo-film.vercel.app/work/rose-williams/) (1:28)",
     );
-    expect(md).toContain("## Selected works");
     expect(md).toContain("## All works");
   });
 

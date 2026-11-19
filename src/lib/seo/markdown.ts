@@ -44,17 +44,6 @@ export function renderHomeMarkdown(
 
   if (summary) out.push(`> ${collapse(summary)}`);
 
-  const featured = home?.featuredWork ?? [];
-
-  if (featured.length) {
-    out.push(
-      section(
-        "Selected works",
-        featured.map((work) => workLine(work, ctx.site)),
-      ),
-    );
-  }
-
   const works = allWork ?? [];
 
   if (works.length) {

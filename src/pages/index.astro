@@ -1,8 +1,6 @@
 ---
 export const prerender = false;
 
-import { stegaClean } from "@sanity/client/stega";
-
 import { loadQuery } from "../lib/sanity/load-query";
 import { allWorkQuery, homeQuery } from "../lib/sanity/queries";
 import Layout from "../layouts/layout.astro";
@@ -14,7 +12,7 @@ import HomeFooter from "../components/home-footer/home-footer.astro";
 const home = await loadQuery(homeQuery, {}, { cookies: Astro.cookies });
 const allWork = await loadQuery(allWorkQuery, {}, { cookies: Astro.cookies });
 
-const selectedWorks = home?.featuredWork ?? [];
+// The wide and the list show the same works, in the same order.
 const works = allWork ?? [];
 ---
 
@@ -27,10 +25,7 @@ const works = allWork ?? [];
   infiniteScroll
 >
   <h1 class="sr-only">{home?.title ?? "Home"}</h1>
-  <HomeWide selectedWorks={selectedWorks} />
-  <HomeList
-    works={works}
-    featured={selectedWorks.map((work) => stegaClean(work.slug) ?? "")}
-  />
+  <HomeWide works={works} />
+  <HomeList works={works} />
   <HomeFooter />
 </Layout>

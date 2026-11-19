@@ -19,6 +19,10 @@ const REVEAL = { duration: 1.4, ease: mattEasing, stagger: 0.1 };
 
 const MOBILE_COLUMNS = 3;
 
+// Desktop only: share of the screen height a gap may sit from the middle and
+// still take the split. Beyond it, the photo across the middle is cut.
+const SNAP = 0.1;
+
 interface Column {
   $window: HTMLElement;
   $column: HTMLElement;
@@ -32,8 +36,12 @@ interface Column {
   // 0 at rest, 1 parted: the photos above the split off the top of the
   // screen, those below it off the bottom.
   part: number;
-  // Index in $items of the first photo below the split, -1 at rest.
-  split: number;
+  // Where the column parts, in the column's own coordinates. Null at rest.
+  split: number | null;
+  // The photo across the split, cut in two: it keeps its upper half, and
+  // $half, a copy laid over it, carries the lower one.
+  $cut: HTMLElement | null;
+  $half: HTMLElement | null;
 }
 
 export class PhotoGrid extends HTMLElement {
@@ -96,7 +104,9 @@ export class PhotoGrid extends HTMLElement {
           lag: this.getLag(index, $windows.length),
           position: this.distance,
           part: 0,
-          split: -1,
+          split: null,
+          $cut: null,
+          $half: null,
         };
       });
     }
@@ -262,6 +272,9 @@ export class PhotoGrid extends HTMLElement {
       return;
     }
 
+    // The photos move to the new columns: mend the one cut by the switch.
+    this.columns.forEach((column) => this.unsplit(column));
+
     this.columns = masonry(this.ratios, count).map((indexes, index) => {
       const $window = this.$windowTemplate!.cloneNode(false) as HTMLElement;
       const $column = this.$columnTemplate!.cloneNode(false) as HTMLElement;
@@ -281,7 +294,9 @@ export class PhotoGrid extends HTMLElement {
         lag: this.getLag(index, count),
         position: 0,
         part: 0,
-        split: -1,
+        split: null,
+        $cut: null,
+        $half: null,
       };
     });
 
@@ -309,7 +324,10 @@ export class PhotoGrid extends HTMLElement {
     this.columns.forEach((column) => {
       const { $column, $set } = column;
 
-      // Clean before cloning, or the copies inherit a parted transform.
+      // Clean before cloning, or the copies inherit a parted transform, or
+      // a cut photo.
+      this.unsplit(column);
+
       $column
         .querySelectorAll<HTMLElement>('[data-photo-grid="item"]')
         .forEach(($item) => ($item.style.transform = ""));
@@ -338,7 +356,6 @@ export class PhotoGrid extends HTMLElement {
       column.tops = column.$items.map(
         ($item) => $item.offsetTop - $column.offsetTop,
       );
-      column.split = -1;
     });
 
     this.render();
@@ -379,30 +396,14 @@ export class PhotoGrid extends HTMLElement {
       $column.style.transform = `translate3d(0, ${shift}px, 0)`;
 
       if (!part) {
-        if (column.split !== -1) {
-          $items.forEach(($item) => ($item.style.transform = ""));
-          column.split = -1;
-        }
+        if (column.split !== null) this.unsplit(column);
         return;
       }
 
-      // Part at the gap between two photos nearest the middle of the screen,
-      // so the halves open from the centre without cutting a photo in two.
       // Chosen once per transition: a scroll mid-way never makes it jump.
-      if (column.split === -1) {
-        let nearest = Infinity;
+      column.split ??= this.cut(column, middle - shift);
 
-        tops.forEach((top, index) => {
-          const distance = Math.abs(top + shift - middle);
-
-          if (distance < nearest) {
-            nearest = distance;
-            column.split = index;
-          }
-        });
-      }
-
-      const splitTop = tops[column.split];
+      const splitTop = column.split;
       const split = splitTop + shift;
       const above = -part * Math.max(0, split);
       const below = part * Math.max(0, window.innerHeight - split);
@@ -412,7 +413,85 @@ export class PhotoGrid extends HTMLElement {
 
         $item.style.transform = `translate3d(0, ${y}px, 0)`;
       });
+
+      // The cut photo travels up with its upper half: the lower one goes
+      // down from there.
+      if (column.$half) {
+        column.$half.style.transform = `translate3d(0, ${below - above}px, 0)`;
+      }
     });
+  }
+
+  // The halves meet in the middle of the screen, like the home's. A gap close
+  // enough to it takes the split, so no photo is cut; otherwise the photo
+  // across the middle is, as the home's halves cut its video. Returns the
+  // split, in the column's coordinates.
+  cut(column: Column, middle: number) {
+    const { $items, tops } = column;
+
+    let gap = middle;
+    let nearest = Infinity;
+
+    tops.forEach((top) => {
+      const distance = Math.abs(top - middle);
+
+      if (distance < nearest) {
+        nearest = distance;
+        gap = top;
+      }
+    });
+
+    // Mobile keeps the nearest gap whatever its distance: it already reads
+    // as meeting in the middle, and no photo is ever cut there.
+    const isNarrow = window.innerWidth < responsive.breakpoints.desktop;
+
+    if (isNarrow || nearest <= window.innerHeight * SNAP) return gap;
+
+    const index = tops.findIndex(
+      (top, i) => top < middle && middle < top + $items[i].offsetHeight,
+    );
+
+    // The middle falls in a gap after all.
+    if (index === -1) return middle;
+
+    const $item = $items[index];
+    const $pieces = Array.from($item.children) as HTMLElement[];
+    const offset = middle - tops[index];
+
+    const $half = document.createElement("div");
+    $half.setAttribute("aria-hidden", "true");
+    $half.style.cssText = `position: absolute; inset: 0; clip-path: inset(${offset}px 0 0 0)`;
+    $half.append(...$pieces.map(($piece) => $piece.cloneNode(true)));
+
+    $pieces.forEach(($piece) => {
+      $piece.style.clipPath = `inset(0 0 calc(100% - ${offset}px) 0)`;
+    });
+
+    $item.style.position = "relative";
+    $item.append($half);
+
+    column.$cut = $item;
+    column.$half = $half;
+
+    return middle;
+  }
+
+  unsplit(column: Column) {
+    column.$items.forEach(($item) => ($item.style.transform = ""));
+
+    column.$half?.remove();
+
+    if (column.$cut) {
+      column.$cut.style.position = "";
+
+      Array.from(column.$cut.children as HTMLCollectionOf<HTMLElement>).forEach(
+        ($piece) => ($piece.style.clipPath = ""),
+      );
+    }
+
+    column.split = null;
+    column.$cut = null;
+    column.$half = null;
   }
 
   /**

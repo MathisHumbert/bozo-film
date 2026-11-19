@@ -50,6 +50,12 @@
   }
 }
 
+/* Same bleed as the text reveal: the masks clip the descenders (the @). */
+[data-modal-reveal] div div {
+  margin-bottom: -0.25em;
+  padding-bottom: 0.25em;
+}
+
 [data-animation="text"] {
   div div {
     transform: translateY(125%) rotate(var(--rotate, 0deg));

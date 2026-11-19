@@ -15,7 +15,6 @@ import {
 
 export type ListItem = {
   slug: string;
-  isFeatured: boolean;
   $item: HTMLElement;
   $heading: HTMLElement | null;
   $media: HTMLElement | null;
@@ -45,7 +44,7 @@ export type ListItem = {
 };
 
 const DURATION = {
-  // Slides the nearest featured work to the centre before leaving.
+  // Slides the nearest work to the centre before leaving.
   center: 0.8,
   // Slides a keyboard-focused item to the centre.
   focus: 1,
@@ -104,7 +103,6 @@ export class HomeList extends HTMLElement {
       this.querySelectorAll<HTMLElement>('[data-home-list="item"]'),
     ).map(($item) => ({
       slug: $item.dataset.slug ?? "",
-      isFeatured: $item.hasAttribute("data-featured"),
       $item,
       $heading: $item.querySelector<HTMLElement>('[data-home-list="heading"]'),
       $media: $item.querySelector<HTMLElement>('[data-home-list="media"]'),
@@ -198,10 +196,8 @@ export class HomeList extends HTMLElement {
    */
   async hide() {
     const speed = device.reducedMotion ? 0 : 1;
-    const featured = this.items.filter(({ isFeatured }) => isFeatured);
-
-    // No featured work to go back to: stay on the list.
-    if (!document.querySelector("c-home-wide") || !featured.length) {
+    // No work to go back to: stay on the list.
+    if (!document.querySelector("c-home-wide") || !this.items.length) {
       events.emit("home:shown", { view: "list" });
       return;
     }
@@ -209,12 +205,13 @@ export class HomeList extends HTMLElement {
     Scroll.stop();
     this.isFrozen = true;
 
-    // Centre the nearest featured work before leaving.
+    // Centre the nearest work before leaving. The wide shows every work, so
+    // this only settles a list left between two of them.
     const offset = (entry: ListItem) =>
       Math.abs(
         this.getPosition(entry) + entry.height / 2 - window.innerHeight / 2,
       );
-    const item = featured.reduce((nearest, entry) =>
+    const item = this.items.reduce((nearest, entry) =>
       offset(entry) < offset(nearest) ? entry : nearest,
     );
 

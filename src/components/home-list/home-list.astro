@@ -7,10 +7,7 @@ import { videoSources } from "../../lib/video-library/sources";
 
 interface Props {
   works?: AllWorkQueryResult | null;
-  featured?: string[];
 }
-
-const { featured = [] } = Astro.props;
 
 const works = (Astro.props.works ?? []).map((work) => {
   const asset = work.previewVideo;
@@ -51,11 +48,10 @@ const works = (Astro.props.works ?? []).map((work) => {
         class="group/list flex flex-col items-center"
       >
         {
-          works.map((work) => (
+          works.map((work, index) => (
             <li
               data-home-list="item"
               data-slug={work.slug}
-              data-featured={featured.includes(work.slug ?? "") || undefined}
               class="group"
             >
               <h3 data-home-list="heading">
@@ -85,9 +81,9 @@ const works = (Astro.props.works ?? []).map((work) => {
                       data-sources={JSON.stringify(work.sources)}
                       data-poster={work.poster}
                       data-preload={
-                        work.slug === featured[0]
+                        index === 0
                           ? "video"
-                          : work.slug === featured[1]
+                          : index === 1
                             ? "poster"
                             : undefined
                       }
