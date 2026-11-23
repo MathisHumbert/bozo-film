@@ -32,11 +32,12 @@ export type ListItem = {
   videoHeight: number;
   // What the open video adds on each side, on top of the closed column gap.
   videoGap: number;
-  // Stacked: the space above and below the open video. Cancelled while it is
-  // closed, so the two lines keep the list's leading.
+  // The space above and below the open video. Stacked, it is cancelled while
+  // the video is closed, so the two lines keep the list's leading.
   rowGap: number;
-  // Side by side: how much taller the open video is than the line. The media
-  // has no height, so the line keeps its leading and the neighbours make room.
+  // Side by side: how much taller the open video, plus a row gap above and
+  // below, is than the line. The media has no height, so the line keeps its
+  // leading and the neighbours make room, clear of their descenders.
   overflow: number;
   videoX: number;
   videoY: number;
@@ -488,7 +489,7 @@ export class HomeList extends HTMLElement {
 
       // The row gap either side of the closed media is taken back by its
       // margins, and given back by render() as the video opens.
-      item.rowGap = item.stacked ? gap : 0;
+      item.rowGap = gap;
       if (item.$media) {
         item.$media.style.marginBlock = item.stacked ? `${-gap}px` : "";
       }
@@ -508,7 +509,7 @@ export class HomeList extends HTMLElement {
       item.videoHeight = parseFloat(style.height) || 0;
       item.overflow = item.stacked
         ? 0
-        : Math.max(0, item.videoHeight - item.height);
+        : Math.max(0, item.videoHeight + item.rowGap * 2 - item.height);
 
       const itemRect = item.$item.getBoundingClientRect();
       const videoRect = item.$video.getBoundingClientRect();

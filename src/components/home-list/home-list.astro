@@ -59,7 +59,7 @@ const works = (Astro.props.works ?? []).map((work) => {
                   href={work.href ?? undefined}
                   data-transition="home-to-work"
                   data-joined={work.joined || undefined}
-                  class="text-h2 duration-base ease-sine-out reduced-motion:transition-none flex items-center gap-x-[0.125em] gap-y-8 data-joined:gap-x-0 md:gap-y-24 transition-opacity group-data-stacked:flex-col pointer-fine:group-has-[a:hover]/list:not-hover:opacity-30"
+                  class="text-h2 leading-[1.15] duration-base ease-sine-out reduced-motion:transition-none flex items-center gap-x-[0.125em] gap-y-8 data-joined:gap-x-0 md:gap-y-24 transition-opacity group-data-stacked:flex-col pointer-fine:group-has-[a:hover]/list:not-hover:opacity-30"
                 >
                   <span class="sr-only">{work.title}</span>
 
