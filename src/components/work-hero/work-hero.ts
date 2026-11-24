@@ -41,6 +41,12 @@ export class WorkHero extends HTMLElement {
   // how far each timestamp travels to reach the toggle, in px
   private travel = { minutes: 0, seconds: 0 };
 
+  // the full length, as rendered, put back once the video has ended
+  private total = { minutes: "", seconds: "" };
+
+  // whole seconds left last written, so a frame only touches the DOM on a tick
+  private remaining: number | null = null;
+
   private isPlaying = false;
   private isIdle = false;
   private idleTimer: number | null = null;
@@ -62,6 +68,11 @@ export class WorkHero extends HTMLElement {
     this.$toggleLines = Array.from(
       this.querySelectorAll('[data-work-hero="toggle-line"]'),
     );
+
+    this.total = {
+      minutes: this.$minutesLine?.textContent?.trim() ?? "",
+      seconds: this.$secondsLine?.textContent?.trim() ?? "",
+    };
   }
 
   /**
@@ -189,6 +200,14 @@ export class WorkHero extends HTMLElement {
     );
   }
 
+  private get $minutesLine() {
+    return this.$minutes?.querySelector('[data-work-hero="duration-line"]');
+  }
+
+  private get $secondsLine() {
+    return this.$seconds?.querySelector('[data-work-hero="duration-line"]');
+  }
+
   /**
    * Methods
    */
@@ -294,6 +313,9 @@ export class WorkHero extends HTMLElement {
   }
 
   private reset() {
+    this.remaining = null;
+    this.setTime(this.total.minutes, this.total.seconds);
+
     gsap.to([this.$minutes, this.$seconds], {
       x: 0,
       duration: this.duration(RETURN),
@@ -382,7 +404,24 @@ export class WorkHero extends HTMLElement {
 
     gsap.set(this.$minutes, { x: this.travel.minutes * progress });
     gsap.set(this.$seconds, { x: this.travel.seconds * progress });
+
+    // Counts down as they close in, to 00 00 at the toggle. Rounded like
+    // formatDuration(), so the first frame reads the length already shown.
+    const remaining = Math.max(Math.round(duration - currentTime), 0);
+
+    if (remaining === this.remaining) return;
+
+    this.remaining = remaining;
+    this.setTime(
+      String(Math.floor(remaining / 60)).padStart(2, "0"),
+      String(remaining % 60).padStart(2, "0"),
+    );
   };
+
+  private setTime(minutes: string, seconds: string) {
+    if (this.$minutesLine) this.$minutesLine.textContent = minutes;
+    if (this.$secondsLine) this.$secondsLine.textContent = seconds;
+  }
 
   private setLabel(label: string) {
     if (!this.$label) return;
